@@ -70,6 +70,7 @@ try:
         page.locator('#water').click(); wait_status('CONVERGED')
         page.set_viewport_size({'width':390,'height':844})
         assert page.evaluate('document.documentElement.scrollWidth<=window.innerWidth')
+        assert page.locator('#energy-value').bounding_box()['height']<60,'Mobile energy should fit on one line'
         assert not errors,errors
         browser.close()
         print('RHF browser energy, density, orbitals, JSON, live iterations: PASS')
