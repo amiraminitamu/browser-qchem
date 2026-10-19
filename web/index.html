@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>browser-qchem | First integral</title>
+  <style>
+    :root { color-scheme: light; font: 17px/1.6 system-ui, sans-serif; color: #18313b; background: #f0f4f4; }
+    body { max-width: 760px; margin: 7vh auto; padding: 24px; }
+    main { background: white; border: 1px solid #d6e0df; border-radius: 16px; padding: clamp(20px, 5vw, 44px); }
+    h1 { font-size: clamp(26px, 5vw, 36px); margin: 6px 0 16px; line-height: 1.2; }
+    .eyebrow { color: #32766e; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; }
+    form { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; margin: 28px 0; }
+    label { display: block; font-size: 14px; }
+    input, button { font: inherit; border-radius: 7px; padding: 9px 14px; }
+    input { width: 150px; border: 1px solid #91a7a6; }
+    button { border: 0; background: #21665e; color: white; cursor: pointer; }
+    button:disabled { opacity: .5; cursor: wait; }
+    pre { padding: 18px; border-radius: 8px; background: #eef5f3; overflow-x: auto; font-size: 14px; }
+    #status { font-weight: 600; }
+    footer { font-size: 13px; color: #52666d; margin-top: 24px; }
+    a { color: #21665e; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="eyebrow">browser-qchem / milestone 01</div>
+    <h1>The first molecular integral.</h1>
+    <p>Overlap between two normalized hydrogen STO-3G 1s orbitals,
+      evaluated locally by libcint compiled to WebAssembly.</p>
+    <form id="integral-form">
+      <div><label for="distance">H-H separation (bohr)</label>
+        <input id="distance" type="number" min="0" max="20" step="any" value="1.4" required></div>
+      <button id="calculate" type="submit" disabled>Calculate overlap</button>
+    </form>
+    <p id="status" role="status">Loading WebAssembly...</p>
+    <pre id="result" aria-live="polite">Waiting for the integral engine.</pre>
+    <footer>This prototype calculates an overlap integral, not an HF energy.
+      Zero separation checks orbital normalization.
+      <br><a href="https://github.com/amiraminitamu/browser-qchem">Source</a> &middot;
+      <a href="https://github.com/sunqm/libcint/tree/v6.1.2">libcint v6.1.2</a></footer>
+  </main>
+  <script type="module" src="./app.mjs"></script>
+</body>
+</html>
