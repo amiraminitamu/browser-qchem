@@ -32,6 +32,9 @@ try:
         errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(f'http://127.0.0.1:{server.server_port}')
+        page.wait_for_function("document.querySelector('#status').textContent.startsWith('CONVERGED')",timeout=30000)
+        page.locator('#mode').select_option('integrals')
+        page.locator('#calculate').click()
         def wait_pass():
             page.wait_for_function("document.querySelector('#status').textContent.startsWith('PASS')", timeout=30000)
         wait_pass()

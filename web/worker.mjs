@@ -2,15 +2,20 @@
 import createQChem from './qc_core.mjs';
 import { parseGeometry } from './molecule.mjs';
 import { computeIntegrals } from './engine.mjs';
+import { computeRHF } from './rhf.mjs';
 try {
   const engine = await createQChem();
-  self.onmessage = ({ data }) => {
+  self.onmessage = async ({ data }) => {
     try {
       const start = performance.now();
-      const result = computeIntegrals(engine, parseGeometry(data.geometry, data.unit));
+      const molecule = parseGeometry(data.geometry,data.unit);
+      const result = data.mode === 'rhf'
+        ? await computeRHF(engine,molecule,data.options,entry => self.postMessage({ type:'iteration',entry }))
+        : computeIntegrals(engine,molecule);
       result.elapsedMs = performance.now() - start;
-      self.postMessage({ type: 'result', result },
-        [result.overlap.buffer, result.kinetic.buffer, result.nuclear.buffer, result.eri.buffer]);
+      const buffers = [result.overlap.buffer, result.kinetic.buffer, result.nuclear.buffer, result.eri.buffer];
+      if (result.rhf) for (const key of ['density','fock','coefficients','orbitalEnergies','occupations']) buffers.push(result.rhf[key].buffer);
+      self.postMessage({ type:'result',result },buffers);
     } catch (error) { self.postMessage({ type: 'error', message: error.message }); }
   };
   self.postMessage({ type: 'ready' });

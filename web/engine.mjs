@@ -2,7 +2,7 @@
 import { packBasis } from './molecule.mjs';
 
 // Copy results before freeing C memory. Allocations may replace WASM heap views.
-export function computeIntegrals(engine, molecule) {
+export function prepareIntegrals(engine, molecule) {
   const data = packBasis(molecule), allocations = [];
   let handle = 0;
   function copyIn(values, integer = false) {
@@ -28,11 +28,19 @@ export function computeIntegrals(engine, molecule) {
       if (!result[name].every(Number.isFinite)) throw new Error(`Nonfinite ${name} integral.`);
     });
     result.checks = checkInvariants(result);
-    return result;
-  } finally {
+    return { handle, result };
+  } catch (error) {
     if (handle) engine._qc_free(handle);
+    throw error;
+  } finally {
     allocations.forEach(pointer => engine._free(pointer));
   }
+}
+
+export function computeIntegrals(engine, molecule) {
+  const { handle, result } = prepareIntegrals(engine, molecule);
+  engine._qc_free(handle);
+  return result;
 }
 
 export function checkInvariants(result) {
@@ -52,6 +60,11 @@ export function checkInvariants(result) {
     passed: Math.max(diagonalError, matrixSymmetryError, eriSymmetryError) < 1e-10 };
 }
 export function serializable(result) {
-  return { ...result, overlap: Array.from(result.overlap), kinetic: Array.from(result.kinetic),
+  const output = { ...result, overlap: Array.from(result.overlap), kinetic: Array.from(result.kinetic),
     nuclear: Array.from(result.nuclear), eri: Array.from(result.eri) };
+  if (result.rhf) {
+    output.rhf = { ...result.rhf };
+    for (const key of ['density','fock','coefficients','orbitalEnergies','occupations']) output.rhf[key] = Array.from(result.rhf[key]);
+  }
+  return output;
 }

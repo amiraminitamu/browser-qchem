@@ -2,6 +2,10 @@
 #ifndef BROWSER_QCHEM_INTEGRALS_H
 #define BROWSER_QCHEM_INTEGRALS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct QCResult QCResult;
 
 /* Coordinates in bohr. Each shell record contains [atom_index, l, nprim].
@@ -20,5 +24,9 @@ double qc_enuc(const QCResult *result);
  */
 const double *qc_data(const QCResult *result, int kind);
 void qc_free(QCResult *result);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
