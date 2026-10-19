@@ -1,0 +1,6 @@
+[submodule "vendor/libcint"]
+	path = vendor/libcint
+	url = https://github.com/sunqm/libcint.git
+[submodule "vendor/eigen"]
+	path = vendor/eigen
+	url = https://gitlab.com/libeigen/eigen.git

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>browser-qchem | Hartree-Fock</title>
+  <style>
+    :root { color-scheme:light; font:16px/1.6 system-ui,sans-serif; color:#18313b; background:#f0f4f4; }
+    body { max-width:1120px; margin:32px auto; padding:20px; }
+    main { background:white; border:1px solid #d6e0df; border-radius:16px; padding:clamp(20px,4vw,40px); }
+    h1 { font-size:clamp(28px,5vw,40px); margin:8px 0; line-height:1.2; } h2 { font-size:19px; }
+    .eyebrow { color:#32766e; font-size:12px; letter-spacing:.12em; text-transform:uppercase; }
+    .grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:32px; margin-top:26px; }
+    .grid > section { min-width:0; }
+    @media(max-width:760px) { .grid { grid-template-columns:minmax(0,1fr); } }
+    @media(max-width:760px) { #summary { white-space:pre-wrap; } }
+    label { display:block; margin:10px 0 5px; font-size:14px; font-weight:600; }
+    textarea { box-sizing:border-box; width:100%; min-height:190px; resize:vertical; font:14px/1.8 ui-monospace,monospace; border:1px solid #91a7a6; border-radius:7px; padding:12px; }
+    select,button,input { font:inherit; border-radius:7px; padding:8px 12px; }
+    select,input { border:1px solid #91a7a6; max-width:100%; }
+    button { border:0; background:#21665e; color:white; cursor:pointer; } button:disabled { opacity:.5; cursor:default; }
+    .actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:18px; }
+    .secondary { color:#21665e; background:#e7f1ee; } #status { font-weight:600; }
+    pre { padding:16px; border-radius:8px; background:#eef5f3; overflow-x:auto; font-size:13px; }
+    .hint,footer { font-size:13px; color:#52666d; }
+    .matrix { overflow-x:auto; max-height:430px; margin:16px 0; }
+    table { border-collapse:collapse; font:12px/1.6 ui-monospace,monospace; }
+    td,th { padding:7px 10px; border-bottom:1px solid #e0e8e6; white-space:nowrap; text-align:right; }
+    th { color:#42645e; background:#f3f8f6; }
+    .indices { display:flex; gap:8px; flex-wrap:wrap; } .indices input { width:65px; }
+    .settings { display:flex; gap:18px; flex-wrap:wrap; align-items:end; }
+    .settings input[type=number] { width:90px; }
+    #scf-history { max-height:300px; }
+    #orbital-table { max-height:340px; }
+    a { color:#21665e; } footer { margin-top:26px; } details { margin:14px 0; }
+  </style>
+</head>
+<body><main>
+  <div class="eyebrow">browser-qchem / milestone 03</div>
+  <h1>Hartree-Fock, in your browser.</h1>
+  <p>Closed-shell molecular energies, SCF convergence, orbitals, and complete integrals.
+    Computed locally with libcint, Eigen, and WebAssembly.</p>
+  <div class="grid">
+    <section aria-label="Molecular input">
+      <h2>Geometry</h2>
+      <label for="geometry">XYZ file contents or Element x y z lines</label>
+      <textarea id="geometry" spellcheck="false"></textarea>
+      <label for="unit">Coordinate unit</label>
+      <select id="unit"><option value="angstrom">Angstrom</option><option value="bohr">Bohr</option></select>
+      <div class="settings">
+        <div><label for="mode">Calculation</label><select id="mode"><option value="rhf">RHF</option><option value="integrals">Integrals only</option></select></div>
+        <div><label for="charge">Molecular charge</label><input id="charge" type="number" step="1" value="0" required></div>
+        <div><label for="maxiter">Maximum iterations</label><input id="maxiter" type="number" min="1" max="500" step="1" value="100" required></div>
+        <label><input id="diis" type="checkbox" checked> Use DIIS</label>
+      </div>
+      <p class="hint">STO-3G for H through Ne, maximum 40 AOs. RHF uses paired electrons and spin 0.
+        Integrals-only mode also accepts odd-electron molecules.</p>
+      <div class="actions">
+        <button id="calculate" disabled>Run calculation</button>
+        <button id="water" class="secondary">Reset water</button>
+        <button id="download" class="secondary" disabled>Download JSON</button>
+      </div>
+    </section>
+    <section aria-label="Calculation status">
+      <h2>Calculation</h2><p id="status" role="status">Loading WebAssembly worker...</p>
+      <pre id="summary" aria-live="polite">Waiting for the integral engine.</pre>
+      <p class="hint">SCF requires |delta E| &lt; 1e-10 Eh, density RMS change &lt; 1e-8,
+        and orthonormal-basis commutator RMS &lt; 1e-8. A converged RHF solution is not a stability analysis.</p>
+    </section>
+  </div>
+  <section id="scf-results" hidden>
+    <h2>SCF convergence</h2>
+    <div id="scf-history" class="matrix"></div>
+    <h2>Spatial orbital energies</h2>
+    <p class="hint">Energies in Hartree. Occupation is 2 for occupied orbitals and 0 for virtual orbitals.</p>
+    <div id="orbital-table" class="matrix"></div>
+  </section>
+  <section id="results" hidden>
+    <h2>One-electron matrices</h2>
+    <label for="matrix-kind">Matrix to inspect (atomic units)</label>
+    <select id="matrix-kind"><option value="overlap">Overlap S</option><option value="kinetic">Kinetic T</option>
+      <option value="nuclear">Nuclear attraction V</option><option value="core">Core Hamiltonian T + V</option>
+      <option value="density">RHF density D</option><option value="fock">RHF Fock F</option></select>
+    <div id="matrix" class="matrix"></div>
+    <h2>Electron repulsion integrals</h2>
+    <p class="hint">Chemists' notation (ij|kl), real spherical AOs. Select AO indices starting from 1.</p>
+    <div class="indices" id="eri-selectors"></div><pre id="eri-value" aria-live="polite"></pre>
+    <details><summary>AO order and array layout</summary><pre id="ao-order"></pre>
+      <p class="hint">JSON arrays are row-major. Matrix index: i*N + j.
+        ERI index: ((i*N + j)*N + k)*N + l, with zero-based indices in the file.
+        Exported coordinates are in bohr. S is dimensionless; all energy quantities use atomic units.</p>
+    </details>
+  </section>
+  <footer>RHF uses a core-Hamiltonian guess and DIIS. The dense ERI tensor has a 40 AO limit.
+    <br><a href="https://github.com/amiraminitamu/browser-qchem">Source</a> &middot;
+    <a href="https://github.com/sunqm/libcint/tree/v6.1.2">libcint v6.1.2</a></footer>
+</main><script type="module" src="./app.mjs"></script></body></html>
