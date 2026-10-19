@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 NAMES = ('overlap', 'kinetic', 'nuclear', 'eri')
 OPERATORS = ('int1e_ovlp_sph', 'int1e_kin_sph', 'int1e_nuc_sph', 'int2e_sph')
 
-def native_result(library, mol):
+def native_handle(library, mol):
     charges = np.ascontiguousarray(mol.atom_charges(), dtype=np.int32)
     xyz = np.ascontiguousarray(mol.atom_coords(), dtype=np.float64)
     shells, exponents, coefficients = [], [], []
@@ -36,6 +36,10 @@ def native_result(library, mol):
         exponents.ctypes.data_as(ct.POINTER(ct.c_double)), coefficients.ctypes.data_as(ct.POINTER(ct.c_double)))
     if not pointer:
         raise RuntimeError(library.qc_error().decode())
+    return pointer
+
+def native_result(library, mol):
+    pointer = native_handle(library,mol)
     try:
         n = library.qc_nao(pointer)
         result = {'nao': n, 'nuclearRepulsion': library.qc_enuc(pointer)}
