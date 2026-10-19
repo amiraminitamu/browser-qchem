@@ -5,4 +5,4 @@ import { parseGeometry } from '../web/molecule.mjs';
 import { computeIntegrals, serializable } from '../web/engine.mjs';
 const input = JSON.parse(fs.readFileSync(0, 'utf8'));
 const engine = await createQChem();
-console.log(JSON.stringify(serializable(computeIntegrals(engine, parseGeometry(input.geometry, input.unit)))));
+console.log(JSON.stringify(serializable(computeIntegrals(engine, parseGeometry(input.geometry, input.unit, input.basis)))));

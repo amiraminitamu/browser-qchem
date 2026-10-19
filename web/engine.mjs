@@ -61,7 +61,7 @@ export function checkInvariants(result) {
 }
 export function serializable(result) {
   const output = { ...result, overlap: Array.from(result.overlap), kinetic: Array.from(result.kinetic),
-    nuclear: Array.from(result.nuclear), eri: Array.from(result.eri) };
+    nuclear: Array.from(result.nuclear), ...(result.eri ? { eri:Array.from(result.eri) } : {}) };
   if (result.rhf) {
     output.rhf = { ...result.rhf };
     for (const key of ['density','fock','coefficients','orbitalEnergies','occupations']) output.rhf[key] = Array.from(result.rhf[key]);

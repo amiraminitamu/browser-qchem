@@ -19,7 +19,7 @@ server=http.server.ThreadingHTTPServer(('127.0.0.1',0),handler)
 threading.Thread(target=server.serve_forever,daemon=True).start()
 try:
     with sync_playwright() as p,tempfile.TemporaryDirectory() as temp:
-        options={'headless':True}
+        options={'headless':True,'args':['--enable-unsafe-swiftshader']}
         if args.browser_path: options['executable_path']=args.browser_path
         browser=p.chromium.launch(**options)
         page=browser.new_page(viewport={'width':1280,'height':1000})
@@ -41,9 +41,10 @@ try:
             assert np.max(np.abs(np.asarray(actual[key])-reference[key]))<1e-7,key
         assert page.locator('#scf-history tbody tr').count()==actual['iterations']
         assert page.locator('#orbital-table tr').count()==8
+        page.locator('[data-tab=matrices]').click()
         for kind in ['density','fock']:
             page.locator('#matrix-kind').select_option(kind)
-            assert page.locator('#matrix td').count()==49
+            assert page.locator('#matrix td:not(:first-child)').count()==49
         # Observe progress during a fresh run, not just the final history render.
         page.evaluate('''() => {
           window.iterationsObserved=0;

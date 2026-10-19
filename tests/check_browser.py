@@ -24,7 +24,7 @@ reference = json.loads((ROOT/'tests/fixtures/water-sto3g.json').read_text())
 
 try:
     with sync_playwright() as p, tempfile.TemporaryDirectory() as temp:
-        options = {'headless':True}
+        options = {'headless':True,'args':['--enable-unsafe-swiftshader']}
         if args.browser_path:
             options['executable_path'] = args.browser_path
         browser = p.chromium.launch(**options)
@@ -42,7 +42,7 @@ try:
         assert page.locator('#matrix tr').count() == 8
         for kind in ['kinetic','nuclear','core','overlap']:
             page.locator('#matrix-kind').select_option(kind)
-            assert page.locator('#matrix td').count() == 49
+            assert page.locator('#matrix td:not(:first-child)').count() == 49
         with page.expect_download() as event:
             page.locator('#download').click()
         target = Path(temp)/'integrals.json'
@@ -51,6 +51,7 @@ try:
         for key in ['overlap','kinetic','nuclear','eri']:
             assert np.max(np.abs(np.asarray(actual[key])-reference[key])) < 1e-10, key
         print('Browser worker and JSON export: all water integrals match PySCF PASS')
+        page.locator('.eri-details summary').click()
         page.get_by_label('ERI index i',exact=True).fill('3')
         page.get_by_label('ERI index j',exact=True).fill('5')
         page.get_by_label('ERI index k',exact=True).fill('6')
@@ -60,7 +61,7 @@ try:
         page.get_by_label('ERI index i',exact=True).fill('0')
         assert 'valid integer' in page.locator('#eri-value').inner_text()
         page.locator('#geometry').fill('H 0 0 0\nH 0 0 1.4')
-        assert page.locator('#results').is_hidden()
+        assert page.locator('#matrix tr').count() == 0
         assert page.locator('#download').is_disabled()
         page.locator('#unit').select_option('bohr')
         page.locator('#calculate').click(); wait_pass()

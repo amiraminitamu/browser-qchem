@@ -1,97 +1,81 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>browser-qchem | Hartree-Fock</title>
-  <style>
-    :root { color-scheme:light; font:16px/1.6 system-ui,sans-serif; color:#18313b; background:#f0f4f4; }
-    body { max-width:1120px; margin:32px auto; padding:20px; }
-    main { background:white; border:1px solid #d6e0df; border-radius:16px; padding:clamp(20px,4vw,40px); }
-    h1 { font-size:clamp(28px,5vw,40px); margin:8px 0; line-height:1.2; } h2 { font-size:19px; }
-    .eyebrow { color:#32766e; font-size:12px; letter-spacing:.12em; text-transform:uppercase; }
-    .grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:32px; margin-top:26px; }
-    .grid > section { min-width:0; }
-    @media(max-width:760px) { .grid { grid-template-columns:minmax(0,1fr); } }
-    @media(max-width:760px) { #summary { white-space:pre-wrap; } }
-    label { display:block; margin:10px 0 5px; font-size:14px; font-weight:600; }
-    textarea { box-sizing:border-box; width:100%; min-height:190px; resize:vertical; font:14px/1.8 ui-monospace,monospace; border:1px solid #91a7a6; border-radius:7px; padding:12px; }
-    select,button,input { font:inherit; border-radius:7px; padding:8px 12px; }
-    select,input { border:1px solid #91a7a6; max-width:100%; }
-    button { border:0; background:#21665e; color:white; cursor:pointer; } button:disabled { opacity:.5; cursor:default; }
-    .actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:18px; }
-    .secondary { color:#21665e; background:#e7f1ee; } #status { font-weight:600; }
-    pre { padding:16px; border-radius:8px; background:#eef5f3; overflow-x:auto; font-size:13px; }
-    .hint,footer { font-size:13px; color:#52666d; }
-    .matrix { overflow-x:auto; max-height:430px; margin:16px 0; }
-    table { border-collapse:collapse; font:12px/1.6 ui-monospace,monospace; }
-    td,th { padding:7px 10px; border-bottom:1px solid #e0e8e6; white-space:nowrap; text-align:right; }
-    th { color:#42645e; background:#f3f8f6; }
-    .indices { display:flex; gap:8px; flex-wrap:wrap; } .indices input { width:65px; }
-    .settings { display:flex; gap:18px; flex-wrap:wrap; align-items:end; }
-    .settings input[type=number] { width:90px; }
-    #scf-history { max-height:300px; }
-    #orbital-table { max-height:340px; }
-    a { color:#21665e; } footer { margin-top:26px; } details { margin:14px 0; }
-  </style>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Browser QC | Molecular workspace</title>
+  <link rel="stylesheet" href="./styles.css">
 </head>
-<body><main>
-  <div class="eyebrow">browser-qchem / milestone 03</div>
-  <h1>Hartree-Fock, in your browser.</h1>
-  <p>Closed-shell molecular energies, SCF convergence, orbitals, and complete integrals.
-    Computed locally with libcint, Eigen, and WebAssembly.</p>
-  <div class="grid">
-    <section aria-label="Molecular input">
-      <h2>Geometry</h2>
-      <label for="geometry">XYZ file contents or Element x y z lines</label>
-      <textarea id="geometry" spellcheck="false"></textarea>
-      <label for="unit">Coordinate unit</label>
-      <select id="unit"><option value="angstrom">Angstrom</option><option value="bohr">Bohr</option></select>
-      <div class="settings">
-        <div><label for="mode">Calculation</label><select id="mode"><option value="rhf">RHF</option><option value="integrals">Integrals only</option></select></div>
-        <div><label for="charge">Molecular charge</label><input id="charge" type="number" step="1" value="0" required></div>
-        <div><label for="maxiter">Maximum iterations</label><input id="maxiter" type="number" min="1" max="500" step="1" value="100" required></div>
-        <label><input id="diis" type="checkbox" checked> Use DIIS</label>
-      </div>
-      <p class="hint">STO-3G for H through Ne, maximum 40 AOs. RHF uses paired electrons and spin 0.
-        Integrals-only mode also accepts odd-electron molecules.</p>
-      <div class="actions">
-        <button id="calculate" disabled>Run calculation</button>
-        <button id="water" class="secondary">Reset water</button>
-        <button id="download" class="secondary" disabled>Download JSON</button>
+<body>
+<header class="app-header">
+  <a class="brand" href="./" aria-label="Browser QC home"><span class="brand-mark">q</span><span>browser<span class="brand-light">_qc</span></span></a>
+  <div class="header-divider"></div><span class="header-title">Molecular workspace</span>
+  <span class="local-badge"><span id="engine-dot" class="dot"></span><span id="engine-state">Starting engine</span></span>
+</header>
+<main class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-title"><span class="eyebrow">EXPERIMENT SETUP</span><span class="version">v0.4</span></div>
+    <form id="controls" autocomplete="off">
+      <section class="control-section">
+        <div class="section-heading"><h2>Molecule</h2><button id="water" type="button" class="text-button">Reset water</button></div>
+        <label for="preset">Example structure</label>
+        <select id="preset"><option value="water">Water</option><option value="h2">Hydrogen</option><option value="methane">Methane</option><option value="ammonia">Ammonia</option><option value="custom" disabled>Custom geometry</option></select>
+        <div class="input-caption"><label for="geometry">Cartesian coordinates</label><label class="upload-button" for="xyz-file">Upload XYZ<input id="xyz-file" type="file" accept=".xyz,.txt" class="visually-hidden"></label></div>
+        <textarea id="geometry" spellcheck="false" wrap="off" aria-describedby="geometry-help"></textarea>
+        <div class="inline-row"><span id="geometry-help" class="small-muted">XYZ or Element x y z</span><select id="unit" aria-label="Coordinate unit" class="compact"><option value="angstrom">Angstrom</option><option value="bohr">Bohr</option></select></div>
+      </section>
+      <section class="control-section">
+        <h2>Calculation</h2>
+        <label for="mode">Task</label><select id="mode"><option value="rhf">Single point · RHF</option><option value="scan">Bond scan · RHF</option><option value="integrals">Integrals only</option></select>
+        <label for="basis">Basis set</label><select id="basis"><option value="sto-3g">STO-3G</option><option value="6-31g">6-31G</option><option value="cc-pvdz">cc-pVDZ</option></select>
+        <div id="basis-info" class="basis-info"><span id="ao-count">7 atomic orbitals</span><span id="eri-memory">0.02 MB ERIs</span></div>
+        <div class="two-fields"><div><label for="charge">Charge</label><input id="charge" type="number" step="1" value="0" required></div><div><label for="maxiter">Max. SCF cycles</label><input id="maxiter" type="number" min="1" max="500" step="1" value="100" required></div></div>
+        <label class="check-label"><input id="diis" type="checkbox" checked><span>Accelerate convergence with DIIS</span></label>
+        <p class="small-muted">Restricted HF, spin 0. H through Ne. Maximum 40 AOs.</p>
+      </section>
+      <section id="scan-controls" class="control-section" hidden>
+        <h2>Bond scan</h2><p class="small-muted">Click two atoms in the viewer, or enter their indices.</p>
+        <div class="two-fields"><div><label for="scan-a">Atom A · fixed</label><input id="scan-a" type="number" min="1" step="1" value="1"></div><div><label for="scan-b">Atom B · moving</label><input id="scan-b" type="number" min="1" step="1" value="2"></div></div>
+        <label for="scan-moving">Moving atom indices</label><input id="scan-moving" type="text" value="2" placeholder="e.g. 2, 4, 5">
+        <button id="auto-fragment" type="button" class="secondary full-width">Use connected fragment</button>
+        <div class="two-fields"><div><label for="scan-start">Start distance</label><input id="scan-start" type="number" min="0.001" step="any" value="0.7"></div><div><label for="scan-end">End distance</label><input id="scan-end" type="number" min="0.001" step="any" value="1.6"></div></div>
+        <div class="two-fields"><div><label for="scan-count">Points</label><input id="scan-count" type="number" min="2" max="101" step="1" value="15"></div><div><label for="scan-unit">Distance unit</label><select id="scan-unit"><option value="angstrom">Angstrom</option><option value="bohr">Bohr</option></select></div></div>
+        <p class="small-muted">Unrelaxed scan. Selected atoms translate as a rigid group; the others stay fixed. Every point starts from a fresh core guess.</p>
+      </section>
+      <div id="input-message" class="input-message" role="status"></div>
+      <div class="run-actions"><button id="calculate" type="submit" class="primary full-width" disabled><span class="run-icon">▶</span> Run calculation</button><button id="cancel" type="button" class="cancel-button full-width" disabled>Stop calculation</button></div>
+    </form>
+    <div class="sidebar-footer">Your coordinates and calculations stay on this device.</div>
+  </aside>
+  <div class="workspace">
+    <div class="workspace-heading"><div><span class="eyebrow">COMPUTATIONAL CHEMISTRY, LOCALLY</span><h1>Explore your molecule.</h1><p>From structure to energy, all in your browser.</p></div><button id="geometry-download" class="secondary">Export geometry</button></div>
+    <div class="stage">
+      <section class="viewer-card card">
+        <div class="card-heading"><div class="molecule-title"><span id="formula">H₂O</span><span id="viewer-meta" class="small-muted">3 atoms · STO-3G</span></div><div class="viewer-tools"><label class="check-label"><input id="atom-labels" type="checkbox" checked>Labels</label><button id="fit-view" class="icon-button" title="Fit molecule in view">Fit</button><button id="viewer-png" class="icon-button" title="Save molecule image">PNG</button></div></div>
+        <div id="molecule-viewer" aria-label="Interactive molecular structure"></div>
+        <div class="viewer-bottom"><span id="selection-info">Select two atoms to measure a bond.</span><span class="viewer-hint">Drag to rotate · scroll to zoom</span></div>
+      </section>
+      <section class="energy-card card" aria-label="Calculation results">
+        <div class="eyebrow" id="result-context">RHF / STO-3G</div><div id="result-badge" class="status-badge neutral">READY</div>
+        <div class="energy-label" id="energy-label">TOTAL ENERGY</div><div id="energy-value" class="energy-value">...</div><div id="energy-unit" class="energy-unit">Hartree</div>
+        <p id="status" role="status">Loading WebAssembly worker...</p>
+        <pre id="summary">Your calculation will appear here.</pre>
+        <div id="job-progress" class="job-progress" hidden><div class="progress-track"><span id="progress-fill"></span></div><span id="progress-text">Starting...</span></div>
+        <div class="energy-footnote">SCF convergence is not a stability or ground-state check.</div>
+      </section>
+    </div>
+    <section class="results-card card">
+      <div class="results-top"><div><span class="eyebrow">RESULTS & ANALYSIS</span><h2 id="results-title">Calculation details</h2></div><button id="download" class="secondary" disabled>Download JSON</button></div>
+      <nav class="result-tabs" role="tablist" aria-label="Results"><button data-tab="scf" role="tab" aria-selected="true">SCF convergence</button><button data-tab="orbitals" role="tab" aria-selected="false">Orbitals</button><button data-tab="matrices" role="tab" aria-selected="false">Matrices</button><button data-tab="pes" role="tab" aria-selected="false">PES scan <span id="scan-count-badge">0</span></button><button data-tab="data" role="tab" aria-selected="false">Geometry & data</button></nav>
+      <div id="results">
+        <section id="panel-scf" data-panel="scf" role="tabpanel"><div id="scf-chart" class="chart"></div><div id="scf-history" class="table-scroll"></div><p class="small-muted">Convergence: |ΔE| &lt; 1e-10 Eh, density RMS change &lt; 1e-8, residual RMS &lt; 1e-8.</p></section>
+        <section id="panel-orbitals" data-panel="orbitals" role="tabpanel" hidden><div id="frontier-info" class="frontier-info"></div><div id="orbital-table" class="table-scroll"></div><p class="small-muted">Spatial orbital energies in Hartree. Closed-shell occupation is 2 or 0.</p></section>
+        <section id="panel-matrices" data-panel="matrices" role="tabpanel" hidden><div class="panel-toolbar"><label for="matrix-kind">AO matrix</label><select id="matrix-kind"><option value="overlap">Overlap S</option><option value="kinetic">Kinetic T</option><option value="nuclear">Nuclear attraction V</option><option value="core">Core Hamiltonian T + V</option><option value="density">RHF density D</option><option value="fock">RHF Fock F</option></select></div><div id="matrix" class="table-scroll"></div><details class="eri-details"><summary>Inspect an electron repulsion integral</summary><p class="small-muted">Chemists' notation (ij|kl). AO indices start from 1.</p><div id="eri-selectors" class="eri-selectors"></div><pre id="eri-value"></pre></details><details><summary>AO ordering</summary><pre id="ao-order"></pre></details></section>
+        <section id="panel-pes" data-panel="pes" role="tabpanel" hidden><div class="panel-toolbar"><div><h3>Potential energy curve</h3><p id="pes-note" class="small-muted">Choose a bond and range in the setup panel.</p></div><select id="pes-energy-unit" aria-label="Plot energy unit"><option value="relative-kcal">Relative energy / kcal mol⁻¹</option><option value="relative-eh">Relative energy / Eh</option><option value="absolute-eh">Total energy / Eh</option></select></div><div id="pes-chart" class="chart"></div><div class="export-actions"><button id="scan-csv" class="secondary" disabled>Export energies CSV</button><button id="scan-xyz" class="secondary" disabled>Export scan XYZ</button><button id="scan-json" class="secondary" disabled>Export scan JSON</button></div><div id="scan-point-table" class="table-scroll"></div></section>
+        <section id="panel-data" data-panel="data" role="tabpanel" hidden><div id="data-meta" class="data-meta"></div><h3>Current geometry / angstrom</h3><pre id="geometry-output"></pre><p class="small-muted">Arrays are row-major. MO coefficients are C[AO, MO]. Scan JSON retains compact point results; run a single point to inspect that geometry's ERIs.</p></section>
       </div>
     </section>
-    <section aria-label="Calculation status">
-      <h2>Calculation</h2><p id="status" role="status">Loading WebAssembly worker...</p>
-      <pre id="summary" aria-live="polite">Waiting for the integral engine.</pre>
-      <p class="hint">SCF requires |delta E| &lt; 1e-10 Eh, density RMS change &lt; 1e-8,
-        and orthonormal-basis commutator RMS &lt; 1e-8. A converged RHF solution is not a stability analysis.</p>
-    </section>
+    <footer class="workspace-footer"><span>browser_qc · RHF molecular laboratory</span><a href="https://github.com/amiraminitamu/browser-qchem" target="_blank" rel="noreferrer">Source & documentation ↗</a></footer>
   </div>
-  <section id="scf-results" hidden>
-    <h2>SCF convergence</h2>
-    <div id="scf-history" class="matrix"></div>
-    <h2>Spatial orbital energies</h2>
-    <p class="hint">Energies in Hartree. Occupation is 2 for occupied orbitals and 0 for virtual orbitals.</p>
-    <div id="orbital-table" class="matrix"></div>
-  </section>
-  <section id="results" hidden>
-    <h2>One-electron matrices</h2>
-    <label for="matrix-kind">Matrix to inspect (atomic units)</label>
-    <select id="matrix-kind"><option value="overlap">Overlap S</option><option value="kinetic">Kinetic T</option>
-      <option value="nuclear">Nuclear attraction V</option><option value="core">Core Hamiltonian T + V</option>
-      <option value="density">RHF density D</option><option value="fock">RHF Fock F</option></select>
-    <div id="matrix" class="matrix"></div>
-    <h2>Electron repulsion integrals</h2>
-    <p class="hint">Chemists' notation (ij|kl), real spherical AOs. Select AO indices starting from 1.</p>
-    <div class="indices" id="eri-selectors"></div><pre id="eri-value" aria-live="polite"></pre>
-    <details><summary>AO order and array layout</summary><pre id="ao-order"></pre>
-      <p class="hint">JSON arrays are row-major. Matrix index: i*N + j.
-        ERI index: ((i*N + j)*N + k)*N + l, with zero-based indices in the file.
-        Exported coordinates are in bohr. S is dimensionless; all energy quantities use atomic units.</p>
-    </details>
-  </section>
-  <footer>RHF uses a core-Hamiltonian guess and DIIS. The dense ERI tensor has a 40 AO limit.
-    <br><a href="https://github.com/amiraminitamu/browser-qchem">Source</a> &middot;
-    <a href="https://github.com/sunqm/libcint/tree/v6.1.2">libcint v6.1.2</a></footer>
-</main><script type="module" src="./app.mjs"></script></body></html>
+</main>
+<script src="./vendor/3Dmol-min.js"></script><script type="module" src="./app.mjs"></script>
+</body></html>
