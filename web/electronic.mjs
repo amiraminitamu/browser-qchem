@@ -4,7 +4,8 @@ import {computeUHF,validateUHFOptions} from './uhf.mjs';
 export function validateElectronicOptions(molecule,options={}) {
   const method=options.method??'rhf';
   if(!['rhf','uhf','mp2'].includes(method)) throw new Error('Choose RHF, UHF, or MP2.');
-  return {...(method==='uhf'?validateUHFOptions(molecule,options):validateRHFOptions(molecule,options)),method};
+  try {return {...(method==='uhf'?validateUHFOptions(molecule,options):validateRHFOptions(molecule,options)),method};}
+  catch(error) {if(method==='mp2')throw new Error('MP2 requires a valid closed-shell RHF reference: '+error.message);throw error;}
 }
 export async function computeElectronic(engine,molecule,options={},onIteration=()=>{},onProgress=()=>{}) {
   const {method}=validateElectronicOptions(molecule,options);

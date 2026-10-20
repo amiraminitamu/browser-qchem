@@ -43,10 +43,19 @@ if(EMSCRIPTEN)
     "-sSTACK_SIZE=1048576" -fexceptions)
   target_compile_options(qc_core PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-fexceptions>)
   file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/dist")
-  foreach(asset index.html app.mjs worker.mjs molecule.mjs basis.mjs engine.mjs rhf.mjs uhf.mjs mp2.mjs electronic.mjs scan.mjs viewer.mjs plot.mjs styles.css)
+  foreach(asset index.html app.mjs worker.mjs molecule.mjs basis.mjs engine.mjs rhf.mjs uhf.mjs mp2.mjs electronic.mjs settings.mjs build-info.mjs scan.mjs viewer.mjs plot.mjs styles.css)
     configure_file("web/${asset}" "${CMAKE_BINARY_DIR}/dist/${asset}" COPYONLY)
   endforeach()
   file(COPY web/vendor DESTINATION "${CMAKE_BINARY_DIR}/dist")
+  find_package(Python3 REQUIRED COMPONENTS Interpreter)
+  # Run even on a no-op rebuild: package the current UI and engine as one
+  # versioned module graph, rather than mixing browser-cached generations.
+  add_custom_target(qc_web_assets ALL
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/scripts/package_web.py"
+            "${CMAKE_CURRENT_SOURCE_DIR}/web" "${CMAKE_BINARY_DIR}/dist"
+    DEPENDS qc_core
+    COMMENT "Packaging versioned browser assets"
+    VERBATIM)
 else()
   add_library(qc_core SHARED src/overlap.c src/integrals.c src/rhf.cpp src/uhf.cpp src/mp2.cpp)
 endif()

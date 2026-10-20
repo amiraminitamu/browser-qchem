@@ -77,7 +77,9 @@ try:
         page.wait_for_function("document.querySelector('#status').textContent.includes('error')")
         assert 'coincide' in summary_text()
         assert page.locator('#download').is_disabled()
-        page.locator('#water').click(); wait_pass()
+        page.locator('#water').click()
+        page.wait_for_function("document.querySelector('#status').textContent.startsWith('CONVERGED')")
+        page.locator('#mode').select_option('integrals');page.locator('#calculate').click();wait_pass()
         assert page.locator('#matrix tr').count() == 8
         # Check narrow layout without horizontal page overflow.
         page.set_viewport_size({'width':390,'height':844})

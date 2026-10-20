@@ -20,7 +20,7 @@ try:
         page.on('request',lambda r:external.append(r.url) if not r.url.startswith(('http://127.0.0.1:','blob:','data:')) else None)
         # Expose only the renderer wrapper in this test response to project atom centers.
         # The atom selection itself is exercised with actual canvas mouse clicks.
-        page.route('**/app.mjs',lambda route:route.fulfill(response=route.fetch(),body=(ROOT/'web/app.mjs').read_text().replace('const viewer=new MoleculeViewer','const viewer=window.testViewer=new MoleculeViewer')))
+        page.route('**/app.mjs*',lambda route:route.fulfill(response=route.fetch(),body=(ROOT/'build/wasm/dist/app.mjs').read_text().replace('const viewer=new MoleculeViewer','const viewer=window.testViewer=new MoleculeViewer')))
         page.goto(f'http://127.0.0.1:{server.server_port}')
         def status(prefix):
             page.wait_for_function('(p)=>document.querySelector("#status").textContent.startsWith(p)',arg=prefix,timeout=30000,polling=100)

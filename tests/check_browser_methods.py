@@ -49,7 +49,8 @@ try:
     scan=json.loads(Path(d.value.path()).read_text());assert scan['spec']['method']=='uhf';assert scan['spec']['multiplicity']==3
     assert all(pt['result']['uhf']['nalpha']==2 and pt['result']['uhf']['nbeta']==0 for pt in scan['points'])
     page.locator('#method').select_option('rhf');page.locator('#scan-point-table tbody tr').first.click()
-    assert page.locator('#method').input_value()=='uhf' and page.locator('#multiplicity').input_value()=='3'
+    assert page.locator('#method').input_value()=='rhf' and page.locator('#multiplicity').input_value()=='3'
+    assert 'current setup RHF/' in page.locator('#status').inner_text()
     page.screenshot(path=str(ROOT.parent/'methods-desktop.png'),full_page=True)
     page.set_viewport_size({'width':390,'height':844});page.locator('#mobile-edit').click();page.locator('#method').select_option('uhf');page.locator('#multiplicity').fill('1');page.locator('#guess').select_option('mix');page.locator('#mode').select_option('rhf');page.locator('#preset').select_option('h2');page.locator('#calculate').click();status('CONVERGED');assert 'UHF' in page.locator('#energy-label').inner_text()
     page.screenshot(path=str(ROOT.parent/'methods-mobile.png'),full_page=True)

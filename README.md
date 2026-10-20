@@ -84,7 +84,8 @@ node tests/check_molecular.mjs
 node tests/check_rhf.mjs
 node tests/check_workspace.mjs
 node tests/check_methods.mjs
-python3 -m http.server 8000 --bind 127.0.0.1 --directory build/wasm/dist
+node tests/check_state.mjs
+python3 scripts/serve.py --directory build/wasm/dist
 ```
 
 Open **http://localhost:8000**. The default water calculation should show:
@@ -114,6 +115,47 @@ source .tools/emsdk/emsdk_env.sh
 Re-run the build after changing the C code or webpage. CMake copies the webpage
 into `build/wasm/dist`; do not edit the generated copies there.
 
+## Settings and build consistency
+
+Method changes commit immediately on the select's change event. Presets recommend
+a method only until the user explicitly selects one. They still load the
+appropriate charge and multiplicity. **Reset** restores all defaults, including
+RHF and the water geometry.
+
+Each job captures one immutable request before controls are disabled. The same
+snapshot supplies validation, labels, scan metadata and the worker request.
+An old scan cannot rewrite a different running calculation. Inspecting a saved
+point preserves newer method, basis, charge and spin edits, with an explicit
+saved-result label. Edits invalidate
+late replies; wrong-method, wrong-basis or wrong-charge results are rejected.
+The worker requires an explicit method and a matching protocol/build handshake.
+
+The complete editable draft is saved locally in the browser under
+`browser-qchem.settings.v2`. Reloading or reopening restores geometry, method,
+basis, task, charge, spin and scan settings together. Only settings are saved;
+numerical result arrays are not stored. Storage-disabled browsers still work.
+A page first opened while the user is editing waits for Run instead of starting
+an automatic calculation with partially edited settings.
+
+Every WASM build packages the complete local module graph with one content hash.
+The page, styles, worker, module imports and WASM request use that same version.
+Use `python3 scripts/serve.py` to serve with no-store headers. Stop any previous
+server before starting it. After this update, perform one Cmd+Shift+R refresh to
+replace the previously cached, unversioned page.
+
+Additional checks:
+
+```bash
+node tests/check_state.mjs
+python3 tests/check_package_web.py
+python3 tests/check_browser_state.py
+```
+
+The controller/worker regression covers explicit methods versus presets,
+active-job scan inspection, stale replies, native-select event order, full
+reset, coherent draft restoration, dispatch and build mismatches. The real-WASM
+browser regression also covers repeated RHF/UHF/MP2 changes, reload and reopening.
+
 ## Interface and navigation
 
 The workbench uses a light molecular canvas beside an energy and convergence
@@ -139,7 +181,7 @@ alignment and a small set of controls keep the calculation in view.
 
 ### Ions and open-shell examples
 
-The example selector includes systems with electronic settings loaded together:
+The example selector includes systems with electronic recommended settings loaded together when no method has been explicitly selected:
 
 | Example | Charge | Electrons | Multiplicity | Default method |
 | --- | --- | --- | --- | --- |
@@ -147,8 +189,9 @@ The example selector includes systems with electronic settings loaded together:
 | HeH, neutral | 0 | 3 | 2 (doublet) | UHF |
 | HeH+ | +1 | 2 | 1 (singlet) | RHF |
 
-HeH is neutral; HeH+ is the cation. Selecting either open-shell example sets
-UHF and the core-Hamiltonian guess. You can edit charge and multiplicity for
+HeH is neutral; HeH+ is the cation. Selecting either open-shell example recommends
+UHF and sets the core-Hamiltonian guess. An explicitly selected method takes
+precedence over subsequent example recommendations. You can edit charge and multiplicity for
 other ions, including anions. The formula and electron count update with charge.
 RHF and RHF-MP2 continue to require a positive even electron count, so H2+
 requires UHF. Geometry-only XYZ input does not carry charge or multiplicity;
