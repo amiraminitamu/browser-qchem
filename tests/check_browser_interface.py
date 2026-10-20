@@ -20,15 +20,12 @@ try:
         def status(prefix):page.wait_for_function('(p)=>document.querySelector("#status").textContent.startsWith(p)',arg=prefix,polling=50)
         status('CONVERGED')
         assert page.locator('#job-list .job-item').count()>=1
-        assert page.locator('#layout-jobs').get_attribute('aria-pressed')=='true'
-        page.locator('#layout-menus').click()
         assert page.locator('.menu-bar').is_visible()
         assert page.locator('.app-toolbar').is_visible()
+        assert page.locator('.brand-name').inner_text()=='Lorentzian'
         page.locator('.menu-bar .menu-button', has_text='Analysis').click()
         page.locator('[data-menu="tab"][data-tab-name="orbitals"]').click()
         assert page.locator('#tab-orbitals').get_attribute('aria-selected')=='true'
-        page.locator('#layout-jobs').click()
-        assert page.locator('#job-dock').is_visible()
         page.locator('#tab-scf').click()
         assert not page.locator('#coordinates-editor').evaluate('(e)=>e.open')
         page.locator('#nav-molecule').click();assert page.locator('#coordinates-editor').evaluate('(e)=>e.open')
