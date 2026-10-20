@@ -7,6 +7,12 @@ scientific libraries and no remote calculation API. The name is the usual
 English adjective from Lorentz — the same pattern as Gaussian, and the competing
 spectroscopic lineshape.
 
+The packaged workbench is at
+**https://amiraminitamu.github.io/browser-qchem/**.
+GitHub Pages serves the WASM build from the `gh-pages` branch. Enable it once
+under **Settings → Pages → Deploy from a branch → `gh-pages` / `/ (root)`**.
+Later pushes to `main` rebuild that branch through `.github/workflows/pages.yml`.
+
 ## Molecular workspace
 
 Run RHF, unrestricted Hartree-Fock (UHF), and small conventional RHF-MP2 calculations directly in the browser. Enter a

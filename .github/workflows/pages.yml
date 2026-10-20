@@ -1,0 +1,44 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: '4.0.10'
+
+      - name: Build WASM workbench
+        run: bash scripts/build_wasm.sh
+
+      - name: Prepare Pages tree
+        run: |
+          install -m 0644 LICENSE build/wasm/dist/LICENSE
+          touch build/wasm/dist/.nojekyll
+          test -s build/wasm/dist/index.html
+          test -s build/wasm/dist/qc_core.mjs
+          test -s build/wasm/dist/qc_core.wasm
+          test -s build/wasm/dist/app.mjs
+
+      - name: Publish gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/wasm/dist
+          force_orphan: true
