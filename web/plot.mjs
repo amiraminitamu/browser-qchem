@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only
+import {mathText} from './format.mjs';
 const NS='http://www.w3.org/2000/svg';
 function node(tag,attributes={},text) {
   const element=document.createElementNS(NS,tag);
   for(const [name,value] of Object.entries(attributes)) element.setAttribute(name,value);
-  if(text!==undefined) element.textContent=text;
+  if(text!==undefined) element.textContent=mathText(text);
   return element;
 }
-export function plot(container,points,{xLabel='Coordinate',yLabel='Energy / Eh',onSelect=()=>{},selected=-1,empty='Run a calculation to see the energy curve.'}={}) {
+export function plot(container,points,{xLabel='Coordinate',yLabel='Energy / Eₕ',onSelect=()=>{},onPreview=()=>{},selected=-1,empty='Run a calculation to see the energy curve.'}={}) {
   if(!points.length){container.replaceChildren();const p=document.createElement('p');p.className='empty-chart';p.textContent=empty;container.append(p);return;}
   const valid=points.filter(p=>Number.isFinite(p.y));
   if(!valid.length){container.textContent='No numerical energies are available yet.';return;}
@@ -21,8 +22,8 @@ export function plot(container,points,{xLabel='Coordinate',yLabel='Energy / Eh',
   const svg=node('svg',{viewBox:`0 0 ${width} ${height}`,role:'img','aria-label':`${yLabel} versus ${xLabel}`});
   for(let t=0;t<=4;t++) {
     const yy=top+t*(height-top-bottom)/4,value=ymax-t*(ymax-ymin)/4;
-    svg.append(node('line',{x1:left,y1:yy,x2:width-right,y2:yy,stroke:'#ebe4d8'}));
-    svg.append(node('text',{x:left-12,y:yy+4,'text-anchor':'end',class:'axis-tick'},Math.abs(ymax-ymin)<.001?value.toExponential(2):value.toFixed(3)));
+    svg.append(node('line',{x1:left,y1:yy,x2:width-right,y2:yy,stroke:'#e4e1d9'}));
+    svg.append(node('text',{x:left-12,y:yy+4,'text-anchor':'end',class:'axis-tick'},Math.abs(ymax-ymin)<.001?value.toFixed(7):value.toFixed(3)));
     const xx=left+t*(width-left-right)/4;
     svg.append(node('text',{x:xx,y:height-bottom+24,'text-anchor':'middle',class:'axis-tick'},(xmin+t*(xmax-xmin)/4).toFixed(2)));
   }
@@ -38,6 +39,8 @@ export function plot(container,points,{xLabel='Coordinate',yLabel='Energy / Eh',
       tabindex:'0',role:'button','aria-label':p.label??`Point ${i+1}`,'data-point':i});
     circle.append(node('title',{},p.label??`${p.x}: ${p.y}`));
     circle.addEventListener('click',()=>onSelect(i));
+    circle.addEventListener('pointerenter',()=>onPreview(i));circle.addEventListener('pointerleave',()=>onPreview(-1));
+    circle.addEventListener('focus',()=>onPreview(i));circle.addEventListener('blur',()=>onPreview(-1));
     circle.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();onSelect(i);}});
     svg.append(circle);
   }
@@ -45,5 +48,3 @@ export function plot(container,points,{xLabel='Coordinate',yLabel='Energy / Eh',
   svg.append(node('text',{x:18,y:(top+height-bottom)/2,transform:`rotate(-90 18 ${(top+height-bottom)/2})`,'text-anchor':'middle',class:'axis-title'},yLabel));
   container.replaceChildren(svg);
 }
-
-

@@ -44,6 +44,8 @@ try:
         box=canvas.bounding_box();page.mouse.move(box['x']+120,box['y']+100);page.mouse.down();page.mouse.move(box['x']+230,box['y']+150,steps=8);page.mouse.up()
         assert canvas.screenshot()!=before,'Dragging should rotate the molecule'
         page.locator('#fit-view').click()
+        control(page, '#mode').select_option('scan')
+        page.locator('#scan-clear').click()
         for index in [2,0]:
             position=page.evaluate('(i)=>testViewer.viewer.modelToScreen(testViewer.model.selectedAtoms({index:i})[0])',index)
             page.mouse.click(position['x'],position['y'])
@@ -81,9 +83,10 @@ try:
         page.locator('#pes-chart circle[role=button]').nth(1).click()
         assert 'Scan point 2' in page.locator('#results-title').inner_text()
         assert '.750000000000' in control(page, '#geometry').input_value()
-        assert abs(float(page.locator('#energy-value').inner_text())-curve['points'][1]['energy'])<1e-9
+        assert abs(float(page.locator('#energy-value').inner_text().replace('−', '-'))-curve['points'][1]['energy'])<1e-9
         assert page.locator('#molecule-viewer').get_attribute('data-atom-count')=='2'
-        page.locator('#pes-energy-unit').select_option('absolute-eh')
+        page.locator('#pes-energy-unit').select_option('eh')
+        page.locator('#pes-relative').uncheck()
         page.locator('#scan-point-table tbody tr').nth(3).press('Enter')
         assert 'Scan point 4' in page.locator('#results-title').inner_text()
         assert '1.250000000000' in control(page, '#geometry').input_value()

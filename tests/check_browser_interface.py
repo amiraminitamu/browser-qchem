@@ -1,5 +1,6 @@
 """Real-WASM integration checks for the canvas-first two-zone workbench."""
 import argparse, functools, http.server, json, threading
+from browser_controls import control
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
@@ -109,13 +110,14 @@ try:
         page.locator('#calculate').click(); status('CONVERGED')
         open_panel('task-popover'); page.locator('#mode').select_option('scan')
         for key, value in [('a','1'), ('b','2'), ('moving','2'), ('start','.5'), ('end','1.5'), ('count','3')]:
-            page.locator('#scan-'+key).fill(value)
+            control(page, '#scan-'+key).fill(value)
         page.locator('#calculate').click()
         page.wait_for_function('document.querySelector("#progress-text").textContent.startsWith("Complete")')
         page.locator('#scan-point-table tbody tr').nth(1).click()
-        assert abs(float(page.locator('#energy-value').inner_text())-(-1.094807962861)) < 1e-9
+        assert abs(float(page.locator('#energy-value').inner_text().replace('−', '-'))-(-1.094807962861)) < 1e-9
         energy = page.locator('#energy-value').inner_text()
-        page.locator('#pes-energy-unit').select_option('absolute-eh')
+        page.locator('#pes-energy-unit').select_option('eh')
+        page.locator('#pes-relative').uncheck()
         assert page.locator('#energy-value').inner_text() == energy
         open_panel('export-popover')
         assert not page.locator('#scan-json').is_disabled()

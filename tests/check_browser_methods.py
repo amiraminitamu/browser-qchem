@@ -30,7 +30,7 @@ try:
     page.locator('#tab-orbitals').click();assert 'Alpha' in page.locator('#orbital-table').inner_text();assert 'Beta' in page.locator('#orbital-table').inner_text()
     page.locator('#tab-matrices').click();page.locator('#matrix-kind').select_option('fockBeta');assert page.locator('#matrix table').count()==1
     control(page, '#multiplicity').fill('1');run();status('Input or calculation error');assert 'Multiplicity' in page.locator('#summary').inner_text()
-    geometry('H 0 0 0\nH 0 0 3');run();status('CONVERGED');assert float(page.locator('#energy-value').inner_text())<-.93
+    geometry('H 0 0 0\nH 0 0 3');run();status('CONVERGED');assert float(page.locator('#energy-value').inner_text().replace('−', '-'))<-.93
     assert export()['uhf']['spinSquare']>.9
     page.locator('#method').select_option('mp2');control(page, '#preset').select_option('water');run();status('CONVERGED')
     result=export();assert abs(result['mp2']['energy']-MP2_WATER)<2e-9
