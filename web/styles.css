@@ -389,3 +389,12 @@ dialog .small-muted { font-size:10px; color:#798196; margin-bottom:22px; }
 }
 #results-section { scroll-margin-top:94px; }
 #scan-controls { background:#fcfbff; }
+
+
+/* Method controls and compact physical diagnostics. */
+#uhf-controls { margin:12px 0; padding:12px; background:var(--surface-soft,#f5f4fa); border-radius:10px; }
+#uhf-controls label:not(:first-child) { margin-top:10px; }
+.method-details { grid-column:1/-1; display:flex; flex-wrap:wrap; gap:10px 24px; padding:16px 0 0; border-top:1px solid #eceaf2; color:#59556e; font-size:12px; }
+.method-details div { display:flex; flex-direction:column; gap:5px; }
+.method-details strong { color:#29233d; font-variant-numeric:tabular-nums; }
+.method-details p { width:100%; margin:0; line-height:1.6; }

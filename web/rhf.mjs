@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
+import { computeMP2 } from './mp2.mjs';
 import { prepareIntegrals } from './engine.mjs';
 import { basisSummary } from './molecule.mjs';
 export const RHF_THRESHOLDS = { energy:1e-10, density:1e-8, residual:1e-8 };
@@ -16,7 +17,7 @@ export function validateRHFOptions(molecule,options={}) {
   if (electrons > 2*basisSummary(molecule).nao) throw new Error('The electron count does not fit this basis. Check the charge.');
   return {charge,maxIterations,electrons};
 }
-export async function computeRHF(engine, molecule, options = {}, onIteration = () => {}) {
+export async function computeRHF(engine, molecule, options = {}, onIteration = () => {}, onProgress = () => {}) {
   const checkCancelled = () => { if (options.isCancelled?.()) throw new CalculationCancelled(); };
   checkCancelled();
   const {charge,maxIterations,electrons}=validateRHFOptions(molecule,options);
@@ -50,9 +51,11 @@ export async function computeRHF(engine, molecule, options = {}, onIteration = (
       const pointer = engine._qc_rhf_data(rhf,kind), size = kind < 3 ? n*n : n;
       result.rhf[key] = engine.HEAPF64.slice(pointer/8,pointer/8+size);
     });
+    if(options.mp2) result.mp2=result.rhf.converged?await computeMP2(engine,rhf,options,onProgress):{method:'MP2',reference:'RHF',allElectron:true,densityFitted:false,status:'not_computed',energy:null,reason:'RHF did not converge.'};
     return result;
   } finally {
     if (rhf) engine._qc_rhf_free(rhf);
     engine._qc_free(handle);
   }
 }
+

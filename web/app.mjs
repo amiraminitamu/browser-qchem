@@ -4,6 +4,7 @@ import {basisLabel} from './basis.mjs';
 import {serializable} from './engine.mjs';
 import {MoleculeViewer} from './viewer.mjs';
 import {distance,connectedFragment,scanSpec,scanCSV,scanXYZ,HARTREE_TO_KCAL} from './scan.mjs';
+import {scfResult,totalEnergy,validateElectronicOptions} from './electronic.mjs';
 import {plot} from './plot.mjs';
 
 const $=id=>document.getElementById(id);
@@ -27,13 +28,16 @@ function setBusy(value) {
   $('xyz-file').disabled=value;
   $('geometry-download').disabled=!molecule;
   const mode=$('mode').value;
-  document.querySelector('#calculation-section .method-chip').textContent=mode==='integrals'?'AO':'RHF';
-  document.querySelector('.spin-info strong').textContent=mode==='integrals'?'Any electron count':'Closed-shell singlet';
+  document.querySelector('#calculation-section .method-chip').textContent=mode==='integrals'?'AO':$('method').value.toUpperCase();
+  document.querySelector('.spin-info strong').textContent=mode==='integrals'?'Any electron count':$('method').value==='uhf'?`Multiplicity ${$('multiplicity').value}`:'Closed-shell singlet';
   $('run-label').textContent=mode==='scan'?'Run bond scan':'Run calculation';
   $('mobile-run').disabled=!value&&(!ready||!valid);
   $('mobile-run').textContent=value?'Stop calculation':mode==='scan'?'Run bond scan':'Run calculation';
   $('scan-controls').querySelectorAll('input,select,button').forEach(element=>element.disabled=value||mode!=='scan');
-  for(const id of ['charge','maxiter','diis'])$(id).disabled=value||mode==='integrals';
+  $('uhf-controls').hidden=$('method').value!=='uhf'||mode==='integrals';
+  for(const id of ['multiplicity','guess'])$(id).disabled=value||mode==='integrals'||$('method').value!=='uhf';
+  $('method-hint').textContent=$('method').value==='uhf'?'Separate alpha and beta orbitals, with spin diagnostics.':$('method').value==='mp2'?'Conventional all-electron MP2 on a converged RHF reference. 40 AO limit.':'Restricted Hartree-Fock for closed-shell singlets.';
+  for(const id of ['method','charge','maxiter','diis'])$(id).disabled=value||mode==='integrals';
 }
 function badge(text,kind='neutral') { $('result-badge').textContent=text;$('result-badge').className=`status-badge ${kind}`; }
 function setTab(name) {
@@ -116,7 +120,7 @@ function preview({reset=false}={}) {
 }
 function invalidate() {
   if(busy) return;
-  current=null;$('download').disabled=true;badge('READY');$('energy-value').textContent='...';
+  current=null;$('method-details').hidden=true;$('download').disabled=true;badge('READY');$('energy-value').textContent='...';
   $('job-progress').hidden=true;
   $('status').textContent='Settings changed. Ready to calculate.';
   $('summary').textContent='Run a calculation for the current settings.';
@@ -147,20 +151,26 @@ function drawSCF() {
       if(row) $('scf-history').scrollTop=row.offsetTop-$('scf-history').offsetTop;
     }});
 }
-function renderOrbitals(rhf) {
-  if(!rhf){$('orbital-table').textContent='Run RHF to view orbitals.';$('frontier-info').replaceChildren();return;}
-  table($('orbital-table'),['Orbital','Energy / Eh','Occupation'],Array.from(rhf.orbitalEnergies,(e,i)=>[i+1,e.toFixed(10),rhf.occupations[i]]));
-  const nocc=rhf.electrons/2,eps=rhf.orbitalEnergies;
+function renderOrbitals(r) {
   $('frontier-info').replaceChildren();
-  for(const [label,value] of [['HOMO',eps[nocc-1]],['LUMO',eps[nocc]],['HOMO-LUMO gap',eps[nocc]===undefined?undefined:eps[nocc]-eps[nocc-1]]]) {
-    const box=document.createElement('div');box.textContent=label;const strong=document.createElement('strong');strong.textContent=value===undefined?'Not in basis':`${value.toFixed(6)} Eh`;box.append(strong);$('frontier-info').append(box);
+  if(!r){$('orbital-table').textContent='Run an electronic calculation to view orbitals.';return;}
+  const uhf=r.method==='UHF';
+  $('orbital-note').textContent=uhf?'Separate alpha and beta orbital energies in Hartree, occupation 1 or 0.':current?.mp2?'RHF reference orbital energies and occupations. These are not correlated MP2 orbitals.':'Spatial orbital energies in Hartree. Closed-shell occupation is 2 or 0.';
+  const channels=uhf?[['Alpha',r.orbitalEnergiesAlpha,r.occupationsAlpha,r.nalpha],['Beta',r.orbitalEnergiesBeta,r.occupationsBeta,r.nbeta]]:[['',r.orbitalEnergies,r.occupations,r.electrons/2]];
+  const rows=[];
+  for(const [label,eps,occ,nocc] of channels) {
+    eps.forEach((e,i)=>rows.push([...(uhf?[label]:[]),i+1,e.toFixed(10),occ[i]]));
+    for(const [name,value] of [['HOMO',eps[nocc-1]],['LUMO',eps[nocc]],['Gap',nocc>0&&eps[nocc]!==undefined?eps[nocc]-eps[nocc-1]:undefined]]) {
+      const box=document.createElement('div');box.textContent=`${label} ${name}`.trim();const strong=document.createElement('strong');strong.textContent=value===undefined?'Not in basis':`${value.toFixed(6)} Eh`;box.append(strong);$('frontier-info').append(box);
+    }
   }
+  table($('orbital-table'),[...(uhf?['Spin']:[]),'Orbital','Energy / Eh','Occupation'],rows);
 }
 function renderMatrix() {
   if(!current){$('matrix').textContent='Run a calculation to inspect its matrices.';return;}
   const {nao:n,aoLabels}=current,kind=$('matrix-kind').value;
-  const data=kind==='core'?current.kinetic.map((value,i)=>value+current.nuclear[i]):['density','fock'].includes(kind)?current.rhf?.[kind]:current[kind];
-  if(!data){$('matrix').textContent='Run RHF to inspect this matrix.';return;}
+  const data=kind==='core'?current.kinetic.map((value,i)=>value+current.nuclear[i]):['density','fock','densityAlpha','densityBeta','spinDensity','fockAlpha','fockBeta'].includes(kind)?scfResult(current)?.[kind]:current[kind];
+  if(!data){$('matrix').textContent='This matrix is not available for this method. For UHF, choose alpha or beta Fock.';return;}
   table($('matrix'),['AO',...Array.from({length:n},(_,i)=>i+1)],Array.from({length:n},(_,i)=>[`${i+1}: ${aoLabels[i]}`,...Array.from({length:n},(_,j)=>data[i*n+j].toFixed(8))]));
 }
 function renderERI() {
@@ -176,17 +186,31 @@ function renderData() {
   const info=basisSummary(molecule);$('data-meta').replaceChildren();
   for(const text of [`${molecule.atoms.length} atoms`,basisLabel(molecule.basis),`${info.nao} AOs`,'Coordinates exported in angstrom']){const chip=document.createElement('span');chip.textContent=text;$('data-meta').append(chip);}
 }
+function referenceContext(mp2) {
+  document.querySelector('#panel-scf h3').textContent=mp2?'RHF reference convergence':'Finding self-consistency';
+  document.querySelector('#panel-scf .panel-intro p').textContent=mp2?'The SCF curve belongs to the RHF reference; correlation is computed after convergence.':'Follow the total SCF energy as the density converges.';
+}
+function renderMethodDetails(result) {
+  referenceContext(!!result.mp2);
+  const box=$('method-details');box.replaceChildren();const u=result.uhf,m=result.mp2;
+  box.hidden=!u&&!m;if(box.hidden)return;
+  const values=u?[['Alpha / beta electrons',`${u.nalpha} / ${u.nbeta}`],['Multiplicity',u.multiplicity],['⟨S²⟩ / target',`${u.spinSquare.toFixed(6)} / ${u.targetSpinSquare.toFixed(6)}`],['Spin contamination',u.spinContamination.toFixed(6)]]:
+    m.status==='complete'?[['RHF reference',`${m.referenceEnergy.toFixed(10)} Eh`],['MP2 correlation',`${m.correlationEnergy.toFixed(10)} Eh`],['Opposite spin',`${m.oppositeSpinEnergy.toFixed(10)} Eh`],['Same spin',`${m.sameSpinEnergy.toFixed(10)} Eh`]]:[['MP2','Not computed: RHF did not converge']];
+  for(const [label,value] of values){const item=document.createElement('div');item.textContent=label;const strong=document.createElement('strong');strong.textContent=value;item.append(strong);box.append(item);}
+  const note=document.createElement('p');note.textContent=u?`Guess: ${u.mixedGuessApplied?'opposite alpha/beta HOMO-LUMO mixing':'core Hamiltonian'}. UHF is not generally an eigenstate of total spin; convergence does not guarantee the lowest or stable SCF solution.`:'All-electron conventional MP2. Orbitals, density, Fock matrices and SCF history belong to the RHF reference. MP2 can be unreliable near bond dissociation or small orbital gaps.';box.append(note);
+}
 function showResult(result,{pointIndex=null}={}) {
-  current=result;const r=result.rhf,n=result.nao;
+  current=result;const r=scfResult(result),n=result.nao,method=result.method??r?.method??'INTEGRALS',energy=totalEnergy(result);
+  renderMethodDetails(result);
   $('metric-basis').textContent=basisLabel(result.molecule.basis);$('metric-aos').textContent=n;$('metric-cycles').textContent=r?.iterations??'N/A';
   if(r&&!r.converged)document.querySelector('.summary-details').open=true;
-  $('result-context').textContent=`${r?'RHF':'INTEGRALS'} / ${basisLabel(result.molecule.basis)}`;
+  $('result-context').textContent=`${method} / ${basisLabel(result.molecule.basis)}`;
   $('results-title').textContent=pointIndex===null?'Calculation details':`Scan point ${pointIndex+1} / ${scan.spec.count}`;
   if(r){
     badge(r.converged?'CONVERGED':'NOT CONVERGED',r.converged?'success':'warning');
-    $('energy-label').textContent=r.converged?'TOTAL RHF ENERGY':'UNCONVERGED ENERGY';$('energy-value').textContent=r.energy.toFixed(10);$('energy-unit').textContent='Hartree';
-    $('status').textContent=r.converged?`CONVERGED: RHF/${basisLabel(result.molecule.basis)}.`:'NOT CONVERGED: maximum iterations reached.';
-    $('summary').textContent=[r.converged?`Total RHF energy  ${r.energy.toFixed(12)} Eh`:`Unconverged energy ${r.energy.toFixed(12)} Eh`,
+    $('energy-label').textContent=r.converged?`TOTAL ${method} ENERGY`:'UNCONVERGED ENERGY';$('energy-value').textContent=(energy??r.energy).toFixed(10);$('energy-unit').textContent='Hartree';
+    $('status').textContent=r.converged?`CONVERGED: ${method}/${basisLabel(result.molecule.basis)}.`:result.mp2?'NOT CONVERGED: RHF reference; MP2 not computed.':'NOT CONVERGED: maximum iterations reached.';
+    $('summary').textContent=[r.converged?`Total ${method} energy  ${(energy??r.energy).toFixed(12)} Eh`:`Unconverged energy ${r.energy.toFixed(12)} Eh`,
       `Electronic energy ${r.electronicEnergy.toFixed(10)}`,`Nuclear repulsion ${result.nuclearRepulsion.toFixed(10)}`,
       `Electrons / charge ${r.electrons} / ${r.charge}`,`Cycles / DIIS      ${r.iterations} / ${r.diis?'on':'off'}`,
       `Basis / AOs        ${basisLabel(result.molecule.basis)} / ${n}`,
@@ -209,7 +233,7 @@ function showResult(result,{pointIndex=null}={}) {
 function scanConfig() {
   return {a:Number($('scan-a').value)-1,b:Number($('scan-b').value)-1,moving:readMoving(),start:Number($('scan-start').value),end:Number($('scan-end').value),count:Number($('scan-count').value),unit:$('scan-unit').value};
 }
-function options() {return {charge:Number($('charge').value),maxIterations:Number($('maxiter').value),diis:$('diis').checked};}
+function options() {return {method:$('method').value,multiplicity:Number($('multiplicity').value),guess:$('guess').value,charge:Number($('charge').value),maxIterations:Number($('maxiter').value),diis:$('diis').checked};}
 function run(event) {
   event?.preventDefault();if(busy||!ready) return;
   preview();if(!valid) return;
@@ -219,12 +243,13 @@ function run(event) {
   }
   const mode=$('mode').value;
   let spec;
-  try {if(mode==='scan')spec=scanSpec(molecule,scanConfig());}
-  catch(error){$('input-message').textContent=error.message;return;}
+  try {if(mode!=='integrals')validateElectronicOptions(molecule,options());if(mode==='scan')spec={...scanSpec(molecule,scanConfig()),method:options().method,multiplicity:options().multiplicity,guess:options().guess};}
+  catch(error){$('input-message').textContent=error.message;badge('INPUT ERROR','error');$('status').textContent='Input or calculation error.';$('summary').textContent=error.message;document.querySelector('.summary-details').open=true;return;}
+  $('method-details').hidden=true;referenceContext($('method').value==='mp2');
   jobId++;jobMode=mode;current=null;history=[];startHistory();drawSCF();renderOrbitals(null);renderMatrix();$('download').disabled=true;
   $('energy-value').textContent='...';badge('RUNNING');$('status').textContent='Computing molecular integrals...';$('summary').textContent='Running locally in your browser.';
   document.querySelector('.summary-details').open=false;
-  $('result-context').textContent=`${mode==='integrals'?'INTEGRALS':'RHF'} / ${basisLabel(molecule.basis)}`;
+  $('result-context').textContent=`${mode==='integrals'?'INTEGRALS':$('method').value.toUpperCase()} / ${basisLabel(molecule.basis)}`;
   $('job-progress').hidden=false;$('progress-fill').style.width='0%';$('progress-text').textContent=mode==='scan'?`0 / ${spec.count} scan points`:'Starting SCF';
   if(mode==='scan') {scan={spec,source:structuredClone(molecule),options:options(),points:[],cancelled:false};selectedPoint=-1;renderScan();setTab('pes');}
   else setTab(mode==='integrals'?'matrices':'scf');
@@ -236,6 +261,7 @@ function selectPoint(index) {
   const point=scan?.points[index];if(!point)return;selectedPoint=index;
   $('geometry').value=toXYZ(point.molecule,'angstrom',`Scan point ${index+1}`);$('unit').value='angstrom';$('basis').value=scan.spec.basis;
   $('preset').value='custom';
+  $('method').value=scan.options.method??'rhf';$('multiplicity').value=scan.options.multiplicity??1;$('guess').value=scan.options.guess??'core';
   $('charge').value=scan.options.charge;$('maxiter').value=scan.options.maxIterations;$('diis').checked=scan.options.diis;
   preview();
   if(point.result)showResult(point.result,{pointIndex:index});
@@ -258,7 +284,7 @@ function renderScan() {
   const data=points.map(p=>({x:p.coordinate,y:p.energy===null?null:(p.energy-(relative?baseline:0))*factor,failed:!p.converged,
     label:`Point ${p.index+1}: ${p.coordinate.toFixed(4)} ${scan.spec.unit}; ${p.energy??'no energy'} Eh; ${p.status}`}));
   plot($('pes-chart'),data,{xLabel:`Bond length / ${scan.spec.unit==='angstrom'?'Å':'bohr'}`,yLabel:unit==='relative-kcal'?'ΔE / kcal mol⁻¹':relative?'ΔE / Eh':'Energy / Eh',onSelect:selectPoint,selected:selectedPoint,empty:'Scan points will appear as calculations complete.'});
-  $('pes-note').textContent=`${basisLabel(scan.spec.basis)} · unrelaxed RHF · ${points.length}/${scan.spec.count} points${scan.cancelled?' · stopped':''}. ${relative?(converged.length?'Relative to the lowest converged point.':'No converged energies yet.'):''} Failed points are not connected.`;
+  $('pes-note').textContent=`${basisLabel(scan.spec.basis)} · unrelaxed ${(scan.spec.method??'rhf').toUpperCase()} · ${points.length}/${scan.spec.count} points${scan.cancelled?' · stopped':''}. ${relative?(converged.length?'Relative to the lowest converged point.':'No converged energies yet.'):''} Failed points are not connected.`;
   const body=table($('scan-point-table'),['Point',`Distance / ${scan.spec.unit==='angstrom'?'Å':'bohr'}`,'Energy / Eh','Status','Cycles'],points.map(p=>[p.index+1,p.coordinate.toFixed(6),p.energy===null?'Not available':p.energy.toFixed(12),p.status,p.iterations]));
   [...body.rows].forEach((row,index)=>{row.className=`clickable ${selectedPoint===index?'selected':''}`;row.tabIndex=0;row.setAttribute('aria-label',`Inspect scan point ${index+1}`);row.addEventListener('click',()=>selectPoint(index));row.addEventListener('keydown',e=>{if(e.key==='Enter')selectPoint(index);});});
 }
@@ -266,7 +292,12 @@ worker.onmessage=({data})=>{
   if(data.type==='ready') {ready=true;$('engine-state').textContent='Local engine ready';$('engine-dot').classList.add('ready');preview();setBusy(false);run();return;}
   if(data.type==='fatal') {ready=false;setBusy(false);badge('ENGINE ERROR','error');$('status').textContent='Engine unavailable.';$('summary').textContent=data.message;return;}
   if(data.id!==jobId)return;
+  if(data.type==='post-scf') {
+    const p=data.progress;$('status').textContent=`MP2 correlation: occupied block ${p.completed} / ${p.occupied}`;
+    $('progress-text').textContent=`${data.index===undefined?'':`Point ${data.index+1} · `}MP2 ${p.completed} / ${p.occupied} occupied orbitals`;return;
+  }
   if(data.type==='iteration') {
+    $('energy-label').textContent=$('method').value==='mp2'?'RHF REFERENCE IN PROGRESS':'SCF ENERGY IN PROGRESS';
     if(jobMode==='scan') {
       $('progress-text').textContent=`Point ${data.index+1} / ${scan.spec.count} · SCF cycle ${data.entry.iteration}`;
       if(!current){$('status').textContent=`SCF iteration ${data.entry.iteration} at scan point ${data.index+1}`;$('energy-value').textContent=data.entry.energy.toFixed(10);}
@@ -406,4 +437,5 @@ new ResizeObserver(entries=>{
 toggleSetup(false);
 
 preview({reset:true});renderScan();plot($('scf-chart'),[]);renderOrbitals(null);renderMatrix();setBusy(false);
+
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { ANGSTROM_PER_BOHR, toXYZ, basisSummary } from './molecule.mjs';
-import { computeRHF,validateRHFOptions } from './rhf.mjs';
+import {computeElectronic,validateElectronicOptions,scfResult,totalEnergy} from './electronic.mjs';
 export const HARTREE_TO_KCAL = 627.5094740631;
 const RADII = { H:.31,He:.28,Li:1.28,Be:.96,B:.84,C:.76,N:.71,O:.66,F:.57,Ne:.58 };
 export function distance(molecule,a,b) {
@@ -48,9 +48,9 @@ export function scanGeometry(molecule,spec,value) {
   const shift=molecule.atoms[spec.b].xyz.map((x,d)=>(x-molecule.atoms[spec.a].xyz[d])*(target-initial)/initial);
   return { ...molecule,atoms:molecule.atoms.map((atom,i)=>({ ...atom,xyz:atom.xyz.map((x,d)=>x+(spec.moving.includes(i)?shift[d]:0)) })) };
 }
-export async function runScan(engine,molecule,config,options={},onPoint=()=>{},onIteration=()=>{}) {
-  validateRHFOptions(molecule,options);
-  const spec=scanSpec(molecule,config), points=[];
+export async function runScan(engine,molecule,config,options={},onPoint=()=>{},onIteration=()=>{},onProgress=()=>{}) {
+  const settings=validateElectronicOptions(molecule,options);
+  const spec={...scanSpec(molecule,config),method:settings.method,multiplicity:settings.multiplicity??1,guess:settings.guess??'core'}, points=[];
   for (let index=0;index<spec.count;index++) {
     if (options.isCancelled?.()) break;
     const coordinate=spec.start+(spec.end-spec.start)*index/(spec.count-1);
@@ -58,13 +58,13 @@ export async function runScan(engine,molecule,config,options={},onPoint=()=>{},o
     let point;
     try {
       const started=performance.now();
-      // Independent core-Hamiltonian guesses at every point. No hidden state following.
-      const result=await computeRHF(engine,geometry,options,entry=>onIteration({ index,entry }));
+      // Independent guesses at every point, with the selected UHF mixing policy.
+      const result=await computeElectronic(engine,geometry,options,entry=>onIteration({ index,entry }),progress=>onProgress({index,progress}));
       result.elapsedMs=performance.now()-started;
       const { eri,...compact }=result; // Do not retain N^4 arrays for an entire scan.
       point={ index,coordinate,coordinateBohr:coordinate/(spec.unit==='angstrom'?ANGSTROM_PER_BOHR:1),
-        molecule:geometry,energy:result.rhf.energy,status:result.rhf.status,converged:result.rhf.converged,
-        iterations:result.rhf.iterations,result:compact };
+        molecule:geometry,energy:totalEnergy(result),status:scfResult(result).status,converged:scfResult(result).converged,
+        iterations:scfResult(result).iterations,result:compact };
     } catch (error) {
       if (error.name==='AbortError') break;
       point={ index,coordinate,coordinateBohr:coordinate/(spec.unit==='angstrom'?ANGSTROM_PER_BOHR:1),molecule:geometry,energy:null,status:'error',converged:false,iterations:0,error:error.message };
@@ -76,9 +76,10 @@ export async function runScan(engine,molecule,config,options={},onPoint=()=>{},o
 }
 export function scanCSV(scan) {
   const escape=value=>`"${String(value??'').replaceAll('"','""')}"`;
-  return ['point,distance,distance_unit,energy_hartree,converged,status,iterations,basis,error',
-    ...scan.points.map(p=>[p.index+1,p.coordinate,scan.spec.unit,p.energy??'',p.converged,p.status,p.iterations,scan.spec.basis,p.error??''].map(escape).join(','))].join('\n')+'\n';
+  return ['point,distance,distance_unit,energy_hartree,converged,status,iterations,basis,error,method,multiplicity,spin_square,correlation_energy_hartree,reference_energy_hartree',
+    ...scan.points.map(p=>[p.index+1,p.coordinate,scan.spec.unit,p.energy??'',p.converged,p.status,p.iterations,scan.spec.basis,p.error??'',p.result?.method??scan.spec.method??'RHF',p.result?.uhf?.multiplicity??1,p.result?.uhf?.spinSquare??'',p.result?.mp2?.correlationEnergy??'',p.result?.mp2?.referenceEnergy??''].map(escape).join(','))].join('\n')+'\n';
 }
 export function scanXYZ(scan) {
-  return scan.points.map(p=>toXYZ(p.molecule,'angstrom',`point=${p.index+1} distance=${p.coordinate} ${scan.spec.unit} energy=${p.energy??'NA'} Eh status=${p.status}`)).join('');
+  return scan.points.map(p=>toXYZ(p.molecule,'angstrom',`point=${p.index+1} distance=${p.coordinate} ${scan.spec.unit} energy=${p.energy??'NA'} Eh method=${p.result?.method??scan.spec.method??'RHF'} multiplicity=${p.result?.uhf?.multiplicity??1} status=${p.status}`)).join('');
 }
+

@@ -2,10 +2,10 @@
 import createQChem from './qc_core.mjs';
 import { parseGeometry } from './molecule.mjs';
 import { computeIntegrals } from './engine.mjs';
-import { computeRHF } from './rhf.mjs';
+import { computeElectronic } from './electronic.mjs';
 import { runScan } from './scan.mjs';
 let active=null;
-const transfers=result=>[...new Set([...Object.values(result),...Object.values(result.rhf??{})]
+const transfers=result=>[...new Set([...Object.values(result),...Object.values(result.rhf??{}),...Object.values(result.uhf??{})]
   .filter(ArrayBuffer.isView).map(value=>value.buffer))];
 try {
   const engine=await createQChem();
@@ -21,11 +21,12 @@ try {
       if (data.mode==='scan') {
         const scan=await runScan(engine,molecule,data.scan,options,
           (point,spec)=>send('point',{point,spec}),
-          ({index,entry})=>send('iteration',{index,entry}));
+          ({index,entry})=>send('iteration',{index,entry}),
+          progress=>send('post-scf',progress));
         send('scan-complete',{spec:scan.spec,summary:{cancelled:scan.cancelled,requested:scan.requested,completed:scan.completed,elapsedMs:performance.now()-start}});
       } else {
         const result=data.mode==='integrals'?computeIntegrals(engine,molecule)
-          :await computeRHF(engine,molecule,options,entry=>send('iteration',{entry}));
+          :await computeElectronic(engine,molecule,options,entry=>send('iteration',{entry}),progress=>send('post-scf',{progress}));
         result.elapsedMs=performance.now()-start;
         if (job.cancelled) send('cancelled');
         else self.postMessage({type:'result',id:job.id,result},transfers(result));
@@ -36,3 +37,4 @@ try {
   };
   self.postMessage({type:'ready'});
 } catch(error) { self.postMessage({type:'fatal',message:error.message}); }
+

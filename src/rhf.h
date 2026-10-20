@@ -27,8 +27,10 @@ double qc_rhf_scalar(const QCRHF *rhf, int kind);
  * 3 orbital energies (n), 4 occupations (n).
  */
 const double *qc_rhf_data(const QCRHF *rhf, int kind);
+const QCResult *qc_rhf_integrals(const QCRHF *rhf);
 void qc_rhf_free(QCRHF *rhf);
 #ifdef __cplusplus
 }
 #endif
 #endif
+

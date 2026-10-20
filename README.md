@@ -5,9 +5,11 @@ scientific libraries and no remote calculation API.
 
 ## Molecular workspace
 
-Run closed-shell restricted Hartree-Fock (RHF) directly in the browser. Enter a
+Run RHF, unrestricted Hartree-Fock (UHF), and small conventional RHF-MP2 calculations directly in the browser. Enter a
 geometry and molecular charge, follow live SCF iterations, inspect orbital
-energies, density and Fock matrices, and export numerical results as JSON.
+energies, density and Fock matrices, and export numerical results as JSON. UHF adds
+spin multiplicity, separate alpha/beta orbitals and matrices, and spin diagnostics.
+MP2 adds the all-electron correlation and total energies on an RHF reference.
 Choose STO-3G, 6-31G, or cc-pVDZ for H through Ne. The workspace includes a
 rotatable 3D molecule, XYZ upload, atom picking, live SCF and PES plots, matrix
 inspection, and numerical exports. The default water/STO-3G calculation converges
@@ -81,6 +83,7 @@ node tests/check_wasm.mjs
 node tests/check_molecular.mjs
 node tests/check_rhf.mjs
 node tests/check_workspace.mjs
+node tests/check_methods.mjs
 python3 -m http.server 8000 --bind 127.0.0.1 --directory build/wasm/dist
 ```
 
@@ -142,7 +145,7 @@ open their summary.
 2. Drag to rotate, scroll to zoom, and use **Fit** to frame the structure.
    Atom labels match the one-based indices in the geometry input. **PNG** exports
    the current view; **Export geometry** writes an XYZ file in angstrom.
-3. Select **Bond scan · RHF**. Click atom A and then atom B, or type their indices.
+3. Select **Bond length scan**. Click atom A and then atom B, or type their indices.
    A stays fixed. B and every listed moving atom translate along the original AB
    direction. **Use connected fragment** proposes the fragment on B's side after
    removing AB from an inferred bond graph. Check the highlighted selection;
@@ -163,14 +166,14 @@ open their summary.
 
 These are **unrelaxed bond scans**: the other coordinates are not optimized.
 Each point uses an independent core-Hamiltonian guess. There is no state
-following, orbital stability test, or guarantee of the lowest RHF solution.
+following, orbital stability test, or guarantee of the lowest SCF solution.
 Core guesses can converge to excited SCF roots, including for N2. Inspect the
 curve for discontinuities and verify the electronic state before interpreting a
 PES. Restricted HF also cannot describe general bond dissociation correctly.
 
 Single-point JSON contains all integrals. Scan JSON omits the large ERI tensor at
-each point, retaining one-electron matrices and RHF results. To inspect a scan
-geometry's ERIs, select the point and run **Single point · RHF**. Exported JSON
+each point, retaining one-electron matrices and electronic results. To inspect a scan
+geometry's ERIs, select the point and run **Single point energy**. Exported JSON
 molecular coordinates are in bohr; XYZ coordinates are in angstrom. Units and
 status accompany all scan energies. Selecting an older completed point during a
 scan keeps that point selected while later points continue to calculate.
@@ -279,6 +282,76 @@ below **1.4e-9 Eh**. Tests also verify MO orthonormality, electron count,
 spin-summed density idempotency, the physical Fock matrix, the generalized
 eigenvalue equation, and independent recomputation of the total energy.
 
+## UHF and conventional RHF-MP2
+
+Select **Electronic method** independently of **Calculation type**. All methods
+support single points, unrelaxed bond scans, live progress, cancellation, and
+JSON exports with explicit method metadata. CSV and XYZ scan exports identify
+the method and multiplicity. MP2 scans plot the correlated total energy. If the
+RHF reference fails to converge, MP2 is not computed and that scan point has no
+MP2 energy. Completed scan points are retained when a job is stopped.
+
+For UHF, enter charge and multiplicity M = 2S + 1. The solver uses
+Nalpha = (Ne + M - 1)/2 and Nbeta = (Ne - M + 1)/2, with nonnegative integer
+populations that fit the basis. Odd electron counts require even multiplicity;
+even counts require odd multiplicity. The default guess applies opposite
+45-degree HOMO/LUMO rotations to alpha/beta occupied orbitals for equal spin
+populations when virtual orbitals exist. Otherwise it uses the core Hamiltonian.
+Select **Core Hamiltonian** to disable mixing. For stretched singlet H2, the
+mixed guess allows a broken-symmetry UHF solution while a spin-symmetric core
+guess can remain on the RHF solution.
+
+UHF uses Falpha = H + J(Dalpha + Dbeta) - K(Dalpha), and analogously for beta.
+Joint DIIS uses both spin commutators. Density and residual RMS are normalized
+by sqrt(2) times the AO count. Both spins must pass convergence and a final
+physical-Fock canonicalization check. The interface reports alpha/beta counts,
+requested multiplicity, <S^2>, target S(S+1), and spin contamination. UHF is
+not generally a total-spin eigenfunction. Convergence does not guarantee the
+lowest or stable SCF solution; different guesses and DIIS trajectories can
+select distinct stationary roots, particularly in open-shell species.
+
+MP2 currently means **all-electron, conventional RHF-MP2** with no frozen core,
+no density fitting, and no UMP2. The calculation requires converged RHF orbitals.
+Each occupied orbital is transformed in four stages, retaining only O(N^3)
+additional intermediate storage. The AO ERIs remain O(N^4); the transformation
+cost is O(N^5). One occupied block is processed per worker step so progress and
+cancellation are available between blocks. The existing **40 AO** limit remains.
+
+The correlation energy is the sum over all occupied i,j and virtual a,b of
+(ia|jb) [2(ia|jb) - (ib|ja)] / (epsilon_i + epsilon_j - epsilon_a - epsilon_b).
+Separate opposite-spin and same-spin energies are reported. Nonfinite,
+nonnegative, or nearly zero denominators (absolute value <= 1e-10 Eh) are
+rejected rather than shifted. No virtual orbitals gives zero correlation.
+MP2 can become unreliable near bond dissociation or a small RHF orbital gap.
+Its displayed orbitals, density, Fock matrices and SCF history are explicitly
+those of the RHF reference, not a correlated MP2 density or orbital set.
+
+JSON keeps the existing `rhf` object for RHF and the MP2 reference. UHF uses
+`uhf` with `densityAlpha`, `densityBeta`, `fockAlpha`, `fockBeta`,
+`coefficientsAlpha`, `coefficientsBeta`, `orbitalEnergiesAlpha/Beta`,
+`occupationsAlpha/Beta`, total `density`, and `spinDensity`. MP2 adds `mp2`
+with reference, correlation, total, opposite-spin and same-spin energies,
+occupied/virtual counts, gap, and minimum absolute denominator. Failed RHF
+references have `mp2.status = "not_computed"` and `mp2.energy = null`.
+
+Validation commands (PySCF is only needed to regenerate/check references):
+
+```bash
+node tests/check_methods.mjs
+python3 tests/check_methods.py
+python3 tests/check_methods_native.py build/native/libqc_core.dylib
+python3 tests/check_browser_methods.py
+```
+
+On Linux use `build/native/libqc_core.so`. The numerical cases cover H, He+,
+Li, OH, O and O2 spin states, closed-shell water, broken-symmetry H2, and MP2
+for H2, water, HF, helium and ammonia across the three supported bases.
+References are generated with PySCF 2.14.0. UHF checks also verify electron
+counts, density idempotency, MO orthonormality, canonical residuals and physical
+Fock reconstruction. The fixture records cases where PySCF's initial trajectory
+chooses a different stationary root; the reported root is independently
+reconverged with PySCF and is not represented as a ground-state guarantee.
+
 ## RHF algorithm and conventions
 
 The C++ core uses a symmetric S^(-1/2) orthogonalizer and a core-Hamiltonian guess.
@@ -300,7 +373,7 @@ includes a checked pure SCF step before a calculation is labeled converged.
 The smallest overlap eigenvalue must be >= 1e-8. The prototype rejects nearly
 linearly dependent bases rather than silently dropping AOs. RHF pairs electrons
 in spatial orbitals, so odd-electron and open-shell calculations need a later
-UHF/ROHF extension. SCF convergence does not establish wavefunction stability or
+ROHF extension; UHF is available separately. SCF convergence does not establish wavefunction stability or
 that the solution is the global minimum. An iteration-limited energy is exported
 as an unconverged result and is labeled that way on the page.
 
@@ -354,11 +427,13 @@ retains an input buffer. A null result is accompanied by a `qc_error` message.
 | `src/overlap.c` | Original H2 overlap regression path |
 | `src/integrals.c`, `src/integrals.h` | General shell inputs and complete integral evaluation |
 | `src/rhf.cpp`, `src/rhf.h` | RHF iteration, DIIS, diagonalization, and convergence |
+| `src/uhf.cpp`, `src/uhf.h` | Spin-resolved UHF, joint DIIS and spin diagnostics |
+| `src/mp2.cpp`, `src/mp2.h` | Blockwise all-electron conventional RHF-MP2 |
 | `CMakeLists.txt` | Build native or WebAssembly targets |
 | `scripts/build_wasm.sh` | Configure and compile the browser module |
 | `web/basis.mjs`, `web/molecule.mjs` | Three basis catalogs, input parsing, and AO labels |
 | `web/engine.mjs`, `web/worker.mjs` | WASM memory interface and background computation |
-| `web/rhf.mjs` | RHF memory ownership, iteration loop, and progress messages |
+| `web/rhf.mjs`, `web/uhf.mjs`, `web/mp2.mjs`, `web/electronic.mjs` | Method validation, memory ownership, iterations and progress |
 | `web/index.html`, `web/styles.css`, `web/app.mjs` | Workspace, results inspection and exports |
 | `web/viewer.mjs`, `web/vendor/` | Local 3Dmol molecule viewer and license |
 | `web/scan.mjs`, `web/plot.mjs` | Scan geometries, runner, exports and interactive SVG charts |
@@ -388,4 +463,5 @@ for this build.
 - W. J. Hehre, R. F. Stewart, J. A. Pople, *J. Chem. Phys.* **51**, 2657-2664
   (1969), [doi:10.1063/1.1672392](https://doi.org/10.1063/1.1672392).
 - [Emscripten installation](https://emscripten.org/docs/getting_started/downloads.html)
+
 
