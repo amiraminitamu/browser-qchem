@@ -7,7 +7,7 @@ import {distance,connectedFragment,scanSpec,scanCSV,scanXYZ,HARTREE_TO_KCAL} fro
 import {scfResult,totalEnergy,validateElectronicOptions} from './electronic.mjs';
 import {plot} from './plot.mjs';
 import {BUILD_ID,WORKER_PROTOCOL} from './build-info.mjs';
-import {captureRequest,assertResultMatches,presetMethod,restoreSettings,saveSettings} from './settings.mjs';
+import {captureRequest,assertResultMatches,presetMethod,restoreSettings,saveSettings,readSettings} from './settings.mjs';
 
 const $=id=>document.getElementById(id);
 const EXAMPLES={water:WATER_XYZ,h2:'2\nHydrogen / angstrom\nH 0 0 0\nH 0 0 0.74',
@@ -20,6 +20,7 @@ const EXAMPLE_SETTINGS={h2plus:{name:'Hydrogen ion',charge:1,multiplicity:2,meth
 let ready=false,busy=false,valid=false,jobId=0,jobMode='rhf',molecule=null,current=null;
 let scan=null,selectedPoint=-1,history=[],previewTimer=null,activeRequest=null,draftRevision=0,scanRevision=0,methodExplicit=false;
 let pair=[0,1],selectionExplicit=false;
+let listedJobs=[],listedJobSeq=0,activeListedJob=0;
 const viewer=new MoleculeViewer($('molecule-viewer'),selectAtom);
 const worker=new Worker(new URL('./worker.mjs',import.meta.url),{type:'module'});
 $('controls').reset();
@@ -43,12 +44,14 @@ function syncControls() {
     setDisabled(element,!!(busy||inactive||scf||spin));
   });
   setDisabled($('cancel'),!busy);$('cancel').textContent='Stop calculation';
+  setDisabled($('toolbar-stop'),!busy);
   setDisabled($('calculate'),busy||!ready||!valid);$('calculate').hidden=busy;
   setDisabled($('download'),busy||!current);
   setDisabled($('geometry-download'),!molecule);
   document.querySelector('#calculation-section .method-chip').textContent=mode==='integrals'?'AO':$('method').value.toUpperCase();
   document.querySelector('.spin-info strong').textContent=mode==='integrals'?'Any electron count':uhf?`Multiplicity ${$('multiplicity').value}`:'Closed-shell singlet';
   $('run-label').textContent=mode==='scan'?'Run bond scan':'Run calculation';
+  $('toolbar-method').textContent=`${mode==='integrals'?'INTEGRALS':$('method').value.toUpperCase()} / ${$('basis').value.toUpperCase()}`;
   setDisabled($('mobile-run'),!busy&&(!ready||!valid));
   $('mobile-run').textContent=busy?'Stop calculation':mode==='scan'?'Run bond scan':'Run calculation';
   $('uhf-controls').hidden=!uhf||mode==='integrals';
@@ -233,7 +236,7 @@ function renderMethodDetails(result) {
   for(const [label,value] of values){const item=document.createElement('div');item.textContent=label;const strong=document.createElement('strong');strong.textContent=value;item.append(strong);box.append(item);}
   $('method-note').textContent=u?`Guess: ${u.mixedGuessApplied?'opposite alpha/beta HOMO-LUMO mixing':'core Hamiltonian'}. UHF is not generally an eigenstate of total spin; convergence does not guarantee the lowest or stable SCF solution.`:'All-electron conventional MP2. Orbitals, density, Fock matrices and SCF history belong to the RHF reference. MP2 can be unreliable near bond dissociation or small orbital gaps.';
 }
-function showResult(result,{pointIndex=null}={}) {
+function showResult(result,{pointIndex=null,skipRemember=false}={}) {
   current=result;const r=scfResult(result),n=result.nao,method=result.method??r?.method??'INTEGRALS',energy=totalEnergy(result);
   renderMethodDetails(result);
   $('metric-basis').textContent=basisLabel(result.molecule.basis);$('metric-aos').textContent=n;$('metric-cycles').textContent=r?.iterations??'N/A';$('metric-electrons').textContent=r?.electrons??'N/A';
@@ -263,6 +266,7 @@ function showResult(result,{pointIndex=null}={}) {
     input.addEventListener('input',renderERI);label.append(input);$('eri-selectors').append(label);
   }
   renderERI();$('download').disabled=busy||!current;
+  if(!skipRemember&&pointIndex===null) rememberCompletedJob(result);
 }
 function run(event) {
   event?.preventDefault();if(busy||!ready)return;
@@ -345,6 +349,7 @@ function renderScan() {
   $('pes-note').textContent=`${basisLabel(scan.spec.basis)} · unrelaxed ${(scan.spec.method??'rhf').toUpperCase()} · ${points.length}/${scan.spec.count} points${scan.cancelled?' · stopped':''}. ${relative?(converged.length?'Relative to the lowest converged point.':'No converged energies yet.'):''} Failed points are not connected.`;
   const body=table($('scan-point-table'),['Point',`Distance / ${scan.spec.unit==='angstrom'?'Å':'bohr'}`,'Energy / Eh','Status','Cycles'],points.map(p=>[p.index+1,p.coordinate.toFixed(6),p.energy===null?'Not available':p.energy.toFixed(12),p.status,p.iterations]));
   [...body.rows].forEach((row,index)=>{row.className=`clickable ${selectedPoint===index?'selected':''}`;row.tabIndex=0;row.setAttribute('aria-label',`Inspect scan point ${index+1}`);row.addEventListener('click',()=>selectPoint(index));row.addEventListener('keydown',e=>{if(e.key==='Enter')selectPoint(index);});});
+  if(scan?.summary&&scan.listId==null) scan.listId=rememberCompletedJob(current,{kind:'scan'});
 }
 worker.onmessage=({data})=>{
   if(data.type==='ready') {
@@ -409,7 +414,7 @@ worker.onmessage=({data})=>{
   badge(data.type==='cancelled'?'CANCELLED':'INPUT ERROR',data.type==='cancelled'?'warning':'error');
   $('status').textContent=data.type==='cancelled'?'Calculation cancelled.':'Input or calculation error.';$('summary').textContent=data.message??'You can adjust the settings and run again.';
 };
-worker.onerror=event=>{ready=false;setBusy(false);badge('WORKER ERROR','error');$('status').textContent='The calculation worker failed.';$('summary').textContent=`${event.message}\nReload the page to restart.`;};
+worker.onerror=event=>{ready=false;setBusy(false);badge('WORKER ERROR','error');$('engine-state').textContent='Engine unavailable';$('status').textContent='The calculation worker failed.';$('summary').textContent=`${event.message}\nReload the page to restart.`;};
 function save(name,content,type='text/plain') {
   const url=URL.createObjectURL(new Blob([content],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
@@ -491,7 +496,10 @@ $('focus-view').addEventListener('click',()=>focusViewer(!document.body.classLis
 $('help-open').addEventListener('click',()=>$('workspace-guide').showModal());
 for(const id of ['help-close','help-done'])$(id).addEventListener('click',()=>$('workspace-guide').close());
 document.addEventListener('keydown',event=>{
-  if(event.key==='Escape'){focusViewer(false);toggleSetup(false);}
+  if(event.key==='Escape'){
+    if(document.querySelector('.menu.open')){closeMenus();return;}
+    focusViewer(false);toggleSetup(false);
+  }
   if((event.metaKey||event.ctrlKey)&&event.key==='Enter'&&!$('workspace-guide').open&&!busy){event.preventDefault();run();}
   if(event.key==='Tab'&&!$('workspace-guide').open){
     const root=document.body.classList.contains('focus-view')?document.querySelector('.viewer-card'):document.body.classList.contains('setup-open')?$('setup-panel'):null;
@@ -523,5 +531,153 @@ toggleSetup(false);
 
 preview({reset:true});renderScan();plot($('scf-chart'),[]);renderOrbitals(null);renderMatrix();setBusy(false);
 globalThis.addEventListener('pageshow',event=>{if(event.persisted&&!busy){invalidate();preview();}});
+
+const ACTIVITY_TITLE={molecule:'Molecule',method:'Calculation',jobs:'Jobs',analysis:'Analysis'};
+function rememberCompletedJob(result,{kind}={}) {
+  const list=$('job-list');
+  if(!list) return 0;
+  const scanJob=kind==='scan';
+  if(!result&&!scanJob) return 0;
+  const r=result?scfResult(result):null;
+  const method=scanJob?(scan?.options?.method??result?.method??'rhf').toUpperCase():(result.method??r?.method??'INTEGRALS');
+  const basis=basisLabel(scanJob?scan?.spec?.basis??result?.molecule?.basis??$('basis').value:result.molecule.basis);
+  const title=$('workspace-title').textContent||'Custom molecule';
+  const status=scanJob?(scan.cancelled?'STOPPED':`${scan.points.length} pts`):($('result-badge').textContent||'DONE');
+  const energy=scanJob?`${scan.points.filter(p=>p.converged).length} converged`:($('energy-value').textContent||'');
+  const id=++listedJobSeq;
+  listedJobs.unshift({
+    id,kind:scanJob?'scan':result.checks?'integrals':'energy',title,method,basis,status,energy,
+    fields:readSettings($('controls')),methodExplicit,result:result??null,scan:scanJob?scan:null,
+    selectedPoint:scanJob?selectedPoint:-1
+  });
+  if(listedJobs.length>24) listedJobs.length=24;
+  activeListedJob=id;
+  renderJobList();
+  return id;
+}
+function renderJobList() {
+  const list=$('job-list');
+  if(!list) return;
+  $('job-count').textContent=String(listedJobs.length);
+  list.replaceChildren();
+  for(const job of listedJobs) {
+    const item=document.createElement('button');
+    item.type='button';
+    item.className=`job-item${job.id===activeListedJob?' active':''}`;
+    item.innerHTML=`<span class="job-status">${job.status}</span><span class="job-name"></span><span class="job-meta"></span>`;
+    item.querySelector('.job-name').textContent=job.title;
+    item.querySelector('.job-meta').textContent=`${job.method}/${job.basis} · ${job.energy}`;
+    item.addEventListener('click',()=>openListedJob(job.id));
+    const row=document.createElement('li');
+    row.append(item);
+    list.append(row);
+  }
+}
+function openListedJob(id) {
+  if(busy) return;
+  const job=listedJobs.find(entry=>entry.id===id);
+  if(!job) return;
+  activeListedJob=id;
+  if(job.fields) {
+    for(const [key,value] of Object.entries(job.fields)) {
+      if(key==='diis') $('diis').checked=value;
+      else if($(key)&&value!=null) $(key).value=value;
+    }
+    methodExplicit=!!job.methodExplicit;
+  }
+  preview();
+  if(job.kind==='scan'&&job.scan) {
+    scan=job.scan;selectedPoint=job.selectedPoint??scan.points.length-1;renderScan();
+    const point=scan.points[selectedPoint];
+    if(point?.result) showResult(point.result,{pointIndex:selectedPoint,skipRemember:true});
+  } else if(job.result) showResult(job.result,{skipRemember:true});
+  persistSettings();
+  renderJobList();
+}
+function setActivity(name,{scroll=true}={}) {
+  const activity=ACTIVITY_TITLE[name]?name:'molecule';
+  document.body.dataset.activity=activity;
+  document.querySelectorAll('.rail-button').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.activity===activity)));
+  $('inspector-title').textContent=ACTIVITY_TITLE[activity];
+  $('inspector-kicker').textContent=document.body.dataset.layout==='menus'?'Properties':'Inspector';
+  if(!scroll) return;
+  if(activity==='molecule') $('structure-section').scrollIntoView({block:'nearest'});
+  if(activity==='method') $('calculation-section').scrollIntoView({block:'nearest'});
+  if(activity==='jobs'&&document.body.dataset.layout==='menus') document.body.classList.add('jobs-open');
+  if(activity==='analysis') $('results-section').scrollIntoView({block:'nearest'});
+}
+function closeMenus() {
+  document.querySelectorAll('.menu.open').forEach(menu=>menu.classList.remove('open'));
+  document.querySelectorAll('.menu-button').forEach(button=>button.setAttribute('aria-expanded','false'));
+}
+function applyLayout(name) {
+  const layout=name==='menus'?'menus':'jobs';
+  document.body.dataset.layout=layout;
+  document.body.classList.toggle('jobs-open',layout==='jobs');
+  $('layout-jobs').setAttribute('aria-pressed',String(layout==='jobs'));
+  $('layout-menus').setAttribute('aria-pressed',String(layout==='menus'));
+  $('inspector-kicker').textContent=layout==='menus'?'Properties':'Inspector';
+  closeMenus();
+  try {storage()?.setItem('browser-qchem.layout',layout);} catch {}
+}
+function handleMenu(action,element) {
+  if(action==='import') $('xyz-file').click();
+  if(action==='export-xyz') $('geometry-download').click();
+  if(action==='export') $('download').click();
+  if(action==='scan-csv') $('scan-csv').click();
+  if(action==='scan-xyz') $('scan-xyz').click();
+  if(action==='scan-json') $('scan-json').click();
+  if(action==='preset') {
+    $('preset').value=element.dataset.preset;
+    $('preset').dispatchEvent(new Event('change',{bubbles:true}));
+    setActivity('molecule');
+  }
+  if(action==='coordinates') {setActivity('molecule');$('coordinates-editor').open=true;}
+  if(action==='reset') $('water').click();
+  if(action==='mode') {
+    $('mode').value=element.dataset.mode;
+    $('mode').dispatchEvent(new Event('change',{bubbles:true}));
+    setActivity('method');
+  }
+  if(action==='convergence') {setActivity('method');document.querySelector('.advanced-settings').open=true;}
+  if(action==='run'&&!busy) run();
+  if(action==='stop') $('cancel').click();
+  if(action==='tab') {setTab(element.dataset.tabName);setActivity('analysis');}
+  if(action==='labels') {$('atom-labels').checked=!$('atom-labels').checked;$('atom-labels').dispatchEvent(new Event('change'));}
+  if(action==='fit') $('fit-view').click();
+  if(action==='expand') $('focus-view').click();
+  if(action==='jobs-panel') {
+    if(document.body.dataset.layout==='menus') document.body.classList.toggle('jobs-open');
+    else setActivity('jobs');
+  }
+  if(action==='layout-jobs') applyLayout('jobs');
+  if(action==='layout-menus') applyLayout('menus');
+  if(action==='guide') $('workspace-guide').showModal();
+  closeMenus();
+}
+$('layout-jobs').addEventListener('click',()=>applyLayout('jobs'));
+$('layout-menus').addEventListener('click',()=>applyLayout('menus'));
+document.querySelectorAll('.rail-button').forEach(button=>button.addEventListener('click',()=>setActivity(button.dataset.activity)));
+document.querySelectorAll('.menu-button').forEach(button=>button.addEventListener('click',event=>{
+  event.stopPropagation();
+  const menu=button.parentElement,open=menu.classList.contains('open');
+  closeMenus();
+  if(!open){menu.classList.add('open');button.setAttribute('aria-expanded','true');}
+}));
+document.querySelectorAll('[data-menu]').forEach(element=>element.addEventListener('click',event=>{
+  event.preventDefault();
+  handleMenu(element.dataset.menu,element);
+}));
+document.addEventListener('click',event=>{
+  if(!event.target.closest('.menu')) closeMenus();
+});
+applyLayout(document.body.dataset.layout==='menus'?'menus':'jobs');
+setActivity(document.body.dataset.activity||'molecule',{scroll:false});
+renderJobList();
+const demoMenu=new URLSearchParams(location.search).get('menu');
+if(demoMenu) document.querySelectorAll('.menu-button').forEach(button=>{
+  if(button.textContent.trim()===demoMenu){button.parentElement.classList.add('open');button.setAttribute('aria-expanded','true');}
+});
+
 
 
