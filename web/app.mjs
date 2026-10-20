@@ -599,26 +599,16 @@ function setActivity(name,{scroll=true}={}) {
   document.body.dataset.activity=activity;
   document.querySelectorAll('.rail-button').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.activity===activity)));
   $('inspector-title').textContent=ACTIVITY_TITLE[activity];
-  $('inspector-kicker').textContent=document.body.dataset.layout==='menus'?'Properties':'Inspector';
+  $('inspector-kicker').textContent='Properties';
   if(!scroll) return;
   if(activity==='molecule') $('structure-section').scrollIntoView({block:'nearest'});
   if(activity==='method') $('calculation-section').scrollIntoView({block:'nearest'});
-  if(activity==='jobs'&&document.body.dataset.layout==='menus') document.body.classList.add('jobs-open');
+  if(activity==='jobs') document.body.classList.add('jobs-open');
   if(activity==='analysis') $('results-section').scrollIntoView({block:'nearest'});
 }
 function closeMenus() {
   document.querySelectorAll('.menu.open').forEach(menu=>menu.classList.remove('open'));
   document.querySelectorAll('.menu-button').forEach(button=>button.setAttribute('aria-expanded','false'));
-}
-function applyLayout(name) {
-  const layout=name==='menus'?'menus':'jobs';
-  document.body.dataset.layout=layout;
-  document.body.classList.toggle('jobs-open',layout==='jobs');
-  $('layout-jobs').setAttribute('aria-pressed',String(layout==='jobs'));
-  $('layout-menus').setAttribute('aria-pressed',String(layout==='menus'));
-  $('inspector-kicker').textContent=layout==='menus'?'Properties':'Inspector';
-  closeMenus();
-  try {storage()?.setItem('browser-qchem.layout',layout);} catch {}
 }
 function handleMenu(action,element) {
   if(action==='import') $('xyz-file').click();
@@ -647,16 +637,12 @@ function handleMenu(action,element) {
   if(action==='fit') $('fit-view').click();
   if(action==='expand') $('focus-view').click();
   if(action==='jobs-panel') {
-    if(document.body.dataset.layout==='menus') document.body.classList.toggle('jobs-open');
-    else setActivity('jobs');
+    document.body.classList.toggle('jobs-open');
+    if(document.body.classList.contains('jobs-open')) setActivity('jobs');
   }
-  if(action==='layout-jobs') applyLayout('jobs');
-  if(action==='layout-menus') applyLayout('menus');
   if(action==='guide') $('workspace-guide').showModal();
   closeMenus();
 }
-$('layout-jobs').addEventListener('click',()=>applyLayout('jobs'));
-$('layout-menus').addEventListener('click',()=>applyLayout('menus'));
 document.querySelectorAll('.rail-button').forEach(button=>button.addEventListener('click',()=>setActivity(button.dataset.activity)));
 document.querySelectorAll('.menu-button').forEach(button=>button.addEventListener('click',event=>{
   event.stopPropagation();
@@ -671,7 +657,6 @@ document.querySelectorAll('[data-menu]').forEach(element=>element.addEventListen
 document.addEventListener('click',event=>{
   if(!event.target.closest('.menu')) closeMenus();
 });
-applyLayout(document.body.dataset.layout==='menus'?'menus':'jobs');
 setActivity(document.body.dataset.activity||'molecule',{scroll:false});
 renderJobList();
 const demoMenu=new URLSearchParams(location.search).get('menu');

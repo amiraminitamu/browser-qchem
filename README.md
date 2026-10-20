@@ -1,7 +1,17 @@
-# browser-qchem
+# Lorentzian
+
+<img src="docs/lorentzian-icon.jpg" width="88" alt="Lorentzian mark: a copper Lorentzian peak on navy">
 
 Electronic structure calculations inside a web browser, using compiled
-scientific libraries and no remote calculation API.
+scientific libraries and no remote calculation API. The name is the usual
+English adjective from Lorentz — the same pattern as Gaussian, and the competing
+spectroscopic lineshape.
+
+The packaged workbench is at
+**https://amiraminitamu.github.io/browser-qchem/**.
+GitHub Pages serves the WASM build from the `gh-pages` branch. Enable it once
+under **Settings → Pages → Deploy from a branch → `gh-pages` / `/ (root)`**.
+Later pushes to `main` rebuild that branch through `.github/workflows/pages.yml`.
 
 ## Molecular workspace
 
@@ -158,12 +168,10 @@ browser regression also covers repeated RHF/UHF/MP2 changes, reload and reopenin
 
 ## Interface and navigation
 
-The workbench is a desktop-style scientific IDE with two switchable layouts.
-**Jobs studio** keeps an activity rail, a job list, and docked structure / energy
-/ analysis panes. **Desktop menus** uses the same docked panes with
-File / Molecule / Calculate / Analysis / View / Help and a calculation toolbar.
-Switch layouts from the header, the View menu, or `?layout=jobs` / `?layout=menus`.
-Completed single points, integrals and scans appear in the job list.
+The workbench is a desktop-style scientific IDE: File / Molecule / Calculate /
+Analysis / View / Help, a calculation toolbar, an activity rail, and docked
+structure / energy / analysis panes. Completed single points, integrals and
+scans appear in **View → Toggle job list**.
 
 Method and basis sit together in a compact inspector, with readable labels,
 charge/electron counts and explicit spin state. The Run/Stop control stays

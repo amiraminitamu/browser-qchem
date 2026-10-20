@@ -21,7 +21,7 @@ export function plot(container,points,{xLabel='Coordinate',yLabel='Energy / Eh',
   const svg=node('svg',{viewBox:`0 0 ${width} ${height}`,role:'img','aria-label':`${yLabel} versus ${xLabel}`});
   for(let t=0;t<=4;t++) {
     const yy=top+t*(height-top-bottom)/4,value=ymax-t*(ymax-ymin)/4;
-    svg.append(node('line',{x1:left,y1:yy,x2:width-right,y2:yy,stroke:'#e5ece7'}));
+    svg.append(node('line',{x1:left,y1:yy,x2:width-right,y2:yy,stroke:'#ebe4d8'}));
     svg.append(node('text',{x:left-12,y:yy+4,'text-anchor':'end',class:'axis-tick'},Math.abs(ymax-ymin)<.001?value.toExponential(2):value.toFixed(3)));
     const xx=left+t*(width-left-right)/4;
     svg.append(node('text',{x:xx,y:height-bottom+24,'text-anchor':'middle',class:'axis-tick'},(xmin+t*(xmax-xmin)/4).toFixed(2)));
@@ -31,10 +31,10 @@ export function plot(container,points,{xLabel='Coordinate',yLabel='Energy / Eh',
     if(!Number.isFinite(p.y)||p.failed){connected=false;continue;}
     path+=`${connected?'L':'M'}${x(p.x)},${y(p.y)} `;connected=true;
   }
-  svg.append(node('path',{d:path,fill:'none',stroke:'#3e8c7b','stroke-width':2.5}));
+  svg.append(node('path',{d:path,fill:'none',stroke:'#c45c26','stroke-width':2.5}));
   for(const [i,p] of points.entries()) if(Number.isFinite(p.y)) {
     const circle=node('circle',{cx:x(p.x),cy:y(p.y),r:i===selected?6.5:4.5,
-      fill:p.failed?'#ed9f3e':i===selected?'#126b60':'#ffffff',stroke:p.failed?'#c58324':'#3e8c7b','stroke-width':2,
+      fill:p.failed?'#ed9f3e':i===selected?'#8a3516':'#ffffff',stroke:p.failed?'#c58324':'#c45c26','stroke-width':2,
       tabindex:'0',role:'button','aria-label':p.label??`Point ${i+1}`,'data-point':i});
     circle.append(node('title',{},p.label??`${p.x}: ${p.y}`));
     circle.addEventListener('click',()=>onSelect(i));
