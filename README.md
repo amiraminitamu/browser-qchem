@@ -158,12 +158,17 @@ browser regression also covers repeated RHF/UHF/MP2 changes, reload and reopenin
 
 ## Interface and navigation
 
-The workbench uses a light molecular canvas beside an energy and convergence
-panel. Method and basis sit together in a compact setup panel, with readable
-labels, charge/electron counts and explicit spin state. The Run/Stop control
-stays visible while the setup panel scrolls. Results share one analysis area
-below the structure and energy. A restrained green palette, clear numeric
-alignment and a small set of controls keep the calculation in view.
+The workbench is a desktop-style scientific IDE with two switchable layouts.
+**Jobs studio** keeps an activity rail, a job list, and docked structure / energy
+/ analysis panes. **Desktop menus** uses the same docked panes with
+File / Molecule / Calculate / Analysis / View / Help and a calculation toolbar.
+Switch layouts from the header, the View menu, or `?layout=jobs` / `?layout=menus`.
+Completed single points, integrals and scans appear in the job list.
+
+Method and basis sit together in a compact inspector, with readable labels,
+charge/electron counts and explicit spin state. The Run/Stop control stays
+visible while the inspector scrolls. Results share one analysis pane below the
+structure and energy.
 
 - **Cartesian coordinates** expands the XYZ editor. **Import XYZ** loads a file.
 - **Calculation** selects a single point, bond-length scan, or molecular integrals.
