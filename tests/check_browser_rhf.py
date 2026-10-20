@@ -19,10 +19,14 @@ server=http.server.ThreadingHTTPServer(('127.0.0.1',0),handler)
 threading.Thread(target=server.serve_forever,daemon=True).start()
 try:
     with sync_playwright() as p,tempfile.TemporaryDirectory() as temp:
-        options={'headless':True}
+        options={'headless':True,'args':['--enable-unsafe-swiftshader']}
         if args.browser_path: options['executable_path']=args.browser_path
         browser=p.chromium.launch(**options)
         page=browser.new_page(viewport={'width':1280,'height':1000})
+        def summary_text():
+            if not page.locator('.summary-details').evaluate('(e)=>e.open'):
+                page.locator('.summary-details summary').click()
+            return page.locator('#summary').inner_text()
         errors=[]
         page.on('pageerror',lambda e:errors.append(str(e)))
         page.goto(f'http://127.0.0.1:{server.server_port}')
@@ -33,7 +37,7 @@ try:
             file=Path(temp)/'rhf.json'; event.value.save_as(file)
             return json.loads(file.read_text())
         wait_status('CONVERGED')
-        assert '-74.963063129729' in page.locator('#summary').inner_text()
+        assert '-74.963063129729' in summary_text()
         data=download(); actual=data['rhf']
         assert actual['converged']
         assert abs(actual['energy']-reference['energy'])<1e-9
@@ -41,9 +45,10 @@ try:
             assert np.max(np.abs(np.asarray(actual[key])-reference[key]))<1e-7,key
         assert page.locator('#scf-history tbody tr').count()==actual['iterations']
         assert page.locator('#orbital-table tr').count()==8
+        page.locator('[data-tab=matrices]').click()
         for kind in ['density','fock']:
             page.locator('#matrix-kind').select_option(kind)
-            assert page.locator('#matrix td').count()==49
+            assert page.locator('#matrix td:not(:first-child)').count()==49
         # Observe progress during a fresh run, not just the final history render.
         page.evaluate('''() => {
           window.iterationsObserved=0;
@@ -52,26 +57,30 @@ try:
         }''')
         page.locator('#calculate').click(); wait_status('CONVERGED')
         assert page.evaluate('window.iterationsObserved')>0
+        page.locator('.advanced-settings summary').click()
         page.locator('#maxiter').fill('1'); page.locator('#calculate').click()
         wait_status('NOT CONVERGED')
         limited=download()['rhf']
         assert not limited['converged'] and limited['status']=='not_converged'
-        assert 'Unconverged energy' in page.locator('#summary').inner_text()
+        assert 'Unconverged energy' in summary_text()
         page.locator('#maxiter').fill('100'); page.locator('#charge').fill('1')
         assert page.locator('#download').is_disabled()
         page.locator('#calculate').click(); wait_status('Input or calculation error')
-        assert 'even electron count' in page.locator('#summary').inner_text()
+        assert 'even electron count' in summary_text()
         page.locator('#water').click(); wait_status('CONVERGED')
+        page.locator('#nav-molecule').click()
         page.locator('#geometry').fill('H 0 0 0\nH 0 0 1.4')
         page.locator('#unit').select_option('bohr'); page.locator('#calculate').click()
         wait_status('CONVERGED')
-        assert '-1.116714325063' in page.locator('#summary').inner_text()
+        assert '-1.116714325063' in summary_text()
         page.locator('#water').click(); wait_status('CONVERGED')
         page.set_viewport_size({'width':390,'height':844})
         assert page.evaluate('document.documentElement.scrollWidth<=window.innerWidth')
+        assert page.locator('#energy-value').bounding_box()['height']<60,'Mobile energy should fit on one line'
         assert not errors,errors
         browser.close()
         print('RHF browser energy, density, orbitals, JSON, live iterations: PASS')
         print('Nonconvergence, charge rejection, recovery, H2/bohr, mobile layout: PASS')
 finally:
     server.shutdown(); server.server_close()
+

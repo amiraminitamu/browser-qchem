@@ -19,6 +19,7 @@ struct QCRHF {
     double enuc, energy, de=0, drms=0, residual=0, overlap_min;
     double etol, dtol, rtol;
     const double *eri;
+    const QCResult *integrals;
     Matrix s, h, x, d, f, c;
     Vector eps, occupations;
     std::vector<Matrix> fock_history, error_history;
@@ -99,7 +100,7 @@ extern "C" QCRHF *qc_rhf_create(const QCResult *integrals,int nelectron,int maxi
         auto r=std::make_unique<QCRHF>();
         r->n=n; r->nocc=nelectron/2; r->maxiter=maxiter; r->use_diis=use_diis!=0;
         r->etol=etol; r->dtol=dtol; r->rtol=rtol; r->enuc=qc_enuc(integrals);
-        r->eri=qc_data(integrals,3);
+        r->eri=qc_data(integrals,3); r->integrals=integrals;
         r->s=Eigen::Map<const Matrix>(qc_data(integrals,0),n,n);
         r->h=Eigen::Map<const Matrix>(qc_data(integrals,1),n,n)
              +Eigen::Map<const Matrix>(qc_data(integrals,2),n,n);
@@ -167,3 +168,6 @@ extern "C" const double *qc_rhf_data(const QCRHF *r,int kind)
         case 3:return r->eps.data(); case 4:return r->occupations.data(); default:return nullptr; }
 }
 extern "C" void qc_rhf_free(QCRHF *r) { delete r; }
+
+
+extern "C" const QCResult *qc_rhf_integrals(const QCRHF *r) { return r ? r->integrals : nullptr; }

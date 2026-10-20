@@ -1,0 +1,1274 @@
+{
+  "source": "PySCF 2.14.0",
+  "cases": [
+    {
+      "geometry": "H 0 0 0",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "H",
+      "referenceEnergy": -0.46658184955727533,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -0.46658184955727533,
+      "spinSquare": 0.75
+    },
+    {
+      "geometry": "He 0 0 0",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "uhf",
+        "charge": 1,
+        "multiplicity": 2,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "He+",
+      "referenceEnergy": -1.931748450137523,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -1.931748450137523,
+      "spinSquare": 0.75
+    },
+    {
+      "geometry": "H 0 0 0\n H 0 0 1.06",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "uhf",
+        "charge": 1,
+        "multiplicity": 2,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "H2+",
+      "referenceEnergy": -0.5826965597947078,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -0.5826965597947078,
+      "spinSquare": 0.75
+    },
+    {
+      "geometry": "He 0 0 0\n H 0 0 1.0",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "HeH",
+      "referenceEnergy": -3.1578592137999975,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -3.1578592137999975,
+      "spinSquare": 0.7500000000000002
+    },
+    {
+      "geometry": "He 0 0 0\n H 0 0 .8",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "uhf",
+        "charge": 1,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "HeH+",
+      "referenceEnergy": -2.8462312503601455,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -2.8462312503601455,
+      "spinSquare": 6.661338147750939e-16
+    },
+    {
+      "geometry": "H 0 0 0",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "uhf",
+        "charge": -1,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "H-",
+      "referenceEnergy": -0.15855775519465287,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -0.15855775519465287,
+      "spinSquare": -4.440892098500626e-16
+    },
+    {
+      "geometry": "Li 0 0 0",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "Li",
+      "referenceEnergy": -7.3155259812810876,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -7.3155259812810876,
+      "spinSquare": 0.75
+    },
+    {
+      "geometry": "O 0 0 0\n H .1 .2 .94",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "OH",
+      "referenceEnergy": -74.36225335213874,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -74.36225335213874,
+      "spinSquare": 0.7531867573121209
+    },
+    {
+      "geometry": "O 0 0 0\n H 0 -.757 .587\n H 0 .757 .587",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "water",
+      "referenceEnergy": -74.96306312972915,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -74.96306312972915,
+      "spinSquare": 0.0
+    },
+    {
+      "geometry": "O 0 0 0\n H 0 -.757 .587\n H 0 .757 .587",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "mix",
+        "maxIterations": 500
+      },
+      "name": "water mixed",
+      "referenceEnergy": -74.96306312972919,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -74.96306312972919,
+      "spinSquare": -1.7763568394002505e-15
+    },
+    {
+      "geometry": "H 0 0 0\n H 0 0 .74",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "mix",
+        "maxIterations": 500
+      },
+      "name": "H2 equilibrium",
+      "referenceEnergy": -1.1167593073964257,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -1.1167593073964257,
+      "spinSquare": 0.0
+    },
+    {
+      "geometry": "H 0 0 0\n H 0 0 3",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "mix",
+        "maxIterations": 500
+      },
+      "name": "H2 broken",
+      "referenceEnergy": -0.9332846583338119,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -0.9332846583338119,
+      "spinSquare": 0.9985907242772285
+    },
+    {
+      "geometry": "O 0 0 0\n H 0 -.757 .587\n H 0 .757 .587",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "mp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "water",
+      "referenceEnergy": -74.96306312972916,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -74.96306312972916,
+      "energy": -74.99862996599983,
+      "correlationEnergy": -0.03556683627065669,
+      "oppositeSpinEnergy": -0.03353422536885574,
+      "sameSpinEnergy": -0.0020326109018009536
+    },
+    {
+      "geometry": "He 0 0 0\n H 0 0 .8",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "mp2",
+        "charge": 1,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "HeH+",
+      "referenceEnergy": -2.8462312503601455,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -2.8462312503601455,
+      "energy": -2.853382247840738,
+      "correlationEnergy": -0.007150997480592348,
+      "oppositeSpinEnergy": -0.007150997480592348,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "geometry": "H 0 0 0\n H 0 0 .74",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "mp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "H2",
+      "referenceEnergy": -1.1167593073964255,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -1.1167593073964255,
+      "energy": -1.1298973809859585,
+      "correlationEnergy": -0.013138073589533008,
+      "oppositeSpinEnergy": -0.013138073589533008,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "geometry": "F .1 .2 .3\n H .3 .1 1.2",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "mp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "HF",
+      "referenceEnergy": -98.57176646237694,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -98.57176646237694,
+      "energy": -98.58956695386202,
+      "correlationEnergy": -0.017800491485072577,
+      "oppositeSpinEnergy": -0.017800491485072577,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "geometry": "He 0 0 0",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "mp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "He",
+      "referenceEnergy": -2.807783957539974,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -2.807783957539974,
+      "energy": -2.807783957539974,
+      "correlationEnergy": 0.0,
+      "oppositeSpinEnergy": 0.0,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "geometry": "N 0 0 .1\n H .93 0 -.25\n H -.465 .8054 -.25\n H -.465 -.8054 -.25",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "mp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "ammonia",
+      "referenceEnergy": -55.45067290599208,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -55.45067290599208,
+      "energy": -55.4956640118273,
+      "correlationEnergy": -0.04499110583522339,
+      "oppositeSpinEnergy": -0.04223803091749143,
+      "sameSpinEnergy": -0.0027530749177319554
+    },
+    {
+      "geometry": "H 0 0 0",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "H",
+      "referenceEnergy": -0.4982329107290701,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -0.4982329107290701,
+      "spinSquare": 0.75
+    },
+    {
+      "geometry": "He 0 0 0",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "uhf",
+        "charge": 1,
+        "multiplicity": 2,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "He+",
+      "referenceEnergy": -1.9936177757864055,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -1.9936177757864055,
+      "spinSquare": 0.75
+    },
+    {
+      "geometry": "H 0 0 0\n H 0 0 1.06",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "uhf",
+        "charge": 1,
+        "multiplicity": 2,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "H2+",
+      "referenceEnergy": -0.58402745958406,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -0.58402745958406,
+      "spinSquare": 0.75
+    },
+    {
+      "geometry": "He 0 0 0\n H 0 0 1.0",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "HeH",
+      "referenceEnergy": -3.262613859205482,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -3.262613859205482,
+      "spinSquare": 0.7506805166101215
+    },
+    {
+      "geometry": "He 0 0 0\n H 0 0 .8",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "uhf",
+        "charge": 1,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "HeH+",
+      "referenceEnergy": -2.909320657694093,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -2.909320657694093,
+      "spinSquare": 4.440892098500626e-16
+    },
+    {
+      "geometry": "H 0 0 0",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "uhf",
+        "charge": -1,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "H-",
+      "referenceEnergy": -0.42244193043697176,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -0.42244193043697176,
+      "spinSquare": 6.661338147750939e-16
+    },
+    {
+      "geometry": "Li 0 0 0",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "Li",
+      "referenceEnergy": -7.431235811083669,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -7.431235811083669,
+      "spinSquare": 0.7500006790935143
+    },
+    {
+      "geometry": "O 0 0 0\n H .1 .2 .94",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "OH",
+      "referenceEnergy": -75.20772888421988,
+      "matchedStationaryRoot": true,
+      "pyscfInitialTrajectoryEnergy": -75.36317711388519,
+      "spinSquare": 0.7567051033529517
+    },
+    {
+      "geometry": "O 0 0 0\n H 0 -.757 .587\n H 0 .757 .587",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "water",
+      "referenceEnergy": -75.98394849810569,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -75.98394849810569,
+      "spinSquare": -1.7763568394002505e-15
+    },
+    {
+      "geometry": "O 0 0 0\n H 0 -.757 .587\n H 0 .757 .587",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "mix",
+        "maxIterations": 500
+      },
+      "name": "water mixed",
+      "referenceEnergy": -75.98394849810562,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -75.98394849810562,
+      "spinSquare": -3.552713678800501e-15
+    },
+    {
+      "geometry": "H 0 0 0\n H 0 0 .74",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "mix",
+        "maxIterations": 500
+      },
+      "name": "H2 equilibrium",
+      "referenceEnergy": -1.1267553171969733,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -1.1267553171969733,
+      "spinSquare": 0.0
+    },
+    {
+      "geometry": "H 0 0 0\n H 0 0 3",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "mix",
+        "maxIterations": 500
+      },
+      "name": "H2 broken",
+      "referenceEnergy": -0.9967040229590582,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -0.9967040229590582,
+      "spinSquare": 0.9953853760169213
+    },
+    {
+      "geometry": "O 0 0 0\n H 0 -.757 .587\n H 0 .757 .587",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "mp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "water",
+      "referenceEnergy": -75.98394849810568,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -75.98394849810568,
+      "energy": -76.11281709278279,
+      "correlationEnergy": -0.12886859467711434,
+      "oppositeSpinEnergy": -0.09871252695726429,
+      "sameSpinEnergy": -0.03015606771985005
+    },
+    {
+      "geometry": "He 0 0 0\n H 0 0 .8",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "mp2",
+        "charge": 1,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "HeH+",
+      "referenceEnergy": -2.9093206576940966,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -2.9093206576940966,
+      "energy": -2.9261719672683717,
+      "correlationEnergy": -0.01685130957427485,
+      "oppositeSpinEnergy": -0.016851309574274855,
+      "sameSpinEnergy": 3.469446951953614e-18
+    },
+    {
+      "geometry": "H 0 0 0\n H 0 0 .74",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "mp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "H2",
+      "referenceEnergy": -1.1267553171969735,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -1.1267553171969735,
+      "energy": -1.1441365748443055,
+      "correlationEnergy": -0.01738125764733195,
+      "oppositeSpinEnergy": -0.017381257647331953,
+      "sameSpinEnergy": 3.469446951953614e-18
+    },
+    {
+      "geometry": "F .1 .2 .3\n H .3 .1 1.2",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "mp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "HF",
+      "referenceEnergy": -99.98337937378857,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -99.98337937378857,
+      "energy": -100.11262572069931,
+      "correlationEnergy": -0.12924634691075132,
+      "oppositeSpinEnergy": -0.09639405570660597,
+      "sameSpinEnergy": -0.03285229120414534
+    },
+    {
+      "geometry": "He 0 0 0",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "mp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "He",
+      "referenceEnergy": -2.8551604261544443,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -2.8551604261544443,
+      "energy": -2.866360549064388,
+      "correlationEnergy": -0.011200122909943471,
+      "oppositeSpinEnergy": -0.011200122909943471,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "geometry": "N 0 0 .1\n H .93 0 -.25\n H -.465 .8054 -.25\n H -.465 -.8054 -.25",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "mp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "ammonia",
+      "referenceEnergy": -56.16241585401913,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -56.16241585401913,
+      "energy": -56.277549556235236,
+      "correlationEnergy": -0.1151337022161053,
+      "oppositeSpinEnergy": -0.09144806218389842,
+      "sameSpinEnergy": -0.02368564003220689
+    },
+    {
+      "geometry": "H 0 0 0",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "H",
+      "referenceEnergy": -0.49927840341958307,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -0.49927840341958307,
+      "spinSquare": 0.75
+    },
+    {
+      "geometry": "He 0 0 0",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "uhf",
+        "charge": 1,
+        "multiplicity": 2,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "He+",
+      "referenceEnergy": -1.993623337726941,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -1.993623337726941,
+      "spinSquare": 0.75
+    },
+    {
+      "geometry": "H 0 0 0\n H 0 0 1.06",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "uhf",
+        "charge": 1,
+        "multiplicity": 2,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "H2+",
+      "referenceEnergy": -0.6002572844066536,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -0.6002572844066536,
+      "spinSquare": 0.75
+    },
+    {
+      "geometry": "He 0 0 0\n H 0 0 1.0",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "HeH",
+      "referenceEnergy": -3.266483534433566,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -3.266483534433566,
+      "spinSquare": 0.7509404693810704
+    },
+    {
+      "geometry": "He 0 0 0\n H 0 0 .8",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "uhf",
+        "charge": 1,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "HeH+",
+      "referenceEnergy": -2.92353192667031,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -2.92353192667031,
+      "spinSquare": -3.1086244689504383e-15
+    },
+    {
+      "geometry": "H 0 0 0",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "uhf",
+        "charge": -1,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "H-",
+      "referenceEnergy": -0.44882372599763665,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -0.44882372599763665,
+      "spinSquare": 4.440892098500626e-16
+    },
+    {
+      "geometry": "Li 0 0 0",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "Li",
+      "referenceEnergy": -7.43242052759577,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -7.43242052759577,
+      "spinSquare": 0.7500005409516391
+    },
+    {
+      "geometry": "O 0 0 0\n H .1 .2 .94",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "OH",
+      "referenceEnergy": -75.3939157241663,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -75.3939157241663,
+      "spinSquare": 0.7545569518171273
+    },
+    {
+      "geometry": "O 0 0 0\n H 0 -.757 .587\n H 0 .757 .587",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "water",
+      "referenceEnergy": -76.02676567312004,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -76.02676567312004,
+      "spinSquare": -1.1546319456101628e-14
+    },
+    {
+      "geometry": "O 0 0 0\n H 0 -.757 .587\n H 0 .757 .587",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "mix",
+        "maxIterations": 500
+      },
+      "name": "water mixed",
+      "referenceEnergy": -76.02676567312011,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -76.02676567312011,
+      "spinSquare": -1.0658141036401503e-14
+    },
+    {
+      "geometry": "H 0 0 0\n H 0 0 .74",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "mix",
+        "maxIterations": 500
+      },
+      "name": "H2 equilibrium",
+      "referenceEnergy": -1.128700093556442,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -1.128700093556442,
+      "spinSquare": -4.440892098500626e-16
+    },
+    {
+      "geometry": "H 0 0 0\n H 0 0 3",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "mix",
+        "maxIterations": 500
+      },
+      "name": "H2 broken",
+      "referenceEnergy": -0.9987211254605659,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -0.9987211254605659,
+      "spinSquare": 0.9948793683969823
+    },
+    {
+      "geometry": "O 0 0 0\n H 0 -.757 .587\n H 0 .757 .587",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "mp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "water",
+      "referenceEnergy": -76.02676567311988,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -76.02676567311988,
+      "energy": -76.23078564040782,
+      "correlationEnergy": -0.20401996728793265,
+      "oppositeSpinEnergy": -0.1524890816316496,
+      "sameSpinEnergy": -0.051530885656283054
+    },
+    {
+      "geometry": "He 0 0 0\n H 0 0 .8",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "mp2",
+        "charge": 1,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "HeH+",
+      "referenceEnergy": -2.923531926670309,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -2.923531926670309,
+      "energy": -2.9529439179991233,
+      "correlationEnergy": -0.029411991328814367,
+      "oppositeSpinEnergy": -0.029411991328814363,
+      "sameSpinEnergy": -3.469446951953614e-18
+    },
+    {
+      "geometry": "H 0 0 0\n H 0 0 .74",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "mp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "H2",
+      "referenceEnergy": -1.1287000935564415,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -1.1287000935564415,
+      "energy": -1.155071651191018,
+      "correlationEnergy": -0.026371557634576367,
+      "oppositeSpinEnergy": -0.026371557634576364,
+      "sameSpinEnergy": -3.469446951953614e-18
+    },
+    {
+      "geometry": "F .1 .2 .3\n H .3 .1 1.2",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "mp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "HF",
+      "referenceEnergy": -100.01890468661871,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -100.01890468661871,
+      "energy": -100.22312851632964,
+      "correlationEnergy": -0.20422382971092745,
+      "oppositeSpinEnergy": -0.14986990043986748,
+      "sameSpinEnergy": -0.05435392927105996
+    },
+    {
+      "geometry": "He 0 0 0",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "mp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "He",
+      "referenceEnergy": -2.85516047724274,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -2.85516047724274,
+      "energy": -2.8809888167941136,
+      "correlationEnergy": -0.025828339551373463,
+      "oppositeSpinEnergy": -0.025828339551373463,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "geometry": "N 0 0 .1\n H .93 0 -.25\n H -.465 .8054 -.25\n H -.465 -.8054 -.25",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "mp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "ammonia",
+      "referenceEnergy": -56.19501855301924,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -56.19501855301924,
+      "energy": -56.382635659363686,
+      "correlationEnergy": -0.18761710634445034,
+      "oppositeSpinEnergy": -0.14441622711764296,
+      "sameSpinEnergy": -0.04320087922680739
+    },
+    {
+      "geometry": "O 0 0 0",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 3,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "O triplet",
+      "referenceEnergy": -73.80415023325594,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -73.80415023325594,
+      "spinSquare": 2.000000000000001
+    },
+    {
+      "geometry": "O 0 0 0\n O 0 0 1.21",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 3,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "name": "O2 triplet",
+      "referenceEnergy": -147.38025502138944,
+      "matchedStationaryRoot": false,
+      "pyscfInitialTrajectoryEnergy": -147.38025502138944,
+      "spinSquare": 2.012799118129185
+    }
+  ],
+  "ionScans": [
+    {
+      "name": "H2+",
+      "geometry": "H 0 0 0\nH 0 0 2",
+      "unit": "bohr",
+      "basis": "sto-3g",
+      "options": {
+        "method": "uhf",
+        "charge": 1,
+        "multiplicity": 2,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "scan": {
+        "a": 0,
+        "b": 1,
+        "moving": [
+          1
+        ],
+        "start": 1.4,
+        "end": 4,
+        "count": 3,
+        "unit": "bohr"
+      },
+      "energies": [
+        -0.5385113475501032,
+        -0.5616851383300953,
+        -0.5068493442823396
+      ]
+    },
+    {
+      "name": "HeH",
+      "geometry": "He 0 0 0\nH 0 0 2",
+      "unit": "bohr",
+      "basis": "sto-3g",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "scan": {
+        "a": 0,
+        "b": 1,
+        "moving": [
+          1
+        ],
+        "start": 1.4,
+        "end": 4,
+        "count": 3,
+        "unit": "bohr"
+      },
+      "energies": [
+        -2.981858936740572,
+        -3.24832735970622,
+        -3.2724965766438103
+      ]
+    },
+    {
+      "name": "HeH+",
+      "geometry": "He 0 0 0\nH 0 0 2",
+      "unit": "bohr",
+      "basis": "sto-3g",
+      "options": {
+        "method": "uhf",
+        "charge": 1,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "scan": {
+        "a": 0,
+        "b": 1,
+        "moving": [
+          1
+        ],
+        "start": 1.4,
+        "end": 4,
+        "count": 3,
+        "unit": "bohr"
+      },
+      "energies": [
+        -2.834060880949277,
+        -2.8269458500668856,
+        -2.8096901365886304
+      ]
+    },
+    {
+      "name": "H2+",
+      "geometry": "H 0 0 0\nH 0 0 2",
+      "unit": "bohr",
+      "basis": "6-31g",
+      "options": {
+        "method": "uhf",
+        "charge": 1,
+        "multiplicity": 2,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "scan": {
+        "a": 0,
+        "b": 1,
+        "moving": [
+          1
+        ],
+        "start": 1.4,
+        "end": 4,
+        "count": 3,
+        "unit": "bohr"
+      },
+      "energies": [
+        -0.5567724729744713,
+        -0.5714048272406003,
+        -0.5373794652337245
+      ]
+    },
+    {
+      "name": "HeH",
+      "geometry": "He 0 0 0\nH 0 0 2",
+      "unit": "bohr",
+      "basis": "6-31g",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "scan": {
+        "a": 0,
+        "b": 1,
+        "moving": [
+          1
+        ],
+        "start": 1.4,
+        "end": 4,
+        "count": 3,
+        "unit": "bohr"
+      },
+      "energies": [
+        -3.1637385776813076,
+        -3.3280305669388124,
+        -3.3507317230837748
+      ]
+    },
+    {
+      "name": "HeH+",
+      "geometry": "He 0 0 0\nH 0 0 2",
+      "unit": "bohr",
+      "basis": "6-31g",
+      "options": {
+        "method": "uhf",
+        "charge": 1,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "scan": {
+        "a": 0,
+        "b": 1,
+        "moving": [
+          1
+        ],
+        "start": 1.4,
+        "end": 4,
+        "count": 3,
+        "unit": "bohr"
+      },
+      "energies": [
+        -2.9094409777870966,
+        -2.8681309810348994,
+        -2.8568227536904507
+      ]
+    },
+    {
+      "name": "H2+",
+      "geometry": "H 0 0 0\nH 0 0 2",
+      "unit": "bohr",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "uhf",
+        "charge": 1,
+        "multiplicity": 2,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "scan": {
+        "a": 0,
+        "b": 1,
+        "moving": [
+          1
+        ],
+        "start": 1.4,
+        "end": 4,
+        "count": 3,
+        "unit": "bohr"
+      },
+      "energies": [
+        -0.5654570968956202,
+        -0.5830439500460046,
+        -0.5395244597730151
+      ]
+    },
+    {
+      "name": "HeH",
+      "geometry": "He 0 0 0\nH 0 0 2",
+      "unit": "bohr",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "uhf",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "scan": {
+        "a": 0,
+        "b": 1,
+        "moving": [
+          1
+        ],
+        "start": 1.4,
+        "end": 4,
+        "count": 3,
+        "unit": "bohr"
+      },
+      "energies": [
+        -3.170139896363569,
+        -3.329161581348096,
+        -3.351665528876586
+      ]
+    },
+    {
+      "name": "HeH+",
+      "geometry": "He 0 0 0\nH 0 0 2",
+      "unit": "bohr",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "uhf",
+        "charge": 1,
+        "multiplicity": 1,
+        "guess": "core",
+        "maxIterations": 500
+      },
+      "scan": {
+        "a": 0,
+        "b": 1,
+        "moving": [
+          1
+        ],
+        "start": 1.4,
+        "end": 4,
+        "count": 3,
+        "unit": "bohr"
+      },
+      "energies": [
+        -2.9224714782796246,
+        -2.873335374512469,
+        -2.8576129402994344
+      ]
+    }
+  ]
+}

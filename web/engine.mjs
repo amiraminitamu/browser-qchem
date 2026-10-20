@@ -59,12 +59,9 @@ export function checkInvariants(result) {
   return { diagonalError, matrixSymmetryError, eriSymmetryError,
     passed: Math.max(diagonalError, matrixSymmetryError, eriSymmetryError) < 1e-10 };
 }
-export function serializable(result) {
-  const output = { ...result, overlap: Array.from(result.overlap), kinetic: Array.from(result.kinetic),
-    nuclear: Array.from(result.nuclear), eri: Array.from(result.eri) };
-  if (result.rhf) {
-    output.rhf = { ...result.rhf };
-    for (const key of ['density','fock','coefficients','orbitalEnergies','occupations']) output.rhf[key] = Array.from(result.rhf[key]);
-  }
-  return output;
+export function serializable(value) {
+  if(ArrayBuffer.isView(value)) return Array.from(value);
+  if(Array.isArray(value)) return value.map(serializable);
+  if(value&&typeof value==='object') return Object.fromEntries(Object.entries(value).map(([k,v])=>[k,serializable(v)]));
+  return value;
 }

@@ -1,0 +1,150 @@
+{
+  "source": "PySCF 2.14.0",
+  "guess": "1e",
+  "cases": [
+    {
+      "name": "water",
+      "basis": "sto-3g",
+      "geometry": "O 0 0 0\nH 0 -.757 .587\nH 0 .757 .587",
+      "unit": "angstrom",
+      "nao": 7,
+      "energy": -74.96306312972916
+    },
+    {
+      "name": "h2-0.5",
+      "basis": "sto-3g",
+      "geometry": "H 0 0 0\nH 0 0 0.5",
+      "unit": "angstrom",
+      "nao": 2,
+      "energy": -1.042996274540095
+    },
+    {
+      "name": "h2-0.75",
+      "basis": "sto-3g",
+      "geometry": "H 0 0 0\nH 0 0 0.75",
+      "unit": "angstrom",
+      "nao": 2,
+      "energy": -1.1161514489386022
+    },
+    {
+      "name": "h2-1.0",
+      "basis": "sto-3g",
+      "geometry": "H 0 0 0\nH 0 0 1.0",
+      "unit": "angstrom",
+      "nao": 2,
+      "energy": -1.0661086493179366
+    },
+    {
+      "name": "h2-1.25",
+      "basis": "sto-3g",
+      "geometry": "H 0 0 0\nH 0 0 1.25",
+      "unit": "angstrom",
+      "nao": 2,
+      "energy": -0.9891138140908916
+    },
+    {
+      "name": "h2-1.5",
+      "basis": "sto-3g",
+      "geometry": "H 0 0 0\nH 0 0 1.5",
+      "unit": "angstrom",
+      "nao": 2,
+      "energy": -0.9108735545943867
+    },
+    {
+      "name": "water",
+      "basis": "6-31g",
+      "geometry": "O 0 0 0\nH 0 -.757 .587\nH 0 .757 .587",
+      "unit": "angstrom",
+      "nao": 13,
+      "energy": -75.98394849810568
+    },
+    {
+      "name": "h2-0.5",
+      "basis": "6-31g",
+      "geometry": "H 0 0 0\nH 0 0 0.5",
+      "unit": "angstrom",
+      "nao": 4,
+      "energy": -1.0580248129697776
+    },
+    {
+      "name": "h2-0.75",
+      "basis": "6-31g",
+      "geometry": "H 0 0 0\nH 0 0 0.75",
+      "unit": "angstrom",
+      "nao": 4,
+      "energy": -1.12654503453573
+    },
+    {
+      "name": "h2-1.0",
+      "basis": "6-31g",
+      "geometry": "H 0 0 0\nH 0 0 1.0",
+      "unit": "angstrom",
+      "nao": 4,
+      "energy": -1.094807962860513
+    },
+    {
+      "name": "h2-1.25",
+      "basis": "6-31g",
+      "geometry": "H 0 0 0\nH 0 0 1.25",
+      "unit": "angstrom",
+      "nao": 4,
+      "energy": -1.045759963276463
+    },
+    {
+      "name": "h2-1.5",
+      "basis": "6-31g",
+      "geometry": "H 0 0 0\nH 0 0 1.5",
+      "unit": "angstrom",
+      "nao": 4,
+      "energy": -0.9974972943283582
+    },
+    {
+      "name": "water",
+      "basis": "cc-pvdz",
+      "geometry": "O 0 0 0\nH 0 -.757 .587\nH 0 .757 .587",
+      "unit": "angstrom",
+      "nao": 24,
+      "energy": -76.02676567311988
+    },
+    {
+      "name": "h2-0.5",
+      "basis": "cc-pvdz",
+      "geometry": "H 0 0 0\nH 0 0 0.5",
+      "unit": "angstrom",
+      "nao": 10,
+      "energy": -1.0488005562126899
+    },
+    {
+      "name": "h2-0.75",
+      "basis": "cc-pvdz",
+      "geometry": "H 0 0 0\nH 0 0 0.75",
+      "unit": "angstrom",
+      "nao": 10,
+      "energy": -1.1287431347527002
+    },
+    {
+      "name": "h2-1.0",
+      "basis": "cc-pvdz",
+      "geometry": "H 0 0 0\nH 0 0 1.0",
+      "unit": "angstrom",
+      "nao": 10,
+      "energy": -1.100153764878411
+    },
+    {
+      "name": "h2-1.25",
+      "basis": "cc-pvdz",
+      "geometry": "H 0 0 0\nH 0 0 1.25",
+      "unit": "angstrom",
+      "nao": 10,
+      "energy": -1.0509983232238373
+    },
+    {
+      "name": "h2-1.5",
+      "basis": "cc-pvdz",
+      "geometry": "H 0 0 0\nH 0 0 1.5",
+      "unit": "angstrom",
+      "nao": 10,
+      "energy": -1.0021927454865391
+    }
+  ]
+}
