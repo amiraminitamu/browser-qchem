@@ -7,7 +7,7 @@ export class MoleculeViewer {
     this.pair=[]; this.moving=[];
     try {
       if (!globalThis.$3Dmol) throw new Error('Viewer library could not be loaded.');
-      this.viewer=globalThis.$3Dmol.createViewer(element,{backgroundColor:'#171b2a',antialias:true,minimumZoomToDistance:2.6});
+      this.viewer=globalThis.$3Dmol.createViewer(element,{backgroundColor:'#f4f7f8',antialias:true,minimumZoomToDistance:2.6});
       if (!this.viewer) throw new Error('WebGL is unavailable.');
       this.viewer.setProjection('orthographic');
       new ResizeObserver(()=>{
@@ -44,11 +44,11 @@ export class MoleculeViewer {
     const style={stick:{radius:.12,colorscheme:'Jmol'},sphere:{scale:.32,colorscheme:'Jmol'}};
     this.viewer.setStyle({},style);
     if (this.moving.length) this.viewer.setStyle({index:this.moving},{stick:{radius:.12,colorscheme:'Jmol'},sphere:{scale:.32,colorscheme:'Jmol'}});
-    if (this.pair.length) this.viewer.setStyle({index:this.pair},{stick:{radius:.13,color:'#a18af8'},sphere:{scale:.35,color:'#a18af8'}});
+    if (this.pair.length) this.viewer.setStyle({index:this.pair},{stick:{radius:.13,color:'#187d77'},sphere:{scale:.35,color:'#187d77'}});
     this.viewer.removeAllLabels();
     if (this.labels) this.molecule.atoms.forEach((atom,i)=>{
       this.viewer.addLabel(`${i+1} ${atom.symbol}`,{position:{x:atom.xyz[0]*ANGSTROM_PER_BOHR,y:atom.xyz[1]*ANGSTROM_PER_BOHR,z:atom.xyz[2]*ANGSTROM_PER_BOHR},
-        fontSize:12,fontColor:'#f0edff',backgroundColor:'#292d40',backgroundOpacity:.9,borderRadius:5,inFront:true,screenOffset:{x:13,y:13}});
+        fontSize:11,fontColor:'#294e59',backgroundColor:'#ffffff',backgroundOpacity:.92,borderRadius:5,inFront:true,screenOffset:{x:13,y:13}});
     });
     this.viewer.render();
   }
@@ -73,4 +73,5 @@ export class MoleculeViewer {
   reset() { this.fit(); }
   png() { return this.viewer?.pngURI(); }
 }
+
 

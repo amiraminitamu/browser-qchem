@@ -116,24 +116,51 @@ into `build/wasm/dist`; do not edit the generated copies there.
 
 ## Interface and navigation
 
-The workspace puts the molecule on a dark 3D canvas, with calculation controls
-in a fixed setup panel and a compact energy summary above the result tabs.
-The Run/Stop control stays visible while the setup panel scrolls. Coordinate
-editing, advanced SCF options, detailed summaries and iteration logs expand when
-needed. Invalid geometry opens the coordinate editor, and calculation errors
-open their summary.
+The workbench uses a light molecular canvas beside an energy and convergence
+panel. Method and basis sit together in a compact setup panel, with readable
+labels, charge/electron counts and explicit spin state. The Run/Stop control
+stays visible while the setup panel scrolls. Results share one analysis area
+below the structure and energy. A restrained green palette, clear numeric
+alignment and a small set of controls keep the calculation in view.
 
-- **Molecule** opens coordinate editing; **Setup** focuses the basis selector.
-- **Scan** selects the bond scan and brings its controls into view.
-- **Results** jumps to the analysis panels. Result tabs support arrow keys,
-  Home and End. Selecting an SCF chart point opens and highlights its log row.
+- **Cartesian coordinates** expands the XYZ editor. **Import XYZ** loads a file.
+- **Calculation** selects a single point, bond-length scan, or molecular integrals.
+  Scan controls appear when needed. **Convergence settings** contains iteration
+  limits and DIIS; numerical summaries and iteration logs expand independently.
+- Result tabs support arrow keys, Home and End. Selecting an SCF chart point
+  opens and highlights its log row.
 - The expand icon gives the molecule a larger canvas; **Esc** restores the
-  workspace. Molecular framing adapts to the canvas dimensions.
-- **Cmd+Enter** or **Ctrl+Enter** runs the calculation. The **?** button opens a
-  short workspace guide.
+  workbench. Molecular framing adapts to the canvas dimensions.
+- **Cmd+Enter** or **Ctrl+Enter** runs the calculation. **Guide** opens a short
+  explanation of the workflow.
 - On phones and tablets, **Setup** opens the configuration drawer. The bottom
   action bar keeps setup and Run/Stop available while viewing results. Running
   closes the drawer, and **Esc** closes it without starting a calculation.
+
+### Ions and open-shell examples
+
+The example selector includes systems with electronic settings loaded together:
+
+| Example | Charge | Electrons | Multiplicity | Default method |
+| --- | --- | --- | --- | --- |
+| H2+ | +1 | 1 | 2 (doublet) | UHF |
+| HeH, neutral | 0 | 3 | 2 (doublet) | UHF |
+| HeH+ | +1 | 2 | 1 (singlet) | RHF |
+
+HeH is neutral; HeH+ is the cation. Selecting either open-shell example sets
+UHF and the core-Hamiltonian guess. You can edit charge and multiplicity for
+other ions, including anions. The formula and electron count update with charge.
+RHF and RHF-MP2 continue to require a positive even electron count, so H2+
+requires UHF. Geometry-only XYZ input does not carry charge or multiplicity;
+set those fields explicitly after importing a file.
+
+The ion regression checks include H2+, neutral HeH, HeH+ with UHF, and H- with
+UHF in STO-3G, 6-31G and cc-pVDZ, plus all-electron RHF-MP2 for HeH+.
+The full reference suite covers **56 single points and 27 ion/open-shell PES
+points** against PySCF. Scan CSV and XYZ now include charge and electron count
+in addition to method, multiplicity and energy. Browser tests verify preset
+settings, superscript charges, charged scans and exports, invalid spin states,
+method rejection for odd-electron MP2, and mobile recovery.
 
 ![Molecular workspace](docs/workspace.png)
 
@@ -144,10 +171,10 @@ open their summary.
    STO-3G, 13 in 6-31G, and 24 in cc-pVDZ. Calculations above 40 AOs are disabled.
 2. Drag to rotate, scroll to zoom, and use **Fit** to frame the structure.
    Atom labels match the one-based indices in the geometry input. **PNG** exports
-   the current view; **Export geometry** writes an XYZ file in angstrom.
-3. Select **Bond length scan**. Click atom A and then atom B, or type their indices.
+   the current view; **Export XYZ** writes an XYZ file in angstrom.
+3. Select **Bond-length scan**. Click atom A and then atom B, or type their indices.
    A stays fixed. B and every listed moving atom translate along the original AB
-   direction. **Use connected fragment** proposes the fragment on B's side after
+   direction. **Select connected fragment** proposes the fragment on B's side after
    removing AB from an inferred bond graph. Check the highlighted selection;
    cyclic structures require an explicit moving group. Inferred bonds affect
    display/selection only and do not enter the electronic structure calculation.
@@ -165,7 +192,7 @@ open their summary.
    remain in XYZ/JSON with their status; CSV leaves unavailable energies blank.
 
 These are **unrelaxed bond scans**: the other coordinates are not optimized.
-Each point uses an independent core-Hamiltonian guess. There is no state
+Each point uses an independent guess, with the selected orbital-mixing policy for UHF. There is no state
 following, orbital stability test, or guarantee of the lowest SCF solution.
 Core guesses can converge to excited SCF roots, including for N2. Inspect the
 curve for discontinuities and verify the electronic state before interpreting a
@@ -173,7 +200,7 @@ PES. Restricted HF also cannot describe general bond dissociation correctly.
 
 Single-point JSON contains all integrals. Scan JSON omits the large ERI tensor at
 each point, retaining one-electron matrices and electronic results. To inspect a scan
-geometry's ERIs, select the point and run **Single point energy**. Exported JSON
+geometry's ERIs, select the point and run **Single-point energy**. Exported JSON
 molecular coordinates are in bohr; XYZ coordinates are in angstrom. Units and
 status accompany all scan energies. Selecting an older completed point during a
 scan keeps that point selected while later points continue to calculate.
@@ -250,6 +277,8 @@ python3 tests/check_browser.py
 python3 tests/check_browser_rhf.py
 python3 tests/check_browser_workspace.py
 python3 tests/check_browser_interface.py
+python3 tests/check_browser_methods.py
+python3 tests/check_browser_ions.py
 ```
 
 This starts a temporary localhost server, loads the real WASM module in a worker,
@@ -265,7 +294,7 @@ AO preflight, XYZ upload, PES point inspection, CSV/XYZ/JSON downloads, stopping
 a scan, failed-point cleanup, nonconvergence, recovery and mobile layout.
 
 The interface browser check additionally verifies persistent actions,
-progressive disclosure, navigation and keyboard controls, help, viewer focus,
+side-by-side scientific layout, convergence controls, keyboard navigation, help, viewer focus,
 mobile single-point and scan workflows, and layouts from 360 to 1440 pixels.
 
 Initial native and WASM validation passed on Linux x86_64 with Emscripten 4.0.10,
@@ -341,6 +370,7 @@ node tests/check_methods.mjs
 python3 tests/check_methods.py
 python3 tests/check_methods_native.py build/native/libqc_core.dylib
 python3 tests/check_browser_methods.py
+python3 tests/check_browser_ions.py
 ```
 
 On Linux use `build/native/libqc_core.so`. The numerical cases cover H, He+,

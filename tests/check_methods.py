@@ -10,10 +10,10 @@ ROOT=Path(__file__).resolve().parents[1]
 WATER='O 0 0 0; H 0 -.757 .587; H 0 .757 .587'
 CASES=[]
 for basis in ['sto-3g','6-31g','cc-pvdz']:
-    for name,geom,charge,spin,guess in [('H','H 0 0 0',0,1,'core'),('He+','He 0 0 0',1,1,'core'),('Li','Li 0 0 0',0,1,'core'),('OH','O 0 0 0; H .1 .2 .94',0,1,'core'),('water',WATER,0,0,'core'),('water mixed',WATER,0,0,'mix'),('H2 equilibrium','H 0 0 0; H 0 0 .74',0,0,'mix'),('H2 broken','H 0 0 0; H 0 0 3',0,0,'mix')]:
+    for name,geom,charge,spin,guess in [('H','H 0 0 0',0,1,'core'),('He+','He 0 0 0',1,1,'core'),('H2+','H 0 0 0; H 0 0 1.06',1,1,'core'),('HeH','He 0 0 0; H 0 0 1.0',0,1,'core'),('HeH+','He 0 0 0; H 0 0 .8',1,0,'core'),('H-','H 0 0 0',-1,0,'core'),('Li','Li 0 0 0',0,1,'core'),('OH','O 0 0 0; H .1 .2 .94',0,1,'core'),('water',WATER,0,0,'core'),('water mixed',WATER,0,0,'mix'),('H2 equilibrium','H 0 0 0; H 0 0 .74',0,0,'mix'),('H2 broken','H 0 0 0; H 0 0 3',0,0,'mix')]:
         CASES.append((name,geom,basis,charge,spin,guess,'uhf'))
-    for name,geom in [('water',WATER),('H2','H 0 0 0; H 0 0 .74'),('HF','F .1 .2 .3; H .3 .1 1.2'),('He','He 0 0 0'),('ammonia','N 0 0 .1; H .93 0 -.25; H -.465 .8054 -.25; H -.465 -.8054 -.25')]:
-        CASES.append((name,geom,basis,0,0,'core','mp2'))
+    for name,geom in [('water',WATER),('HeH+','He 0 0 0; H 0 0 .8'),('H2','H 0 0 0; H 0 0 .74'),('HF','F .1 .2 .3; H .3 .1 1.2'),('He','He 0 0 0'),('ammonia','N 0 0 .1; H .93 0 -.25; H -.465 .8054 -.25; H -.465 -.8054 -.25')]:
+        CASES.append((name,geom,basis,1 if name=='HeH+' else 0,0,'core','mp2'))
 CASES.extend([('O triplet','O 0 0 0','sto-3g',0,2,'core','uhf'),('O2 triplet','O 0 0 0; O 0 0 1.21','sto-3g',0,2,'core','uhf')])
 references=[]
 for name,geom,basis,charge,spin,guess,method in CASES:
@@ -63,5 +63,20 @@ for name,geom,basis,charge,spin,guess,method in CASES:
         ref.update(energy=pt.e_tot,correlationEnergy=pt.e_corr,oppositeSpinEnergy=pt.e_corr_os,sameSpinEnergy=pt.e_corr_ss)
     references.append(ref)
     print(f'{method.upper()} {name}/{basis}: energy, '+('spin and SCF identities' if method=='uhf' else 'OS/SS correlation')+' PASS',flush=True)
-(ROOT/'tests/fixtures/methods.json').write_text(json.dumps({'source':'PySCF '+__import__('pyscf').__version__,'cases':references},indent=2)+'\n')
-print(f'{len(references)} independent PySCF comparisons PASS')
+ion_scans=[]
+for basis in ['sto-3g','6-31g','cc-pvdz']:
+    for name,first,charge,multiplicity in [('H2+','H',1,2),('HeH','He',0,2),('HeH+','He',1,1)]:
+        request={'name':name,'geometry':f'{first} 0 0 0\nH 0 0 2','unit':'bohr','basis':basis,'options':{'method':'uhf','charge':charge,'multiplicity':multiplicity,'guess':'core','maxIterations':500},'scan':{'a':0,'b':1,'moving':[1],'start':1.4,'end':4,'count':3,'unit':'bohr'}}
+        actual=json.loads(subprocess.run(['node','tests/export_scan.mjs'],cwd=ROOT,input=json.dumps(request),text=True,check=True,capture_output=True).stdout)
+        energies=[]
+        for point in actual['points']:
+            assert point['converged'],point
+            mol=gto.M(atom=f'{first} 0 0 0; H 0 0 {point["coordinate"]}',unit='bohr',basis=basis,charge=charge,spin=multiplicity-1,verbose=0);mol.incore_anyway=True
+            mf=scf.UHF(mol);mf.init_guess='1e';mf.init_guess_breaksym=0;mf.conv_tol=1e-12;mf.conv_tol_grad=1e-10;mf.max_cycle=500;mf.kernel();assert mf.converged
+            assert abs(mf.e_tot-point['energy'])<2e-8,(name,basis,point['coordinate'],mf.e_tot,point['energy'])
+            assert point['result']['uhf']['electrons']==mol.nelectron
+            energies.append(float(mf.e_tot))
+        ion_scans.append({**request,'energies':energies})
+        print(f'UHF {name}/{basis}: charged/open-shell three-point PES PASS',flush=True)
+(ROOT/'tests/fixtures/methods.json').write_text(json.dumps({'source':'PySCF '+__import__('pyscf').__version__,'cases':references,'ionScans':ion_scans},indent=2)+'\n')
+print(f'{len(references)} single points and {len(ion_scans)*3} ion/open-shell scan points PASS')

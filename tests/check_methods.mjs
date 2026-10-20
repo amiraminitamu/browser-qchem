@@ -41,3 +41,19 @@ const failed=await runScan(engine,water,{a:0,b:1,start:.7,end:1.5,count:2},{meth
 assert.equal(engine._qc_mp2_create(0),0);assert.equal(engine._qc_mp2_step(0),-1);assert.equal(engine._qc_uhf_step(0),-1);assert.equal(engine._qc_uhf_create(0,1,0,100,1,0,1e-10,1e-8,1e-8),0);
 assert.ok((await computeElectronic(engine,water,{method:'mp2'})).mp2.energy<-74.99);
 console.log('Broken symmetry, spin validation, no virtuals, failed references, cancellation, UHF/MP2 scans and recovery PASS');
+
+for(const c of fixture.ionScans??[]) {
+ const scan=await runScan(engine,parseGeometry(c.geometry,c.unit,c.basis),c.scan,c.options);
+ assert.equal(scan.spec.charge,c.options.charge);
+ for(const [i,p] of scan.points.entries()) {assert.ok(p.converged);near(p.energy,c.energies[i]);assert.equal(p.result.uhf.charge,c.options.charge);assert.equal(p.result.uhf.multiplicity,c.options.multiplicity);}
+ assert.match(scanCSV(scan),/reference_energy_hartree,charge,electrons/);
+ assert.match(scanXYZ(scan),new RegExp(`charge=${c.options.charge} electrons=`));
+}
+console.log('Ion/open-shell PES energies, charge/electron metadata and exports PASS');
+
+const failedIon=await runScan(engine,parseGeometry('H 0 0 0\nH 0 0 1'),{a:0,b:1,start:.00001,end:1,count:2},{method:'uhf',charge:1,multiplicity:2,guess:'core'});
+assert.equal(failedIon.points[0].status,'error');assert.ok(failedIon.points[1].converged);
+const failedFields=scanCSV(failedIon).trim().split('\n')[1].split(',').map(s=>JSON.parse(s));
+assert.equal(failedFields[9],'UHF');assert.equal(failedFields[10],'2');assert.equal(failedFields[14],'1');assert.equal(failedFields[15],'1');
+assert.match(scanXYZ(failedIon),/method=UHF multiplicity=2 charge=1 electrons=1 status=error/);
+console.log('Failed ion scan points retain method, multiplicity, charge and electron count PASS');

@@ -27,12 +27,15 @@ try:
         run_y=page.locator('#calculate').bounding_box()['y']
         assert 0<run_y<850,'Primary action should stay within the viewport'
         assert page.locator('#metric-aos').inner_text()=='7'
-        page.locator('#nav-scan').click()
+        viewer_box=page.locator('.viewer-card').bounding_box();energy_box=page.locator('.energy-card').bounding_box()
+        assert energy_box['x']>=viewer_box['x']+viewer_box['width'],'Structure and energy should sit side by side'
+        assert page.locator('#metric-electrons').inner_text()=='10'
+        page.locator('#mode').select_option('scan')
         assert page.locator('#mode').input_value()=='scan'
         assert page.locator('#scan-a').is_visible()
         assert abs(page.locator('#calculate').bounding_box()['y']-run_y)<1
         assert page.locator('#run-label').inner_text()=='Run bond scan'
-        page.locator('#nav-setup').click();page.locator('#mode').select_option('rhf')
+        page.locator('#mode').select_option('rhf')
         page.locator('.advanced-settings summary').click()
         page.locator('#maxiter').fill('1');page.keyboard.press('Control+Enter');status('NOT CONVERGED')
         assert page.locator('.summary-details').evaluate('(e)=>e.open')
@@ -54,7 +57,7 @@ try:
         page.evaluate('scrollTo(0,0)')
         page.evaluate("document.querySelector('.setup-scroll').scrollTop=0;document.querySelector('.advanced-settings').open=false;document.querySelector('#coordinates-editor').open=false;document.querySelector('#iteration-details').open=false;document.activeElement.blur()")
         page.screenshot(path=str(ROOT.parent/'redesign-desktop.png'),full_page=True)
-        print('Persistent Run, scan navigation, advanced settings, keyboard run, tabs, diagnostics, help and expanded viewer PASS',flush=True)
+        print('Scientific layout, persistent Run, scan setup, convergence settings, keyboard run, tabs, diagnostics, help and expanded viewer PASS',flush=True)
         page.set_viewport_size({'width':390,'height':844});page.evaluate('scrollTo(0,0)')
         assert page.locator('#setup-panel').get_attribute('aria-hidden')=='true'
         assert page.locator('#mobile-run').is_visible()
@@ -89,3 +92,4 @@ try:
         print('Mobile drawer, real single-point/scan calculations, curve inspection and responsive widths 360-1440px PASS')
 finally:
     server.shutdown();server.server_close()
+

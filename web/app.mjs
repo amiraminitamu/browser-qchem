@@ -10,7 +10,11 @@ import {plot} from './plot.mjs';
 const $=id=>document.getElementById(id);
 const EXAMPLES={water:WATER_XYZ,h2:'2\nHydrogen / angstrom\nH 0 0 0\nH 0 0 0.74',
   methane:'5\nMethane / angstrom\nC 0 0 0\nH .63 .63 .63\nH -.63 -.63 .63\nH -.63 .63 -.63\nH .63 -.63 -.63',
-  ammonia:'4\nAmmonia / angstrom\nN 0 0 .1\nH .93 0 -.25\nH -.465 .8054 -.25\nH -.465 -.8054 -.25'};
+  ammonia:'4\nAmmonia / angstrom\nN 0 0 .1\nH .93 0 -.25\nH -.465 .8054 -.25\nH -.465 -.8054 -.25',
+  h2plus:'2\nHydrogen molecular ion / angstrom\nH 0 0 0\nH 0 0 1.06',
+  heh:'2\nNeutral helium hydride / angstrom\nHe 0 0 0\nH 0 0 1.0',
+  hehplus:'2\nHelium hydride cation / angstrom\nHe 0 0 0\nH 0 0 .8'};
+const EXAMPLE_SETTINGS={h2plus:{name:'Hydrogen ion',charge:1,multiplicity:2,method:'uhf'},heh:{name:'Helium hydride',charge:0,multiplicity:2,method:'uhf'},hehplus:{name:'Helium hydride ion',charge:1,multiplicity:1,method:'rhf'}};
 let ready=false,busy=false,valid=false,jobId=0,jobMode='rhf',molecule=null,current=null;
 let scan=null,selectedPoint=-1,history=[],previewTimer=null;
 let pair=[0,1],selectionExplicit=false;
@@ -36,7 +40,7 @@ function setBusy(value) {
   $('scan-controls').querySelectorAll('input,select,button').forEach(element=>element.disabled=value||mode!=='scan');
   $('uhf-controls').hidden=$('method').value!=='uhf'||mode==='integrals';
   for(const id of ['multiplicity','guess'])$(id).disabled=value||mode==='integrals'||$('method').value!=='uhf';
-  $('method-hint').textContent=$('method').value==='uhf'?'Separate alpha and beta orbitals, with spin diagnostics.':$('method').value==='mp2'?'Conventional all-electron MP2 on a converged RHF reference. 40 AO limit.':'Restricted Hartree-Fock for closed-shell singlets.';
+  $('method-hint').textContent=$('method').value==='uhf'?'Separate alpha and beta orbitals, with spin diagnostics.':$('method').value==='mp2'?'All-electron MP2 correlation on an RHF reference.':'Restricted Hartree-Fock for closed-shell singlets.';
   for(const id of ['method','charge','maxiter','diis'])$(id).disabled=value||mode==='integrals';
 }
 function badge(text,kind='neutral') { $('result-badge').textContent=text;$('result-badge').className=`status-badge ${kind}`; }
@@ -58,8 +62,13 @@ document.querySelectorAll('[data-tab]').forEach(button=>button.addEventListener(
 function formula(atoms) {
   const counts={};for(const atom of atoms) counts[atom.symbol]=(counts[atom.symbol]??0)+1;
   const symbols=Object.keys(counts).sort();
+  if(symbols.length===2&&counts.He&&counts.H) symbols.sort((a,b)=>a==='He'?-1:b==='He'?1:0);
   if(counts.C) symbols.sort((a,b)=>(a==='C'?-2:a==='H'?-1:0)-(b==='C'?-2:b==='H'?-1:0)||a.localeCompare(b));
   return symbols.map(symbol=>symbol+(counts[symbol]>1?String(counts[symbol]).replace(/\d/g,d=>'₀₁₂₃₄₅₆₇₈₉'[d]):'')).join('');
+}
+function chargeSuffix(charge) {
+  const digits=String(Math.abs(charge)).replace(/\d/g,d=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[d]);
+  return (Math.abs(charge)===1?'':digits)+(charge>0?'⁺':'⁻');
 }
 function readMoving() {
   const text=$('scan-moving').value.trim();
@@ -100,13 +109,19 @@ function preview({reset=false}={}) {
     $('eri-memory').textContent=`${(info.eriBytes/1e6).toFixed(2)} MB ERIs`;
     $('input-message').textContent=!info.fits?'This basis exceeds the 40 AO limit. Select a smaller basis or molecule.':'';
     $('formula').textContent=formula(molecule.atoms);
-    const title={water:'Water',h2:'Hydrogen',methane:'Methane',ammonia:'Ammonia'}[$('preset').value]??'Custom molecule';
+    const title=EXAMPLE_SETTINGS[$('preset').value]?.name??{water:'Water',h2:'Hydrogen',methane:'Methane',ammonia:'Ammonia'}[$('preset').value]??'Custom molecule';
     $('header-molecule').textContent=title;
     $('workspace-title').replaceChildren(document.createTextNode(title));
-    const dot=document.createElement('span');dot.className='title-dot';dot.textContent='.';$('workspace-title').append(dot);
+    const charge=Number($('charge').value),electrons=molecule.atoms.reduce((sum,a)=>sum+a.charge,0)-charge;
+    const mult=$('method').value==='uhf'?Number($('multiplicity').value):1;
+    const spinLabel=({1:'singlet',2:'doublet',3:'triplet',4:'quartet',5:'quintet'})[mult]??`multiplicity ${mult}`;
+    const chargeLabel=Number.isSafeInteger(charge)?charge===0?'Neutral':`Charge ${charge>0?'+':''}${charge}`:'Invalid charge';
+    $('molecule-state').textContent=$('mode').value==='integrals'?chargeLabel:`${chargeLabel} · ${spinLabel}`;
+    $('electron-info').textContent=Number.isSafeInteger(electrons)&&electrons>=0?`${electrons} electron${electrons===1?'':'s'} · ${chargeLabel.toLowerCase()}`:'Check the molecular charge';
+    $('formula').textContent=formula(molecule.atoms)+(Number.isSafeInteger(charge)&&charge!==0?chargeSuffix(charge):'');
     $('workspace-description').textContent=$('mode').value==='scan'?'Map the energy along a molecular coordinate.':'Explore structure, energy, and electronic properties.';
     $('viewer-meta').textContent=`${molecule.atoms.length} atoms · ${basisLabel(molecule.basis)}`;
-    if(!current){$('metric-basis').textContent=basisLabel(molecule.basis);$('metric-aos').textContent=info.nao;$('metric-cycles').textContent='...';}
+    if(!current){$('metric-basis').textContent=basisLabel(molecule.basis);$('metric-aos').textContent=info.nao;$('metric-cycles').textContent='...';$('metric-electrons').textContent=Number.isSafeInteger(electrons)&&electrons>=0?electrons:'...';}
     viewer.setMolecule(molecule,{reset});
     if(pair.some(i=>!molecule.atoms[i])) {$('scan-a').value=1;$('scan-b').value=Math.min(2,molecule.atoms.length);$('scan-moving').value=Math.min(2,molecule.atoms.length);}
     selection();renderData();
@@ -187,28 +202,29 @@ function renderData() {
   for(const text of [`${molecule.atoms.length} atoms`,basisLabel(molecule.basis),`${info.nao} AOs`,'Coordinates exported in angstrom']){const chip=document.createElement('span');chip.textContent=text;$('data-meta').append(chip);}
 }
 function referenceContext(mp2) {
-  document.querySelector('#panel-scf h3').textContent=mp2?'RHF reference convergence':'Finding self-consistency';
+  document.querySelector('#panel-scf h3').textContent=mp2?'RHF reference convergence':'SCF convergence';
   document.querySelector('#panel-scf .panel-intro p').textContent=mp2?'The SCF curve belongs to the RHF reference; correlation is computed after convergence.':'Follow the total SCF energy as the density converges.';
 }
 function renderMethodDetails(result) {
   referenceContext(!!result.mp2);
   const box=$('method-details');box.replaceChildren();const u=result.uhf,m=result.mp2;
+  $('method-note').textContent='SCF convergence does not establish wavefunction stability or the lowest-energy state.';
   box.hidden=!u&&!m;if(box.hidden)return;
   const values=u?[['Alpha / beta electrons',`${u.nalpha} / ${u.nbeta}`],['Multiplicity',u.multiplicity],['⟨S²⟩ / target',`${u.spinSquare.toFixed(6)} / ${u.targetSpinSquare.toFixed(6)}`],['Spin contamination',u.spinContamination.toFixed(6)]]:
     m.status==='complete'?[['RHF reference',`${m.referenceEnergy.toFixed(10)} Eh`],['MP2 correlation',`${m.correlationEnergy.toFixed(10)} Eh`],['Opposite spin',`${m.oppositeSpinEnergy.toFixed(10)} Eh`],['Same spin',`${m.sameSpinEnergy.toFixed(10)} Eh`]]:[['MP2','Not computed: RHF did not converge']];
   for(const [label,value] of values){const item=document.createElement('div');item.textContent=label;const strong=document.createElement('strong');strong.textContent=value;item.append(strong);box.append(item);}
-  const note=document.createElement('p');note.textContent=u?`Guess: ${u.mixedGuessApplied?'opposite alpha/beta HOMO-LUMO mixing':'core Hamiltonian'}. UHF is not generally an eigenstate of total spin; convergence does not guarantee the lowest or stable SCF solution.`:'All-electron conventional MP2. Orbitals, density, Fock matrices and SCF history belong to the RHF reference. MP2 can be unreliable near bond dissociation or small orbital gaps.';box.append(note);
+  $('method-note').textContent=u?`Guess: ${u.mixedGuessApplied?'opposite alpha/beta HOMO-LUMO mixing':'core Hamiltonian'}. UHF is not generally an eigenstate of total spin; convergence does not guarantee the lowest or stable SCF solution.`:'All-electron conventional MP2. Orbitals, density, Fock matrices and SCF history belong to the RHF reference. MP2 can be unreliable near bond dissociation or small orbital gaps.';
 }
 function showResult(result,{pointIndex=null}={}) {
   current=result;const r=scfResult(result),n=result.nao,method=result.method??r?.method??'INTEGRALS',energy=totalEnergy(result);
   renderMethodDetails(result);
-  $('metric-basis').textContent=basisLabel(result.molecule.basis);$('metric-aos').textContent=n;$('metric-cycles').textContent=r?.iterations??'N/A';
+  $('metric-basis').textContent=basisLabel(result.molecule.basis);$('metric-aos').textContent=n;$('metric-cycles').textContent=r?.iterations??'N/A';$('metric-electrons').textContent=r?.electrons??'N/A';
   if(r&&!r.converged)document.querySelector('.summary-details').open=true;
   $('result-context').textContent=`${method} / ${basisLabel(result.molecule.basis)}`;
-  $('results-title').textContent=pointIndex===null?'Calculation details':`Scan point ${pointIndex+1} / ${scan.spec.count}`;
+  $('results-title').textContent=pointIndex===null?'Electronic structure':`Scan point ${pointIndex+1} / ${scan.spec.count}`;
   if(r){
     badge(r.converged?'CONVERGED':'NOT CONVERGED',r.converged?'success':'warning');
-    $('energy-label').textContent=r.converged?`TOTAL ${method} ENERGY`:'UNCONVERGED ENERGY';$('energy-value').textContent=(energy??r.energy).toFixed(10);$('energy-unit').textContent='Hartree';
+    $('energy-label').textContent=r.converged?`TOTAL ${method} ENERGY`:'UNCONVERGED ENERGY';$('energy-value').textContent=(energy??r.energy).toFixed(10);$('energy-unit').textContent='Eₕ';
     $('status').textContent=r.converged?`CONVERGED: ${method}/${basisLabel(result.molecule.basis)}.`:result.mp2?'NOT CONVERGED: RHF reference; MP2 not computed.':'NOT CONVERGED: maximum iterations reached.';
     $('summary').textContent=[r.converged?`Total ${method} energy  ${(energy??r.energy).toFixed(12)} Eh`:`Unconverged energy ${r.energy.toFixed(12)} Eh`,
       `Electronic energy ${r.electronicEnergy.toFixed(10)}`,`Nuclear repulsion ${result.nuclearRepulsion.toFixed(10)}`,
@@ -346,8 +362,18 @@ $('mode').addEventListener('change',()=>{
   preview();
   if($('mode').value==='scan')$('scan-controls').scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'});
 });
-$('preset').addEventListener('change',()=>{if(busy)return;selectionExplicit=false;$('geometry').value=EXAMPLES[$('preset').value];$('unit').value='angstrom';$('charge').value='0';invalidate();preview({reset:true});});
-$('water').addEventListener('click',()=>{if(busy)return;$('preset').value='water';$('geometry').value=WATER_XYZ;$('unit').value='angstrom';$('charge').value='0';invalidate();preview({reset:true});run();});
+$('preset').addEventListener('change',()=>{
+  if(busy)return;
+  selectionExplicit=false;
+  const preset=$('preset').value,settings=EXAMPLE_SETTINGS[preset];
+  $('geometry').value=EXAMPLES[preset];$('unit').value='angstrom';
+  $('charge').value=settings?.charge??0;$('multiplicity').value=settings?.multiplicity??1;
+  if(settings)$('method').value=settings.method;
+  if(settings?.method==='uhf')$('guess').value='core';
+  pair=[0,1];$('scan-a').value='1';$('scan-b').value='2';$('scan-moving').value='2';
+  invalidate();preview({reset:true});
+});
+$('water').addEventListener('click',()=>{if(busy)return;$('preset').value='water';$('geometry').value=WATER_XYZ;$('unit').value='angstrom';$('charge').value='0';$('multiplicity').value='1';invalidate();preview({reset:true});run();});
 $('xyz-file').addEventListener('change',async event=>{
   const file=event.target.files[0];if(!file)return;
   if(file.size>1000000){$('input-message').textContent='Use an XYZ file smaller than 1 MB.';return;}
@@ -380,12 +406,6 @@ function focusViewer(enabled) {
   $('focus-view').setAttribute('aria-pressed',String(enabled));
   $('focus-view').title=enabled?'Exit expanded viewer':'Expand molecule viewer';
 }
-function activateTool(id) {
-  document.querySelectorAll('.rail-button').forEach(button=>{
-    button.classList.toggle('active',button.id===id);
-    button.setAttribute('aria-pressed',String(button.id===id));
-  });
-}
 $('mobile-setup-toggle').addEventListener('click',()=>toggleSetup(!document.body.classList.contains('setup-open')));
 $('mobile-edit').addEventListener('click',()=>toggleSetup(true));
 $('close-setup').addEventListener('click',()=>toggleSetup(false));
@@ -394,17 +414,6 @@ $('mobile-run').addEventListener('click',()=>busy?$('cancel').click():run());
 $('focus-view').addEventListener('click',()=>focusViewer(!document.body.classList.contains('focus-view')));
 $('help-open').addEventListener('click',()=>$('workspace-guide').showModal());
 for(const id of ['help-close','help-done'])$(id).addEventListener('click',()=>$('workspace-guide').close());
-$('nav-molecule').addEventListener('click',()=>{
-  activateTool('nav-molecule');$('coordinates-editor').open=true;toggleSetup(true);$('geometry').focus();
-});
-$('nav-setup').addEventListener('click',()=>{activateTool('nav-setup');toggleSetup(true);$('basis').focus();});
-$('nav-scan').addEventListener('click',()=>{
-  if(busy)return;
-  activateTool('nav-scan');$('mode').value='scan';invalidate();preview();setTab('pes');toggleSetup(true);$('scan-a').focus();
-});
-$('nav-results').addEventListener('click',()=>{
-  activateTool('nav-results');$('results-section').scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'});
-});
 document.addEventListener('keydown',event=>{
   if(event.key==='Escape'){focusViewer(false);toggleSetup(false);}
   if((event.metaKey||event.ctrlKey)&&event.key==='Enter'&&!$('workspace-guide').open&&!busy){event.preventDefault();run();}
