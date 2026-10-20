@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import fs from 'node:fs';
+import {mathText} from '../web/format.mjs';
 import {TASKS} from '../web/workbench.mjs';
 
 function check(value,message) {if(!value)throw new Error(message);}
@@ -9,7 +10,7 @@ function functionBlock(source,start,end) {const a=source.indexOf(start),b=source
 
 export function runStateTests(appSource,settingsSource) {
   const settings=exported(settingsSource,['readSettings','restoreSettings','saveSettings','presetMethod','captureRequest','assertResultMatches','SETTINGS_FIELDS']);
-  const defaults={preset:'water',geometry:'O 0 0 0\nH 0 0 1\nH 0 1 0',unit:'angstrom',basis:'sto-3g',method:'rhf',mode:'rhf',charge:'0',multiplicity:'1',guess:'mix',maxiter:'100',diis:true,'scan-a':'1','scan-b':'2','scan-moving':'2','scan-start':'.7','scan-end':'1.4','scan-count':'3','scan-unit':'angstrom'};
+  const defaults={preset:'water',geometry:'O 0 0 0\nH 0 0 1\nH 0 1 0',unit:'angstrom',basis:'sto-3g',method:'rhf',mode:'rhf',charge:'0',multiplicity:'1',guess:'mix',maxiter:'100',diis:true,'scan-coordinate':'bond','scan-c':'','scan-d':'','scan-a':'1','scan-b':'2','scan-moving':'2','scan-start':'.7','scan-end':'1.4','scan-count':'3','scan-unit':'angstrom'};
   function controller(saved) {
     const nodes=new Map(),queue=new Map(),memory=new Map(saved??[]);let clock=0;
     function node(id) {
@@ -34,7 +35,7 @@ export function runStateTests(appSource,settingsSource) {
     const sent=[],shown=[];
     const env={$:node,document:{querySelector:selector=>node(selector),querySelectorAll:()=>[],dispatchEvent(){}},worker:{postMessage:r=>sent.push(r),terminate(){}},
       BUILD_ID:'test-build',WORKER_PROTOCOL:2,EXAMPLES:{water:defaults.geometry,hehplus:'He 0 0 0\nH 0 0 .8',h2plus:'H 0 0 0\nH 0 0 1.06'},EXAMPLE_SETTINGS:{hehplus:{method:'rhf',charge:1,multiplicity:1},h2plus:{method:'uhf',charge:1,multiplicity:2}},WATER_XYZ:defaults.geometry,
-      ...settings,TASKS,viewer:{setLabels(){}},structuredClone:v=>JSON.parse(JSON.stringify(v)),Number,Object,Array,Math,Set,
+      ...settings,TASKS,mathText,viewer:{setLabels(){},setMolecule(){}},structuredClone:v=>JSON.parse(JSON.stringify(v)),Number,Object,Array,Math,Set,
       setTimeout:fn=>{queue.set(++clock,fn);return clock;},clearTimeout:id=>queue.delete(id),
       parseGeometry:(geometry,unit,basis)=>({geometry,unit,basis,atoms:[{charge:1,xyz:[0,0,0]},{charge:1,xyz:[0,0,2]}]}),
       validateElectronicOptions:(_m,o)=>{if(!['rhf','uhf','mp2'].includes(o.method))throw Error('Invalid method');return o;},

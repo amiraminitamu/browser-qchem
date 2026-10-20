@@ -172,15 +172,15 @@ The workbench uses a canvas-first layout: a single compute pipeline above a full
 molecular stage and a unified results dock. The app stays inside the viewport;
 plots, tables, and drawers scroll within their own panes.
 
-- The **Molecule pill** contains examples, XYZ import, and reset. **XYZ** opens
+- The **Molecule selector** contains examples, XYZ import, and reset. **XYZ** opens
   the coordinate editor over the left edge of the canvas.
-- The **Task pill** selects single-point energy, bond-length scan, or molecular
-  integrals. Scan ranges and fragment controls appear inside this popover.
+- The **Task selector** selects single-point energy, PES Scan, or molecular
+  integrals. PES controls dock above the molecular stage only in PES mode.
 - **Method / basis**, **charge and spin**, and **Solver** settings share the
   pipeline. Solver controls adapt to RHF, UHF, MP2, and integral-only tasks.
 - **Run** becomes **Stop** during computation. **Cmd+Enter** or **Ctrl+Enter**
   runs the selected calculation. Completed calculations appear in **Jobs**.
-- **Export** is the home for geometry XYZ, result JSON, and scan CSV/XYZ/JSON.
+- **Export** is the home for geometry XYZ, result JSON, scan CSV/XYZ/JSON, and PDF/PNG/JPG figures.
   Canvas PNG export sits with labels, fit, and expand in the floating viewer toolbar.
 - Drag the divider to resize the stage from 35% to 70%, or focus the divider
   and use arrow keys, Home, and End. Double-click restores the 55% split.
@@ -191,12 +191,47 @@ plots, tables, and drawers scroll within their own panes.
   the current implementation displays the selected orbital and its energy.
 - **Geometry** contains Cartesian coordinates, internuclear distances, and
   **Copy XYZ**. **Esc** closes popovers, jobs, the coordinate drawer, or viewer expansion.
-- Below 800 px the stage and dock stack vertically. The same pipeline controls
+- Below 600 px the stage and dock stack vertically. The same pipeline controls
   remain available; no duplicate setup or run bar is added.
 
 Task/tab registries, method-specific solver groups, canvas overlay slots, and
 split/drawer behavior live in `web/workbench.mjs`. Calculation settings and
 worker requests remain in `web/app.mjs` and `web/settings.mjs`.
+
+### Publication figure exports and extension points
+
+**Export figure** inside Potential energy and the unified Export menu generate
+PDF, PNG, or JPG from the same saved scan and display-unit selection. Four energy
+units (Eₕ, kcal·mol⁻¹, eV, kJ·mol⁻¹) support absolute or minimum-relative energies.
+Figures have a white background, axis labels, gridlines, and a caption containing
+the molecule, method/basis, coordinate, moving fragment, sampled minimum, and
+scan range. PNG/JPG use a fixed 3× offscreen canvas; JPG quality is 0.95. PDF embeds
+that high-resolution figure at quality 0.98, rather than capturing the application.
+It is a raster PDF, not a vector plot. Failed/unconverged points are never joined
+into the curve. Raw CSV keeps ASCII numbers and identifies coordinate type,
+units, and ordered atom indices; XYZ trajectories always use angstrom positions.
+
+`TASKS` declares picking policy (`none`, `internal-coordinate`, or future
+`atom-selection`), optional contextual controls, solver use, and the result tab.
+Context panels use `data-task-context` and remain outside the layout structure.
+`registerViewportLayer` adds toggleable controls to the viewport toolbar and returns
+an unregister function. Future isosurfaces, vectors, and normal modes can use this
+hook without introducing a sidebar. `coordinates.mjs` owns pure geometry transforms,
+`pes-setup.mjs` owns coordinate interaction, and `pes-export.mjs` owns figure data
+and encoders. No new runtime dependencies or external figure services are required.
+
+Run `node tests/check_coordinates.mjs` after building WASM to check bends,
+signed/periodic torsions, rigid fragments, scan calculations, raw exports,
+figure metadata, and inspection-mode picking isolation. For a DOM interaction
+check with the actual worker and WASM (without WebGL or layout assertions):
+
+```sh
+npm install --prefix /tmp/lorentzian-qa jsdom --no-save --ignore-scripts
+LORENTZIAN_QA_PACKAGE=/tmp/lorentzian-qa/package.json node tests/check_workbench_dom.mjs
+```
+
+Run this after packaging the app with `scripts/package_web.py`. The package path
+only resolves the test dependency; the production frontend remains buildless.
 
 ### Ions and open-shell examples
 
@@ -224,7 +259,7 @@ in addition to method, multiplicity and energy. Browser tests verify preset
 settings, superscript charges, charged scans and exports, invalid spin states,
 method rejection for odd-electron MP2, and mobile recovery.
 
-## Explore a molecule and scan a bond
+## Explore a molecule and scan an internal coordinate
 
 1. Select an example or upload an XYZ file. Choose the coordinate unit and basis.
    The viewer and AO count update before you calculate. Water uses 7 AOs in
@@ -232,16 +267,24 @@ method rejection for odd-electron MP2, and mobile recovery.
 2. Drag to rotate, scroll to zoom, and use **Fit** to frame the structure.
    Atom labels match the one-based indices in the geometry input. **PNG** exports
    the current view; **Export XYZ** writes an XYZ file in angstrom.
-3. Select **Bond-length scan**. Click atom A and then atom B, or type their indices.
-   A stays fixed. B and every listed moving atom translate along the original AB
-   direction. **Select connected fragment** proposes the fragment on B's side after
-   removing AB from an inferred bond graph. Check the highlighted selection;
-   cyclic structures require an explicit moving group. Inferred bonds affect
-   display/selection only and do not enter the electronic structure calculation.
-4. Set the start/end distance, angstrom or bohr, and 2 to 101 points. Descending
-   ranges are supported. Run to calculate points sequentially in the worker.
-   Every geometry is generated from the original input, avoiding accumulated drift.
-5. Select a curve point or table row to inspect its geometry and SCF details.
+3. Select **PES Scan**, then **Bond**, **Angle**, or **Dihedral**. Pick 2, 3, or 4
+   atoms in order, or enter their one-based indices. In Bond mode, clicking a bond
+   assigns both endpoints. Single-point and integral modes reserve the canvas for
+   camera navigation and never enable picking or selection overlays.
+4. Set the start/end coordinate and 2 to 101 points. Bonds use angstrom or bohr;
+   angles and torsions use degrees. The displayed increment is `(end-start)/(points-1)`.
+   Presets bracket the current coordinate or define dissociation, linearization,
+   and rotation ranges. Reset to current restores the first preset around the
+   current geometry. Reverse reorders the atom sequence and recomputes the moving
+   fragment. Clear or Esc starts a new selection.
+   **Moving fragment** allows explicit atom indices; connected-fragment detection
+   cuts the selected bond (the vertex-to-terminal arm for bends, or the central
+   bond for torsions). Rings and ambiguous fragments require explicit indices.
+   Bonds translate the fragment; bends rotate it about the vertex; torsions rotate
+   it about the central axis. Every point starts from the original geometry,
+   avoiding accumulated drift. Collinear torsions are rejected.
+5. Hover a curve point or table row to preview its geometry without changing the
+   draft. Click a point or row to inspect its geometry and SCF details.
    The viewer, editor, energy and matrices follow that point. Relative energies
    use the lowest converged point in the current scan. Unconverged points are
    marked and are not connected by the curve; errors retain an explanatory row.
@@ -251,7 +294,7 @@ method rejection for odd-electron MP2, and mobile recovery.
    multi-frame XYZ, or compact results and metadata as JSON. Failed geometries
    remain in XYZ/JSON with their status; CSV leaves unavailable energies blank.
 
-These are **unrelaxed bond scans**: the other coordinates are not optimized.
+These are **unrelaxed internal-coordinate scans**: the other coordinates are not optimized.
 Each point uses an independent guess, with the selected orbital-mixing policy for UHF. There is no state
 following, orbital stability test, or guarantee of the lowest SCF solution.
 Core guesses can converge to excited SCF roots, including for N2. Inspect the
@@ -530,7 +573,9 @@ retains an input buffer. A null result is accompanied by a `qc_error` message.
 | `web/index.html`, `web/styles.css`, `web/app.mjs` | Workspace, results inspection and exports |
 | `web/workbench.mjs` | Task/tab registries, solver groups, popovers, drawers, and split resizing |
 | `web/viewer.mjs`, `web/vendor/` | Local 3Dmol molecule viewer and license |
-| `web/scan.mjs`, `web/plot.mjs` | Scan geometries, runner, exports and interactive SVG charts |
+| `web/scan.mjs`, `web/plot.mjs` | Scan runner, raw exports and interactive SVG charts |
+| `web/coordinates.mjs`, `web/pes-setup.mjs` | Bond, angle and dihedral transforms and stage controls |
+| `web/pes-export.mjs`, `web/format.mjs` | Publication figures, PDF/image encoders and scientific display text |
 | `tests/` | Numerical comparisons, PySCF reference, and browser checks |
 
 ## License and references
