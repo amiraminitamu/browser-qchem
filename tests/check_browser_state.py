@@ -1,4 +1,6 @@
 """Real-WASM regressions for method changes, presets, scans, late replies and reopening."""
+from browser_controls import control
+
 import argparse,functools,http.server,json,threading
 from pathlib import Path
 from playwright.sync_api import sync_playwright
@@ -39,12 +41,12 @@ try:
     def status(prefix):page.wait_for_function('(p)=>document.querySelector("#status").textContent.startsWith(p)',arg=prefix,polling=25)
     def run():page.keyboard.press('Control+Enter')
     def result():
-        with page.expect_download() as d:page.locator('#download').click()
+        with page.expect_download() as d:control(page, '#download').click()
         return json.loads(Path(d.value.path()).read_text())
     page.goto(url);status('CONVERGED')
     # An explicit method must survive an example that recommends a different one.
     for method in ['mp2','uhf','rhf','mp2','uhf','mp2']:
-        page.locator('#method').select_option(method);page.locator('#preset').select_option('hehplus')
+        page.locator('#method').select_option(method);control(page, '#preset').select_option('hehplus')
         page.wait_for_timeout(180)
         assert page.locator('#method').input_value()==method
         run();status('CONVERGED');r=result();assert r['method']==method.upper()
@@ -53,8 +55,8 @@ try:
     # The stored molecule/method/charge/spin must restore together on reload.
     page.reload();status('CONVERGED')
     assert page.locator('#method').input_value()=='mp2'
-    assert page.locator('#charge').input_value()=='1'
-    assert page.locator('#preset').input_value()=='hehplus'
+    assert control(page, '#charge').input_value()=='1'
+    assert control(page, '#preset').input_value()=='hehplus'
     assert result()['method']=='MP2'
     # Reopening another tab at the same origin restores the same coherent draft.
     reopened=context.new_page();reopened.goto(url)
@@ -63,10 +65,10 @@ try:
     assert reopened.locator('#charge').input_value()=='1';reopened.close()
     # Keep a finished RHF scan, then start MP2. The delayed real result provides
     # a deterministic window in which clicking the old scan used to reset it.
-    page.locator('#method').select_option('rhf');page.locator('#preset').select_option('h2');page.locator('#mode').select_option('scan')
-    for key,value in [('a','1'),('b','2'),('moving','2'),('start','.7'),('end','1.3'),('count','3')]:page.locator('#scan-'+key).fill(value)
+    page.locator('#method').select_option('rhf');control(page, '#preset').select_option('h2');control(page, '#mode').select_option('scan')
+    for key,value in [('a','1'),('b','2'),('moving','2'),('start','.7'),('end','1.3'),('count','3')]:control(page, '#scan-'+key).fill(value)
     run();page.wait_for_function('document.querySelector("#progress-text").textContent.startsWith("Complete")')
-    page.locator('#mode').select_option('rhf');page.locator('#method').select_option('mp2')
+    control(page, '#mode').select_option('rhf');page.locator('#method').select_option('mp2')
     page.locator('#scan-point-table tbody tr').first.click()
     assert page.locator('#method').input_value()=='mp2'
     assert 'current setup MP2/' in page.locator('#status').inner_text()
@@ -79,7 +81,7 @@ try:
     page.locator('#method').select_option('uhf')
     page.evaluate('window.__workers[0].onmessage({data:window.__workers[0].lastResult})')
     assert 'Settings changed' in page.locator('#status').inner_text()
-    assert page.locator('#download').is_disabled()
+    assert control(page, '#download').is_disabled()
     # Test native keyboard selection after the former debounce interval.
     page.locator('#method').focus();page.keyboard.press('Home');page.wait_for_timeout(180);page.keyboard.press('End');page.keyboard.press('Enter')
     assert page.locator('#method').input_value()=='mp2'

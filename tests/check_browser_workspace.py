@@ -1,4 +1,6 @@
 """End-to-end basis, viewer and PES tests in Chromium, using the real WASM worker."""
+from browser_controls import control
+
 import argparse,csv,functools,http.server,io,json,math,tempfile,threading
 from pathlib import Path
 from playwright.sync_api import sync_playwright
@@ -27,7 +29,7 @@ try:
         def idle():
             page.wait_for_function('!document.querySelector("#calculate").disabled',timeout=30000,polling=100)
         def download(selector,filename):
-            with page.expect_download() as d:page.locator(selector).click()
+            with page.expect_download() as d:control(page, selector).click()
             target=Path(temp)/filename;d.value.save_as(target);return target
         def scan_complete():
             page.wait_for_function('document.querySelector("#progress-text").textContent.startsWith("Complete") && !document.querySelector("#calculate").disabled',timeout=30000,polling=100)
@@ -45,27 +47,27 @@ try:
         for index in [2,0]:
             position=page.evaluate('(i)=>testViewer.viewer.modelToScreen(testViewer.model.selectedAtoms({index:i})[0])',index)
             page.mouse.click(position['x'],position['y'])
-        assert page.locator('#scan-a').input_value()=='3'
-        assert page.locator('#scan-b').input_value()=='1'
-        page.locator('#mode').select_option('scan')
-        page.locator('#auto-fragment').click()
-        assert page.locator('#scan-moving').input_value()=='1, 2'
+        assert control(page, '#scan-a').input_value()=='3'
+        assert control(page, '#scan-b').input_value()=='1'
+        control(page, '#mode').select_option('scan')
+        control(page, '#auto-fragment').click()
+        assert control(page, '#scan-moving').input_value()=='1, 2'
         print('WebGL rendering, PNG, rotation, atom picking and connected fragment selection PASS',flush=True)
         # The larger basis must be applied to the worker, not just the displayed label.
-        page.locator('#mode').select_option('rhf');page.locator('#basis').select_option('cc-pvdz');page.locator('#calculate').click();status('CONVERGED')
+        control(page, '#mode').select_option('rhf');page.locator('#basis').select_option('cc-pvdz');page.locator('#calculate').click();status('CONVERGED')
         data=json.loads(download('#download','water.json').read_text())
         expected=next(c for c in reference if c['name']=='water' and c['basis']=='cc-pvdz')
         assert data['nao']==24 and abs(data['rhf']['energy']-expected['energy'])<1e-9
-        page.locator('#nav-molecule').click()
-        page.locator('#geometry').fill('Ne 0 0 0\nNe 0 0 3\nNe 0 0 6')
+        page.locator('#xyz-toggle').click()
+        control(page, '#geometry').fill('Ne 0 0 0\nNe 0 0 3\nNe 0 0 6')
         page.wait_for_function('document.querySelector("#input-message").textContent.includes("40 AO")',polling=100)
         assert page.locator('#calculate').is_disabled()
         # Upload a real XYZ file, then calculate a five-point H2 curve.
         page.locator('#xyz-file').set_input_files({'name':'h2.xyz','mimeType':'text/plain','buffer':b'2\nHydrogen\nH 0 0 0\nH 0 0 .74\n'})
         page.wait_for_function('document.querySelector("#molecule-viewer").dataset.atomCount==="2"',polling=100)
-        page.locator('#basis').select_option('6-31g');page.locator('#mode').select_option('scan')
-        for key,value in [('a','1'),('b','2'),('moving','2'),('start','.5'),('end','1.5'),('count','5')]:page.locator('#scan-'+key).fill(value)
-        page.locator('#scan-unit').select_option('angstrom');page.locator('#calculate').click();scan_complete()
+        page.locator('#basis').select_option('6-31g');control(page, '#mode').select_option('scan')
+        for key,value in [('a','1'),('b','2'),('moving','2'),('start','.5'),('end','1.5'),('count','5')]:control(page, '#scan-'+key).fill(value)
+        control(page, '#scan-unit').select_option('angstrom');page.locator('#calculate').click();scan_complete()
         assert page.locator('#scan-point-table tbody tr').count()==5
         curve=json.loads(download('#scan-json','scan.json').read_text())
         csvrows=list(csv.DictReader(download('#scan-csv','scan.csv').read_text().splitlines()))
@@ -78,19 +80,19 @@ try:
             assert 'eri' not in point['result']
         page.locator('#pes-chart circle[role=button]').nth(1).click()
         assert 'Scan point 2' in page.locator('#results-title').inner_text()
-        assert '.750000000000' in page.locator('#geometry').input_value()
+        assert '.750000000000' in control(page, '#geometry').input_value()
         assert abs(float(page.locator('#energy-value').inner_text())-curve['points'][1]['energy'])<1e-9
         assert page.locator('#molecule-viewer').get_attribute('data-atom-count')=='2'
         page.locator('#pes-energy-unit').select_option('absolute-eh')
         page.locator('#scan-point-table tbody tr').nth(3).press('Enter')
         assert 'Scan point 4' in page.locator('#results-title').inner_text()
-        assert '1.250000000000' in page.locator('#geometry').input_value()
+        assert '1.250000000000' in control(page, '#geometry').input_value()
         page.screenshot(path=str(ROOT.parent/'workspace-scan.png'),full_page=True)
         print('cc-pVDZ worker results, AO preflight, XYZ upload, PES curve, point inspection and all exports PASS',flush=True)
         # Use a larger molecule/basis so completed points remain inspectable before stopping.
-        page.locator('#preset').select_option('water');page.locator('#basis').select_option('cc-pvdz')
-        page.locator('#scan-start').fill('.8');page.locator('#scan-end').fill('1.3')
-        page.locator('#scan-count').fill('101')
+        control(page, '#preset').select_option('water');page.locator('#basis').select_option('cc-pvdz')
+        control(page, '#scan-start').fill('.8');control(page, '#scan-end').fill('1.3')
+        control(page, '#scan-count').fill('101')
         page.locator('#calculate').scroll_into_view_if_needed()
         run_box=page.locator('#calculate').bounding_box()
         run_x=run_box['x']+run_box['width']/2;run_y=run_box['y']+run_box['height']/2
@@ -102,21 +104,21 @@ try:
         assert stopped['cancelled'] and 1<=len(stopped['points'])<101
         assert 'Stopped' in page.locator('#progress-text').inner_text()
         # Nonconvergence is explicit in both the table and the exported point metadata.
-        page.locator('#preset').select_option('water');page.locator('#basis').select_option('sto-3g');page.locator('#scan-a').fill('1');page.locator('#scan-b').fill('2');page.locator('#scan-moving').fill('2')
-        page.locator('.advanced-settings').evaluate('(e)=>e.open=true');page.locator('#scan-count').fill('3');page.locator('#scan-start').fill('.8');page.locator('#scan-end').fill('1.2');page.locator('#maxiter').fill('1')
+        control(page, '#preset').select_option('water');page.locator('#basis').select_option('sto-3g');control(page, '#scan-a').fill('1');control(page, '#scan-b').fill('2');control(page, '#scan-moving').fill('2')
+        page.locator('.advanced-settings').evaluate('(e)=>e.open=true');control(page, '#scan-count').fill('3');control(page, '#scan-start').fill('.8');control(page, '#scan-end').fill('1.2');control(page, '#maxiter').fill('1')
         page.locator('#calculate').click();scan_complete()
         limited=json.loads(download('#scan-json','limited.json').read_text())
         assert all(p['status']=='not_converged' and not p['converged'] for p in limited['points'])
         assert page.locator('#result-badge').inner_text()=='NOT CONVERGED'
         # A colliding intermediate geometry must not leave stale matrices under a failed point.
-        page.locator('#geometry').fill('H 0 0 0\nH 1 0 0\nH 2 0 0');page.locator('#charge').fill('1');page.locator('#maxiter').fill('100');page.locator('#scan-start').fill('1');page.locator('#scan-end').fill('3')
+        control(page, '#geometry').fill('H 0 0 0\nH 1 0 0\nH 2 0 0');control(page, '#charge').fill('1');control(page, '#maxiter').fill('100');control(page, '#scan-start').fill('1');control(page, '#scan-end').fill('3')
         page.locator('#calculate').click();scan_complete()
         page.locator('#scan-point-table tbody tr').nth(1).click()
         assert page.locator('#result-badge').inner_text()=='POINT FAILED'
         assert 'coincide' in page.locator('#summary').inner_text()
-        assert page.locator('#matrix tbody tr').count()==0 and page.locator('#download').is_disabled()
+        assert page.locator('#matrix tbody tr').count()==0 and control(page, '#download').is_disabled()
         # Disabled hidden scan fields must not block a later single-point form submission.
-        page.locator('#scan-start').fill('-1');page.locator('#mode').select_option('rhf');page.locator('#water').click();status('CONVERGED')
+        control(page, '#scan-start').fill('-1');control(page, '#mode').select_option('rhf');control(page, '#water').click();status('CONVERGED')
         for tab in ['orbitals','matrices','pes','data','scf']:page.locator(f'[data-tab={tab}]').click()
         page.set_viewport_size({'width':390,'height':844})
         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')

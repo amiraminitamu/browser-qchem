@@ -8,7 +8,7 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231b2744'/%3E%3Cpath d='M5 23c4-.4 6.6-12.5 11-15.2C20.4 10.5 23 22.6 27 23' fill='none' stroke='%23c45c26' stroke-width='2.2' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='6.2' r='1.4' fill='%23c45c26'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./styles.css">
 </head>
-<body data-activity="molecule">
+<body>
 <svg class="svg-defs" aria-hidden="true"><defs>
   <symbol id="i-peak" viewBox="0 0 24 24"><path d="M2 18c4-.3 6.2-11.4 10-14 3.8 2.6 6 13.7 10 14"/><circle cx="12" cy="3.2" r="1.1"/></symbol>
   <symbol id="i-atom" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/><circle cx="12" cy="12" r="1"/></symbol>
@@ -30,119 +30,15 @@
   <symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 10a9 9 0 1 1 1 7M3 4v6h6"/></symbol>
 </defs></svg>
 
-<div class="app-frame">
-  <header class="app-header">
-    <a class="brand" href="./" aria-label="Lorentzian home"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><rect width="32" height="32" rx="7"/><path d="M5 23c4-.4 6.6-12.5 11-15.2C20.4 10.5 23 22.6 27 23"/><circle cx="16" cy="6.2" r="1.4"/></svg></span><span class="brand-name">Lorentzian</span></a>
-    <nav class="menu-bar" aria-label="Application">
-      <div class="menu">
-        <button type="button" class="menu-button" aria-haspopup="true" aria-expanded="false">File</button>
-        <div class="menu-panel" role="menu">
-          <button type="button" role="menuitem" data-menu="import">Import XYZ…</button>
-          <button type="button" role="menuitem" data-menu="export-xyz">Export XYZ</button>
-          <button type="button" role="menuitem" data-menu="export">Export result JSON</button>
-          <button type="button" role="menuitem" data-menu="scan-csv">Export scan CSV</button>
-          <button type="button" role="menuitem" data-menu="scan-xyz">Export scan XYZ</button>
-          <button type="button" role="menuitem" data-menu="scan-json">Export scan JSON</button>
-        </div>
-      </div>
-      <div class="menu">
-        <button type="button" class="menu-button" aria-haspopup="true" aria-expanded="false">Molecule</button>
-        <div class="menu-panel" role="menu">
-          <button type="button" role="menuitem" data-menu="preset" data-preset="water">Water · H₂O</button>
-          <button type="button" role="menuitem" data-menu="preset" data-preset="h2">Hydrogen · H₂</button>
-          <button type="button" role="menuitem" data-menu="preset" data-preset="methane">Methane · CH₄</button>
-          <button type="button" role="menuitem" data-menu="preset" data-preset="ammonia">Ammonia · NH₃</button>
-          <button type="button" role="menuitem" data-menu="preset" data-preset="h2plus">H₂⁺ · doublet</button>
-          <button type="button" role="menuitem" data-menu="preset" data-preset="heh">HeH · doublet</button>
-          <button type="button" role="menuitem" data-menu="preset" data-preset="hehplus">HeH⁺</button>
-          <button type="button" role="menuitem" data-menu="coordinates">Cartesian coordinates</button>
-          <button type="button" role="menuitem" data-menu="reset">Reset to water</button>
-        </div>
-      </div>
-      <div class="menu">
-        <button type="button" class="menu-button" aria-haspopup="true" aria-expanded="false">Calculate</button>
-        <div class="menu-panel" role="menu">
-          <button type="button" role="menuitem" data-menu="mode" data-mode="rhf">Single-point energy</button>
-          <button type="button" role="menuitem" data-menu="mode" data-mode="scan">Bond-length scan</button>
-          <button type="button" role="menuitem" data-menu="mode" data-mode="integrals">Molecular integrals</button>
-          <button type="button" role="menuitem" data-menu="convergence">Convergence settings</button>
-          <button type="button" role="menuitem" data-menu="run">Run</button>
-          <button type="button" role="menuitem" data-menu="stop">Stop</button>
-        </div>
-      </div>
-      <div class="menu">
-        <button type="button" class="menu-button" aria-haspopup="true" aria-expanded="false">Analysis</button>
-        <div class="menu-panel" role="menu">
-          <button type="button" role="menuitem" data-menu="tab" data-tab-name="scf">SCF convergence</button>
-          <button type="button" role="menuitem" data-menu="tab" data-tab-name="orbitals">Orbitals</button>
-          <button type="button" role="menuitem" data-menu="tab" data-tab-name="matrices">AO matrices</button>
-          <button type="button" role="menuitem" data-menu="tab" data-tab-name="pes">Potential energy</button>
-          <button type="button" role="menuitem" data-menu="tab" data-tab-name="data">Geometry</button>
-        </div>
-      </div>
-      <div class="menu">
-        <button type="button" class="menu-button" aria-haspopup="true" aria-expanded="false">View</button>
-        <div class="menu-panel" role="menu">
-          <button type="button" role="menuitem" data-menu="labels">Atom labels</button>
-          <button type="button" role="menuitem" data-menu="fit">Fit molecule</button>
-          <button type="button" role="menuitem" data-menu="expand">Expand viewer</button>
-          <button type="button" role="menuitem" data-menu="jobs-panel">Toggle job list</button>
-        </div>
-      </div>
-      <div class="menu">
-        <button type="button" class="menu-button" aria-haspopup="true" aria-expanded="false">Help</button>
-        <div class="menu-panel" role="menu">
-          <button type="button" role="menuitem" data-menu="guide">Workspace guide</button>
-        </div>
-      </div>
-    </nav>
-    <div class="header-actions">
-      <span class="local-badge"><span id="engine-dot" class="dot"></span><span id="engine-state">Starting engine</span></span>
-      <button id="help-open" type="button" class="quiet-button" aria-label="Open workspace guide"><svg class="icon" aria-hidden="true"><use href="#i-help"/></svg> Guide</button>
-      <button id="mobile-setup-toggle" type="button" class="secondary" aria-expanded="false" aria-controls="setup-panel"><svg class="icon" aria-hidden="true"><use href="#i-sliders"/></svg> Setup</button>
-    </div>
-  </header>
-
-  <div class="app-toolbar" aria-label="Calculation toolbar">
-    <button type="button" class="toolbar-button" data-menu="import"><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg> Import XYZ</button>
-    <span class="toolbar-readout" id="toolbar-method">RHF / STO-3G</span>
-    <button type="button" class="toolbar-button" data-menu="run" id="toolbar-run"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg> Run</button>
-    <button type="button" class="toolbar-button danger" data-menu="stop" id="toolbar-stop">Stop</button>
-    <span class="toolbar-spacer"></span>
-    <button type="button" class="toolbar-button" data-menu="export"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg> Export JSON</button>
-  </div>
-
-  <div class="app-shell">
-    <nav class="activity-rail" aria-label="Workbench modules">
-      <button type="button" class="rail-button" data-activity="molecule" title="Molecule" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="#i-atom"/></svg><span>Mol</span></button>
-      <button type="button" class="rail-button" data-activity="method" title="Calculation" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-sliders"/></svg><span>Calc</span></button>
-      <button type="button" class="rail-button" data-activity="jobs" title="Jobs" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-jobs"/></svg><span>Jobs</span></button>
-      <button type="button" class="rail-button" data-activity="analysis" title="Analysis" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg><span>Data</span></button>
-    </nav>
-
-    <button id="setup-backdrop" class="drawer-backdrop" aria-label="Close setup" hidden></button>
-    <aside id="setup-panel" class="sidebar" aria-label="Calculation setup">
-      <div class="sidebar-title">
-        <div>
-          <span class="eyebrow" id="inspector-kicker">Properties</span>
-          <h2 id="inspector-title">Molecule</h2>
-        </div>
-        <button id="close-setup" type="button" class="icon-button" aria-label="Close setup"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
-      </div>
-      <div class="job-dock" id="job-dock">
-        <div class="job-dock-head">
-          <h3>Jobs</h3>
-          <span id="job-count">0</span>
-        </div>
-        <ol id="job-list" aria-label="Calculation jobs"></ol>
-        <p id="job-empty" class="job-empty">Jobs appear after a calculation. New methods and scans will land here.</p>
-      </div>
-      <form id="controls" autocomplete="off">
-        <div class="setup-scroll">
-          <section class="control-section" id="structure-section">
-            <div class="section-heading"><h3>Molecule</h3><button id="water" type="button" class="text-button" title="Load and calculate water">Reset</button></div>
-            <label for="preset">Example</label>
-            <select id="preset">
+<form id="controls" class="app-frame" autocomplete="off">
+  <header class="app-header" aria-label="Compute pipeline">
+    <a class="brand" href="./" aria-label="Lorentzian home"><svg class="brand-mark icon" aria-hidden="true"><use href="#i-atom"/></svg><span class="brand-name">Lorentzian</span></a>
+    <div class="pipeline-system">
+      <details id="molecule-popover" class="popover">
+        <summary aria-label="Choose molecule"><span id="header-molecule">Water</span><span class="pill-formula" id="formula">H₂O</span><span aria-hidden="true">⌄</span></summary>
+        <div class="popover-panel">
+          <h2>Molecule</h2><label for="preset">Example templates</label>
+<select id="preset">
               <optgroup label="Closed-shell molecules">
                 <option value="water">Water · H₂O</option>
                 <option value="h2">Hydrogen · H₂</option>
@@ -156,54 +52,19 @@
               </optgroup>
               <option value="custom" disabled>Custom geometry</option>
             </select>
-            <div class="structure-actions">
-              <label class="upload-button" for="xyz-file"><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg> Import XYZ<input id="xyz-file" type="file" accept=".xyz,.txt" class="visually-hidden"></label>
-              <span class="small-muted">or edit below</span>
-            </div>
-            <details id="coordinates-editor" class="coordinates-editor">
-              <summary id="nav-molecule">Cartesian coordinates <span class="coordinate-unit">XYZ</span></summary>
-              <label for="geometry" class="visually-hidden">Cartesian coordinates</label>
-              <textarea id="geometry" spellcheck="false" wrap="off" aria-describedby="geometry-help"></textarea>
-              <div class="inline-row">
-                <span id="geometry-help" class="small-muted">Element x y z</span>
-                <select id="unit" aria-label="Coordinate unit" class="compact"><option value="angstrom">Angstrom</option><option value="bohr">Bohr</option></select>
-              </div>
-            </details>
-          </section>
-          <section class="control-section" id="calculation-section">
-            <div class="section-heading"><h3>Electronic structure</h3><span class="method-chip">RHF</span></div>
-            <div class="two-fields">
-              <div><label for="method">Method</label><select id="method"><option value="rhf">RHF</option><option value="uhf">UHF</option><option value="mp2">MP2</option></select></div>
-              <div><label for="basis">Basis set</label><select id="basis"><option value="sto-3g">STO-3G</option><option value="6-31g">6-31G</option><option value="cc-pvdz">cc-pVDZ</option></select></div>
-            </div>
-            <p id="method-hint" class="method-hint">Restricted Hartree-Fock for closed-shell singlets.</p>
-            <div class="charge-row">
-              <div><label for="charge">Charge</label><input id="charge" type="number" step="1" value="0" required></div>
-              <div class="spin-info"><span>Spin state</span><strong>Closed-shell singlet</strong></div>
-            </div>
-            <div id="uhf-controls" hidden>
-              <div class="two-fields">
-                <div><label for="multiplicity">Multiplicity · 2S + 1</label><input id="multiplicity" type="number" min="1" max="81" step="1" value="1" required></div>
-                <div><label for="guess">Initial guess</label><select id="guess"><option value="mix">Orbital mixing</option><option value="core">Core Hamiltonian</option></select></div>
-              </div>
-            </div>
-            <div id="basis-info" class="basis-info"><span id="ao-count">7 atomic orbitals</span><span id="eri-memory">0.02 MB ERIs</span></div>
-            <p id="electron-info" class="electron-info">10 electrons · neutral</p>
-            <label for="mode">Calculation</label>
-            <select id="mode">
-              <option value="rhf">Single-point energy</option>
-              <option value="scan">Bond-length scan</option>
-              <option value="integrals">Molecular integrals</option>
-            </select>
-            <details class="advanced-settings">
-              <summary>Convergence settings</summary>
-              <label for="maxiter">Maximum SCF cycles</label>
-              <input id="maxiter" type="number" min="1" max="500" step="1" value="100" required>
-              <label class="check-label"><input id="diis" type="checkbox" checked><span>DIIS acceleration</span></label>
-              <p class="small-muted">ΔE &lt; 10⁻¹⁰ Eₕ · density and residual &lt; 10⁻⁸.</p>
-            </details>
-          </section>
-          <section id="scan-controls" class="control-section" hidden>
+
+          <label class="upload-button" for="xyz-file"><svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg> Import .xyz file<input id="xyz-file" type="file" accept=".xyz,.txt" class="visually-hidden"></label>
+          <button id="water" type="button" class="secondary full-width">Reset geometry to water</button>
+          <p class="small-muted">Examples include recommended charge and spin settings.</p>
+        </div>
+      </details>
+      <button id="xyz-toggle" type="button" class="header-button" aria-expanded="false" aria-controls="coordinates-editor">✎ XYZ</button>
+    </div>
+    <div class="recipe" id="calculation-section" aria-label="Calculation recipe">
+      <details id="task-popover" class="popover task-popover">
+        <summary aria-label="Configure calculation task"><span id="task-label">Single-point energy</span><span aria-hidden="true">⌄</span></summary>
+        <div class="popover-panel task-panel"><h2>Calculation task</h2><label for="mode">Task</label><select id="mode"></select>
+<section id="scan-controls" class="control-section" hidden>
             <div class="section-heading"><h3>Scan coordinate</h3><span class="method-chip">1D</span></div>
             <p class="section-hint">Click two atoms in the viewer or enter their indices.</p>
             <div class="two-fields">
@@ -223,107 +84,74 @@
             </div>
             <p class="scan-explainer">Unrelaxed scan. The selected atoms translate as a rigid fragment; every point starts independently.</p>
           </section>
-        </div>
-        <div class="run-actions">
-          <div id="input-message" class="input-message" role="status"></div>
-          <button id="calculate" type="submit" class="primary full-width" disabled><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg><span id="run-label">Run calculation</span><kbd>⌘ ↵</kbd></button>
-          <button id="cancel" type="button" class="cancel-button full-width" disabled>Stop calculation</button>
-          <p class="run-note">H through Ne elements <span>·</span> 40 AO limit</p>
-        </div>
-      </form>
-    </aside>
 
-    <main class="workspace">
-      <div class="workspace-heading">
-        <div>
-          <div class="workspace-title-row">
-            <h1 id="workspace-title">Water</h1>
-            <span id="molecule-state" class="state-label">Neutral · singlet</span>
-          </div>
-          <p id="workspace-description">Explore structure, energy, and electronic properties.</p>
         </div>
-        <div class="workspace-actions">
-          <span id="header-molecule" class="visually-hidden">Water</span>
-          <button id="geometry-download" type="button" class="secondary"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg> Export XYZ</button>
+      </details>
+      <label class="recipe-field"><span class="visually-hidden">Method</span><select id="method"><option value="rhf">RHF</option><option value="uhf">UHF</option><option value="mp2">MP2</option></select></label>
+      <span class="recipe-slash" aria-hidden="true">/</span>
+      <label class="recipe-field"><span class="visually-hidden">Basis set</span><select id="basis"><option value="sto-3g">STO-3G</option><option value="6-31g">6-31G</option><option value="cc-pvdz">cc-pVDZ</option></select></label>
+      <details id="spin-popover" class="popover">
+        <summary><span id="spin-label">Q: 0 · Singlet</span><span aria-hidden="true">⌄</span></summary>
+        <div class="popover-panel"><h2>Charge &amp; spin</h2><label for="charge">Molecular charge</label><input id="charge" type="number" step="1" value="0" required>
+          <div class="spin-info"><span>Spin state</span><strong>Closed-shell singlet</strong></div>
+          <div id="uhf-controls" hidden><label for="multiplicity">Multiplicity · 2S + 1</label><input id="multiplicity" type="number" min="1" max="81" step="1" value="1" required></div>
+          <p id="method-hint" class="small-muted">Restricted Hartree-Fock for closed-shell singlets.</p>
         </div>
-      </div>
-      <div class="overview-grid">
-        <section class="viewer-card" aria-label="Molecular structure">
-          <div class="card-heading">
-            <div class="molecule-title">
-              <span id="formula">H₂O</span>
-              <div>
-                <span class="viewer-overline">Structure</span>
-                <span id="viewer-meta">3 atoms · STO-3G</span>
-              </div>
-            </div>
-            <div class="viewer-tools">
-              <label class="check-label"><input id="atom-labels" type="checkbox" checked> Labels</label>
-              <button id="fit-view" type="button" class="viewer-button" title="Fit molecule in view"><svg class="icon" aria-hidden="true"><use href="#i-fit"/></svg><span>Fit</span></button>
-              <button id="viewer-png" type="button" class="viewer-button" title="Save molecule image"><svg class="icon" aria-hidden="true"><use href="#i-image"/></svg><span>PNG</span></button>
-              <button id="focus-view" type="button" class="viewer-button icon-only" title="Expand molecule viewer" aria-label="Expand molecule viewer" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-expand"/></svg></button>
-            </div>
-          </div>
-          <div id="molecule-viewer" aria-label="Interactive molecular structure"></div>
-          <div class="viewer-bottom">
-            <span id="selection-info">Click atoms to measure a distance.</span>
-            <span class="viewer-hint">Drag to rotate · scroll to zoom</span>
-          </div>
-        </section>
-        <section class="energy-card" aria-label="Calculation results">
-          <div class="result-heading"><span class="eyebrow">Energy</span><span id="result-badge" class="status-badge neutral">READY</span></div>
-          <div class="energy-main">
-            <span id="energy-label">TOTAL RHF ENERGY</span>
-            <div class="energy-reading"><span id="energy-value">...</span><span id="energy-unit">Eₕ</span></div>
-            <span id="result-context">RHF / STO-3G</span>
-          </div>
-          <div class="calculation-metrics">
-            <div><span>Basis set</span><strong id="metric-basis">STO-3G</strong></div>
-            <div><span>Atomic orbitals</span><strong id="metric-aos">7</strong></div>
-            <div><span>Electrons</span><strong id="metric-electrons">10</strong></div>
-            <div><span>SCF cycles</span><strong id="metric-cycles">...</strong></div>
-          </div>
-          <div id="method-details" class="method-details" hidden></div>
-          <div class="result-status">
-            <p id="status" role="status">Loading calculation engine...</p>
-            <div id="job-progress" class="job-progress" hidden>
-              <div class="progress-track"><span id="progress-fill"></span></div>
-              <span id="progress-text">Starting...</span>
-            </div>
-            <details class="summary-details">
-              <summary>Numerical details &amp; conventions</summary>
-              <pre id="summary">Your calculation will appear here.</pre>
-              <p id="method-note" class="small-muted">SCF convergence does not establish wavefunction stability or the lowest-energy state.</p>
-            </details>
-          </div>
-        </section>
-      </div>
-      <section class="results-card" id="results-section">
-        <div class="results-top">
-          <div>
-            <span class="eyebrow">Analysis</span>
-            <h2 id="results-title">Electronic structure</h2>
-          </div>
-          <button id="download" type="button" class="secondary" disabled><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg> Export result</button>
+      </details>
+      <details id="solver-popover" class="popover advanced-settings">
+        <summary aria-label="Solver settings"><svg class="icon" aria-hidden="true"><use href="#i-sliders"/></svg><span class="solver-word">Solver</span></summary>
+        <div class="popover-panel"><h2><span class="method-chip">RHF</span> solver</h2>
+          <div data-solver-group="scf"><label for="maxiter">Maximum SCF cycles</label><input id="maxiter" type="number" min="1" max="500" step="1" value="100" required><label class="check-label"><input id="diis" type="checkbox" checked> DIIS acceleration</label><p class="small-muted">ΔE &lt; 10⁻¹⁰ Eₕ<br>Density &amp; residual &lt; 10⁻⁸</p></div>
+          <div data-solver-group="uhf" hidden><label for="guess">Initial guess</label><select id="guess"><option value="mix">Orbital mixing</option><option value="core">Core Hamiltonian</option></select></div>
+          <p data-solver-group="mp2" class="small-muted" hidden>All-electron MP2 on an RHF reference.</p>
+          <p id="integrals-solver-note" class="small-muted" hidden>No iterative solver is used for molecular integrals.</p>
         </div>
-        <nav class="result-tabs" role="tablist" aria-label="Results">
-          <button id="tab-scf" type="button" data-tab="scf" role="tab" aria-controls="panel-scf" aria-selected="true">SCF convergence</button>
-          <button id="tab-orbitals" type="button" data-tab="orbitals" role="tab" aria-controls="panel-orbitals" aria-selected="false" tabindex="-1">Orbitals</button>
-          <button id="tab-matrices" type="button" data-tab="matrices" role="tab" aria-controls="panel-matrices" aria-selected="false" tabindex="-1">AO matrices</button>
-          <button id="tab-pes" type="button" data-tab="pes" role="tab" aria-controls="panel-pes" aria-selected="false" tabindex="-1">Potential energy <span id="scan-count-badge">0</span></button>
-          <button id="tab-data" type="button" data-tab="data" role="tab" aria-controls="panel-data" aria-selected="false" tabindex="-1">Geometry</button>
-        </nav>
-        <div id="results">
-          <section id="panel-scf" data-panel="scf" role="tabpanel" aria-labelledby="tab-scf">
-            <div class="panel-intro"><div><h3>SCF convergence</h3><p>Energy at each self-consistent-field iteration.</p></div><span class="chart-key"><i></i> Total energy</span></div>
-            <div id="scf-chart" class="chart"></div>
-            <details id="iteration-details" class="diagnostics"><summary>Iteration log <span>Energy, density and residuals</span></summary><div id="scf-history" class="table-scroll"></div></details>
-          </section>
-          <section id="panel-orbitals" data-panel="orbitals" role="tabpanel" hidden>
-            <div id="frontier-info" class="frontier-info"></div>
-            <div id="orbital-table" class="table-scroll"></div>
-            <p class="small-muted"><span id="orbital-note">Spatial orbital energies in Hartree. Closed-shell occupation is 2 or 0.</span></p>
-          </section>
+      </details>
+    </div>
+    <div class="run-actions">
+      <button id="calculate" type="submit" class="primary" disabled><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg><span id="run-label">Run</span><kbd>⌘↵</kbd></button>
+      <button id="cancel" type="button" class="cancel-button" disabled hidden><span aria-hidden="true">■</span> Stop</button>
+    </div>
+    <div class="header-actions">
+      <button id="jobs-toggle" type="button" class="header-button" aria-controls="jobs-drawer" aria-expanded="false"><svg class="icon" aria-hidden="true"><use href="#i-jobs"/></svg> Jobs <span id="job-count">0</span></button>
+      <details id="export-popover" class="popover export-popover"><summary>Export <span aria-hidden="true">⌄</span></summary><div class="popover-panel export-panel">
+        <h3>Geometry</h3><button id="geometry-download" type="button">Export XYZ (.xyz)</button>
+        <h3>Calculation results</h3><button id="download" type="button" disabled>Export result (.json)</button>
+        <h3>Scan data</h3><button id="scan-csv" type="button" disabled>Export scan (.csv)</button><button id="scan-xyz" type="button" disabled>Export scan geometries (.xyz)</button><button id="scan-json" type="button" disabled>Export scan (.json)</button>
+      </div></details>
+      <button id="help-open" type="button" class="header-button icon-only" aria-label="Open workspace guide"><svg class="icon" aria-hidden="true"><use href="#i-help"/></svg></button>
+    </div>
+  </header>
+  <main class="workspace" id="workbench">
+    <section class="viewer-card" aria-label="Molecular structure">
+      <div id="molecule-viewer" aria-label="Interactive molecular structure"></div>
+      <div class="stage-heading"><span class="eyebrow">Molecular stage</span><h1 id="workspace-title">Water</h1><p id="viewer-meta">3 atoms · STO-3G</p><p id="workspace-description" class="visually-hidden">Explore structure, energy, and electronic properties.</p><span id="molecule-state" class="state-label">Neutral · singlet</span></div>
+      <div class="stage-hud"><div class="telemetry"><span id="basis-info"><span id="ao-count">7 atomic orbitals</span><span id="eri-memory">0.02 MB ERIs</span></span><span id="electron-info">10 electrons · neutral</span></div><span id="selection-info" class="distance-chip">Click atoms to measure a distance.</span></div>
+      <div class="stage-overlay-slot" id="builder-tools-slot" aria-label="Molecule builder tools"></div>
+      <div id="orbital-overlay-slot" class="orbital-overlay" hidden></div>
+      <details id="coordinates-editor" class="coordinates-editor">
+        <summary id="nav-molecule">Cartesian coordinates <svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></summary>
+        <div class="coordinate-content"><label for="geometry">XYZ geometry</label><textarea id="geometry" spellcheck="false" wrap="off" aria-describedby="geometry-help input-message"></textarea><div class="inline-row"><span id="geometry-help" class="small-muted">Element x y z</span><select id="unit" aria-label="Coordinate unit"><option value="angstrom">Angstrom</option><option value="bohr">Bohr</option></select></div><p class="small-muted">Edits update the molecule as you type.</p></div>
+      </details>
+      <div id="input-message" class="input-message" role="status"></div>
+      <div class="viewer-tools"><label class="check-label"><input id="atom-labels" type="checkbox" checked> Atom labels</label><button id="fit-view" type="button" class="viewer-button" title="Fit molecule in view"><svg class="icon" aria-hidden="true"><use href="#i-fit"/></svg> Fit</button><button id="viewer-png" type="button" class="viewer-button" title="Export PNG"><svg class="icon" aria-hidden="true"><use href="#i-image"/></svg> PNG</button><button id="focus-view" type="button" class="viewer-button icon-only" title="Expand molecule viewer" aria-label="Expand molecule viewer" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-expand"/></svg></button><span id="visualization-tools-slot"></span></div>
+      <span class="viewer-hint">Drag to rotate · scroll to zoom</span>
+    </section>
+    <div id="split-handle" role="separator" aria-label="Resize molecular stage" aria-orientation="vertical" aria-valuemin="35" aria-valuemax="70" aria-valuenow="55" tabindex="0"></div>
+    <section class="results-card" id="results-section" aria-label="Results and analysis">
+      <section class="energy-card" aria-label="Calculation results">
+        <div class="result-heading"><span class="eyebrow" id="energy-label">TOTAL RHF ENERGY</span><span id="result-badge" class="status-badge neutral">READY</span><span class="cycle-count"><strong id="metric-cycles">...</strong> cycles</span></div>
+        <div class="energy-reading"><span id="energy-value">...</span><span id="energy-unit">Eₕ</span></div>
+        <div class="result-subline"><span id="result-context">RHF / STO-3G</span><details id="conventions-popover" class="summary-details"><summary>ⓘ Conventions</summary><div class="conventions-panel"><pre id="summary">Your calculation will appear here.</pre><div id="method-details" class="method-details" hidden></div><p id="method-note" class="small-muted">SCF convergence does not establish wavefunction stability or the lowest-energy state.</p></div></details></div>
+        <div id="frontier-info" class="frontier-info"><span class="small-muted">Frontier orbitals appear after a calculation.</span></div>
+        <div class="calculation-metrics visually-hidden"><strong id="metric-basis">STO-3G</strong><strong id="metric-aos">7</strong><strong id="metric-electrons">10</strong></div>
+        <p id="status" role="status">Loading calculation engine...</p><div id="job-progress" class="job-progress" hidden><div class="progress-track"><span id="progress-fill"></span></div><span id="progress-text">Starting...</span></div>
+      </section>
+      <div class="analysis-heading"><span id="results-title">Electronic structure</span><span class="eyebrow">Analysis</span></div>
+      <nav class="result-tabs" role="tablist" aria-label="Results"></nav>
+      <div id="results">
+        <section id="panel-scf" data-panel="scf" role="tabpanel" aria-labelledby="tab-scf"><div class="panel-intro"><div><h3>SCF convergence</h3><p>Energy at each self-consistent-field iteration.</p></div><span class="chart-key"><i></i> Total energy</span></div><div id="scf-chart" class="chart"></div><details id="iteration-details" class="diagnostics" open><summary>Iteration log <span>Energy, density &amp; residuals</span></summary><div id="scf-history" class="table-scroll"></div></details></section>
+        <section id="panel-orbitals" data-panel="orbitals" role="tabpanel" aria-labelledby="tab-orbitals" hidden><div class="panel-intro"><div><h3>Molecular orbitals</h3><p>Select a row to inspect an orbital.</p></div></div><div id="orbital-table" class="table-scroll"></div><p class="small-muted" id="orbital-note">Spatial orbital energies in Hartree. Closed-shell occupation is 2 or 0.</p></section>
           <section id="panel-matrices" data-panel="matrices" role="tabpanel" hidden>
             <div class="panel-toolbar">
               <label for="matrix-kind">AO matrix</label>
@@ -352,7 +180,7 @@
           </section>
           <section id="panel-pes" data-panel="pes" role="tabpanel" hidden>
             <div class="panel-toolbar">
-              <div><h3>Potential energy curve</h3><p id="pes-note" class="small-muted">Choose a bond and range in the setup panel.</p></div>
+              <div><h3>Potential energy curve</h3><p id="pes-note" class="small-muted">Choose Bond-length scan in the task selector to configure a range.</p></div>
               <select id="pes-energy-unit" aria-label="Plot energy unit">
                 <option value="relative-kcal">Relative energy / kcal mol⁻¹</option>
                 <option value="relative-eh">Relative energy / Eh</option>
@@ -360,34 +188,16 @@
               </select>
             </div>
             <div id="pes-chart" class="chart"></div>
-            <div class="export-actions">
-              <button id="scan-csv" type="button" class="secondary" disabled>Export energies CSV</button>
-              <button id="scan-xyz" type="button" class="secondary" disabled>Export scan XYZ</button>
-              <button id="scan-json" type="button" class="secondary" disabled>Export scan JSON</button>
-            </div>
             <div id="scan-point-table" class="table-scroll"></div>
           </section>
-          <section id="panel-data" data-panel="data" role="tabpanel" hidden>
-            <div id="data-meta" class="data-meta"></div>
-            <h3>Current geometry / angstrom</h3>
-            <pre id="geometry-output"></pre>
-            <p class="small-muted">Arrays are row-major. MO coefficients are C[AO, MO]. Scan JSON retains compact point results; run a single point to inspect that geometry's ERIs.</p>
-          </section>
-        </div>
-      </section>
-      <footer class="workspace-footer">
-        <span><span class="dot ready"></span> Computed on your device. Your geometry stays private.</span>
-        <a href="https://github.com/amiraminitamu/browser-qchem" target="_blank" rel="noreferrer">Lorentzian · v0.5 <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
-      </footer>
-    </main>
-  </div>
-</div>
 
-<div class="mobile-action-bar">
-  <button id="mobile-edit" type="button" class="secondary"><svg class="icon" aria-hidden="true"><use href="#i-sliders"/></svg> Edit system</button>
-  <button id="mobile-run" type="button" class="primary" disabled>Run calculation</button>
-</div>
-
+        <section id="panel-data" data-panel="data" role="tabpanel" aria-labelledby="tab-data" hidden><div id="data-meta" class="data-meta"></div><div class="panel-toolbar"><h3>Cartesian coordinates / Å</h3><button id="geometry-copy" type="button" class="secondary">Copy XYZ</button></div><div id="coordinate-table" class="table-scroll"></div><h3>Internuclear distances / Å</h3><div id="distance-matrix" class="table-scroll"></div><pre id="geometry-output" class="visually-hidden"></pre></section>
+      </div>
+    </section>
+    <aside id="jobs-drawer" class="jobs-drawer" aria-label="Calculation jobs" hidden><div class="drawer-heading"><h2>Jobs</h2><button id="jobs-close" type="button" class="icon-button" aria-label="Close jobs"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div><p class="small-muted">Completed calculations in this session</p><ol id="job-list" aria-label="Calculation jobs"></ol><p id="job-empty" class="small-muted">Run a calculation to start your history.</p></aside>
+  </main>
+  <footer class="workspace-footer"><span class="privacy-notice">Computed on your device. Your geometry stays private.</span><span class="engine-indicator"><span id="engine-dot" class="dot"></span><span id="engine-state">Starting engine</span></span><span class="system-limits">H–Ne · 40 AO limit</span><a href="https://github.com/amiraminitamu/browser-qchem" target="_blank" rel="noreferrer">GitHub · v0.5 <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a></footer>
+</form>
 <dialog id="workspace-guide">
   <div class="guide-heading">
     <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><rect width="32" height="32" rx="7"/><path d="M5 23c4-.4 6.6-12.5 11-15.2C20.4 10.5 23 22.6 27 23"/><circle cx="16" cy="6.2" r="1.4"/></svg></span>
@@ -397,18 +207,12 @@
   <h2>From a molecule to its electronic structure.</h2>
   <ol>
     <li><strong>Define the system.</strong> Use Molecule, import an XYZ file, or edit coordinates. Open-shell examples load UHF settings.</li>
-    <li><strong>Choose the calculation.</strong> Set method, basis, charge and multiplicity. Run a single point or a bond-length scan from Calculate or the toolbar.</li>
-    <li><strong>Inspect the result.</strong> Follow SCF convergence, orbitals and matrices, or a potential energy curve. Completed jobs stay in View → Job list.</li>
+    <li><strong>Choose the calculation.</strong> Set method, basis, charge and multiplicity. Run a single point or a bond-length scan from the pipeline bar.</li>
+    <li><strong>Inspect the result.</strong> Follow SCF convergence, orbitals and matrices, or a potential energy curve. Open Jobs to revisit completed calculations.</li>
   </ol>
-  <p class="small-muted">⌘ Enter or Ctrl Enter runs a calculation. Esc closes this guide, menus, the setup drawer, or the expanded viewer. Energies are in Hartree (Eₕ).</p>
+  <p class="small-muted">⌘ Enter or Ctrl Enter runs a calculation. Esc closes this guide, menus, drawers, or the expanded viewer. Energies are in Hartree (Eₕ).</p>
   <button id="help-done" type="button" class="primary full-width">Start exploring <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button>
 </dialog>
-<script>
-try {
-  const activity=new URLSearchParams(location.search).get('activity');
-  if(activity) document.body.dataset.activity=activity;
-} catch {}
-</script>
 <script src="./vendor/3Dmol-min.js"></script>
 <script type="module" src="./app.mjs"></script>
 </body>

@@ -2,6 +2,8 @@
 
 Requires Playwright and its Chromium browser. The server is temporary and local.
 """
+from browser_controls import control
+
 import argparse
 import functools
 import http.server
@@ -37,7 +39,7 @@ try:
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(f'http://127.0.0.1:{server.server_port}')
         page.wait_for_function("document.querySelector('#status').textContent.startsWith('CONVERGED')",timeout=30000)
-        page.locator('#mode').select_option('integrals')
+        control(page, '#mode').select_option('integrals')
         page.locator('#calculate').click()
         def wait_pass():
             page.wait_for_function("document.querySelector('#status').textContent.startsWith('PASS')", timeout=30000)
@@ -48,7 +50,7 @@ try:
             page.locator('#matrix-kind').select_option(kind)
             assert page.locator('#matrix td:not(:first-child)').count() == 49
         with page.expect_download() as event:
-            page.locator('#download').click()
+            control(page, '#download').click()
         target = Path(temp)/'integrals.json'
         event.value.save_as(target)
         actual = json.loads(target.read_text())
@@ -64,22 +66,22 @@ try:
         assert f'{expected:.14f}' in page.locator('#eri-value').inner_text()
         page.get_by_label('ERI index i',exact=True).fill('0')
         assert 'valid integer' in page.locator('#eri-value').inner_text()
-        page.locator('#nav-molecule').click()
-        page.locator('#geometry').fill('H 0 0 0\nH 0 0 1.4')
+        page.locator('#xyz-toggle').click()
+        control(page, '#geometry').fill('H 0 0 0\nH 0 0 1.4')
         assert page.locator('#matrix tr').count() == 0
-        assert page.locator('#download').is_disabled()
-        page.locator('#unit').select_option('bohr')
+        assert control(page, '#download').is_disabled()
+        control(page, '#unit').select_option('bohr')
         page.locator('#calculate').click(); wait_pass()
         assert page.locator('#matrix tr').count() == 3
         assert '0.65931821' in page.locator('#matrix').inner_text()
-        page.locator('#geometry').fill('H 0 0 0\nH 0 0 0')
+        control(page, '#geometry').fill('H 0 0 0\nH 0 0 0')
         page.locator('#calculate').click()
         page.wait_for_function("document.querySelector('#status').textContent.includes('error')")
         assert 'coincide' in summary_text()
-        assert page.locator('#download').is_disabled()
-        page.locator('#water').click()
+        assert control(page, '#download').is_disabled()
+        control(page, '#water').click()
         page.wait_for_function("document.querySelector('#status').textContent.startsWith('CONVERGED')")
-        page.locator('#mode').select_option('integrals');page.locator('#calculate').click();wait_pass()
+        control(page, '#mode').select_option('integrals');page.locator('#calculate').click();wait_pass()
         assert page.locator('#matrix tr').count() == 8
         # Check narrow layout without horizontal page overflow.
         page.set_viewport_size({'width':390,'height':844})

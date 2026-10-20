@@ -1,4 +1,6 @@
 """Optional RHF browser test: python3 tests/check_browser_rhf.py [--browser-path PATH]."""
+from browser_controls import control
+
 import argparse
 import functools
 import http.server
@@ -33,7 +35,7 @@ try:
         def wait_status(prefix):
             page.wait_for_function('(prefix) => document.querySelector("#status").textContent.startsWith(prefix)',arg=prefix,timeout=30000)
         def download():
-            with page.expect_download() as event: page.locator('#download').click()
+            with page.expect_download() as event: control(page, '#download').click()
             file=Path(temp)/'rhf.json'; event.value.save_as(file)
             return json.loads(file.read_text())
         wait_status('CONVERGED')
@@ -58,22 +60,22 @@ try:
         page.locator('#calculate').click(); wait_status('CONVERGED')
         assert page.evaluate('window.iterationsObserved')>0
         page.locator('.advanced-settings summary').click()
-        page.locator('#maxiter').fill('1'); page.locator('#calculate').click()
+        control(page, '#maxiter').fill('1'); page.locator('#calculate').click()
         wait_status('NOT CONVERGED')
         limited=download()['rhf']
         assert not limited['converged'] and limited['status']=='not_converged'
         assert 'Unconverged energy' in summary_text()
-        page.locator('#maxiter').fill('100'); page.locator('#charge').fill('1')
-        assert page.locator('#download').is_disabled()
+        control(page, '#maxiter').fill('100'); control(page, '#charge').fill('1')
+        assert control(page, '#download').is_disabled()
         page.locator('#calculate').click(); wait_status('Input or calculation error')
         assert 'even electron count' in summary_text()
-        page.locator('#water').click(); wait_status('CONVERGED')
-        page.locator('#nav-molecule').click()
-        page.locator('#geometry').fill('H 0 0 0\nH 0 0 1.4')
-        page.locator('#unit').select_option('bohr'); page.locator('#calculate').click()
+        control(page, '#water').click(); wait_status('CONVERGED')
+        page.locator('#xyz-toggle').click()
+        control(page, '#geometry').fill('H 0 0 0\nH 0 0 1.4')
+        control(page, '#unit').select_option('bohr'); page.locator('#calculate').click()
         wait_status('CONVERGED')
         assert '-1.116714325063' in summary_text()
-        page.locator('#water').click(); wait_status('CONVERGED')
+        control(page, '#water').click(); wait_status('CONVERGED')
         page.set_viewport_size({'width':390,'height':844})
         assert page.evaluate('document.documentElement.scrollWidth<=window.innerWidth')
         assert page.locator('#energy-value').bounding_box()['height']<60,'Mobile energy should fit on one line'
