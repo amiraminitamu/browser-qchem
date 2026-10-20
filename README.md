@@ -111,6 +111,29 @@ source .tools/emsdk/emsdk_env.sh
 Re-run the build after changing the C code or webpage. CMake copies the webpage
 into `build/wasm/dist`; do not edit the generated copies there.
 
+## Interface and navigation
+
+The workspace puts the molecule on a dark 3D canvas, with calculation controls
+in a fixed setup panel and a compact energy summary above the result tabs.
+The Run/Stop control stays visible while the setup panel scrolls. Coordinate
+editing, advanced SCF options, detailed summaries and iteration logs expand when
+needed. Invalid geometry opens the coordinate editor, and calculation errors
+open their summary.
+
+- **Molecule** opens coordinate editing; **Setup** focuses the basis selector.
+- **Scan** selects the bond scan and brings its controls into view.
+- **Results** jumps to the analysis panels. Result tabs support arrow keys,
+  Home and End. Selecting an SCF chart point opens and highlights its log row.
+- The expand icon gives the molecule a larger canvas; **Esc** restores the
+  workspace. Molecular framing adapts to the canvas dimensions.
+- **Cmd+Enter** or **Ctrl+Enter** runs the calculation. The **?** button opens a
+  short workspace guide.
+- On phones and tablets, **Setup** opens the configuration drawer. The bottom
+  action bar keeps setup and Run/Stop available while viewing results. Running
+  closes the drawer, and **Esc** closes it without starting a calculation.
+
+![Molecular workspace](docs/workspace.png)
+
 ## Explore a molecule and scan a bond
 
 1. Select an example or upload an XYZ file. Choose the coordinate unit and basis.
@@ -223,6 +246,7 @@ python3 -m playwright install chromium
 python3 tests/check_browser.py
 python3 tests/check_browser_rhf.py
 python3 tests/check_browser_workspace.py
+python3 tests/check_browser_interface.py
 ```
 
 This starts a temporary localhost server, loads the real WASM module in a worker,
@@ -236,6 +260,10 @@ The workspace browser check covers actual WebGL rendering, rotation, atom
 picking, connected-fragment selection, PNG export, cc-pVDZ worker results,
 AO preflight, XYZ upload, PES point inspection, CSV/XYZ/JSON downloads, stopping
 a scan, failed-point cleanup, nonconvergence, recovery and mobile layout.
+
+The interface browser check additionally verifies persistent actions,
+progressive disclosure, navigation and keyboard controls, help, viewer focus,
+mobile single-point and scan workflows, and layouts from 360 to 1440 pixels.
 
 Initial native and WASM validation passed on Linux x86_64 with Emscripten 4.0.10,
 Node 24, PySCF 2.14.0, and headless Chromium 134. Across the 18 atom/molecule cases,
@@ -360,3 +388,4 @@ for this build.
 - W. J. Hehre, R. F. Stewart, J. A. Pople, *J. Chem. Phys.* **51**, 2657-2664
   (1969), [doi:10.1063/1.1672392](https://doi.org/10.1063/1.1672392).
 - [Emscripten installation](https://emscripten.org/docs/getting_started/downloads.html)
+

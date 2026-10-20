@@ -29,6 +29,10 @@ try:
             options['executable_path'] = args.browser_path
         browser = p.chromium.launch(**options)
         page = browser.new_page(viewport={'width':1280,'height':1000})
+        def summary_text():
+            if not page.locator('.summary-details').evaluate('(e)=>e.open'):
+                page.locator('.summary-details summary').click()
+            return page.locator('#summary').inner_text()
         errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(f'http://127.0.0.1:{server.server_port}')
@@ -38,7 +42,7 @@ try:
         def wait_pass():
             page.wait_for_function("document.querySelector('#status').textContent.startsWith('PASS')", timeout=30000)
         wait_pass()
-        assert '2401 values' in page.locator('#summary').inner_text()
+        assert '2401 values' in summary_text()
         assert page.locator('#matrix tr').count() == 8
         for kind in ['kinetic','nuclear','core','overlap']:
             page.locator('#matrix-kind').select_option(kind)
@@ -60,6 +64,7 @@ try:
         assert f'{expected:.14f}' in page.locator('#eri-value').inner_text()
         page.get_by_label('ERI index i',exact=True).fill('0')
         assert 'valid integer' in page.locator('#eri-value').inner_text()
+        page.locator('#nav-molecule').click()
         page.locator('#geometry').fill('H 0 0 0\nH 0 0 1.4')
         assert page.locator('#matrix tr').count() == 0
         assert page.locator('#download').is_disabled()
@@ -70,7 +75,7 @@ try:
         page.locator('#geometry').fill('H 0 0 0\nH 0 0 0')
         page.locator('#calculate').click()
         page.wait_for_function("document.querySelector('#status').textContent.includes('error')")
-        assert 'coincide' in page.locator('#summary').inner_text()
+        assert 'coincide' in summary_text()
         assert page.locator('#download').is_disabled()
         page.locator('#water').click(); wait_pass()
         assert page.locator('#matrix tr').count() == 8
@@ -83,3 +88,4 @@ try:
 finally:
     server.shutdown()
     server.server_close()
+

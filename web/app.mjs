@@ -12,7 +12,7 @@ const EXAMPLES={water:WATER_XYZ,h2:'2\nHydrogen / angstrom\nH 0 0 0\nH 0 0 0.74'
   ammonia:'4\nAmmonia / angstrom\nN 0 0 .1\nH .93 0 -.25\nH -.465 .8054 -.25\nH -.465 -.8054 -.25'};
 let ready=false,busy=false,valid=false,jobId=0,jobMode='rhf',molecule=null,current=null;
 let scan=null,selectedPoint=-1,history=[],previewTimer=null;
-let pair=[0,1];
+let pair=[0,1],selectionExplicit=false;
 const viewer=new MoleculeViewer($('molecule-viewer'),selectAtom);
 const worker=new Worker(new URL('./worker.mjs',import.meta.url),{type:'module'});
 $('geometry').value=WATER_XYZ;
@@ -27,15 +27,30 @@ function setBusy(value) {
   $('xyz-file').disabled=value;
   $('geometry-download').disabled=!molecule;
   const mode=$('mode').value;
+  document.querySelector('#calculation-section .method-chip').textContent=mode==='integrals'?'AO':'RHF';
+  document.querySelector('.spin-info strong').textContent=mode==='integrals'?'Any electron count':'Closed-shell singlet';
+  $('run-label').textContent=mode==='scan'?'Run bond scan':'Run calculation';
+  $('mobile-run').disabled=!value&&(!ready||!valid);
+  $('mobile-run').textContent=value?'Stop calculation':mode==='scan'?'Run bond scan':'Run calculation';
   $('scan-controls').querySelectorAll('input,select,button').forEach(element=>element.disabled=value||mode!=='scan');
   for(const id of ['charge','maxiter','diis'])$(id).disabled=value||mode==='integrals';
 }
 function badge(text,kind='neutral') { $('result-badge').textContent=text;$('result-badge').className=`status-badge ${kind}`; }
 function setTab(name) {
-  document.querySelectorAll('[data-tab]').forEach(button=>button.setAttribute('aria-selected',String(button.dataset.tab===name)));
+  document.querySelectorAll('[data-tab]').forEach(button=>{
+    button.setAttribute('aria-selected',String(button.dataset.tab===name));
+    button.tabIndex=button.dataset.tab===name?0:-1;
+  });
   document.querySelectorAll('[data-panel]').forEach(panel=>panel.hidden=panel.dataset.panel!==name);
+  if(name==='scf')drawSCF();
+  if(name==='pes')renderScan();
 }
 document.querySelectorAll('[data-tab]').forEach(button=>button.addEventListener('click',()=>setTab(button.dataset.tab)));
+document.querySelectorAll('[data-tab]').forEach(button=>button.addEventListener('keydown',event=>{
+  const tabs=[...document.querySelectorAll('[data-tab]')],index=tabs.indexOf(button);
+  const target=event.key==='ArrowRight'?tabs[(index+1)%tabs.length]:event.key==='ArrowLeft'?tabs[(index+tabs.length-1)%tabs.length]:event.key==='Home'?tabs[0]:event.key==='End'?tabs.at(-1):null;
+  if(target){event.preventDefault();setTab(target.dataset.tab);target.focus();}
+}));
 function formula(atoms) {
   const counts={};for(const atom of atoms) counts[atom.symbol]=(counts[atom.symbol]??0)+1;
   const symbols=Object.keys(counts).sort();
@@ -56,10 +71,12 @@ function selection() {
   }
   const label=index=>`${molecule.atoms[index].symbol}${index+1}`;
   $('selection-info').textContent=`${label(a)} - ${label(b)} · ${(distance(molecule,a,b)*ANGSTROM_PER_BOHR).toFixed(4)} Å`;
-  viewer.select(pair,readMoving().filter(i=>molecule.atoms[i]));
+  const highlight=selectionExplicit||$('mode').value==='scan';
+  viewer.select(highlight?pair:[],highlight?readMoving().filter(i=>molecule.atoms[i]):[]);
 }
 function selectAtom(index) {
   if(busy||!molecule||molecule.atoms.length<2) return;
+  selectionExplicit=true;
   pair=pair.length===1?[pair[0],index]:[index];
   if(pair.length===1){viewer.select(pair);$('selection-info').textContent=`Atom ${index+1} selected. Choose a second atom.`;return;}
   if(pair[0]===pair[1]){pair=[index];return;}
@@ -79,12 +96,19 @@ function preview({reset=false}={}) {
     $('eri-memory').textContent=`${(info.eriBytes/1e6).toFixed(2)} MB ERIs`;
     $('input-message').textContent=!info.fits?'This basis exceeds the 40 AO limit. Select a smaller basis or molecule.':'';
     $('formula').textContent=formula(molecule.atoms);
+    const title={water:'Water',h2:'Hydrogen',methane:'Methane',ammonia:'Ammonia'}[$('preset').value]??'Custom molecule';
+    $('header-molecule').textContent=title;
+    $('workspace-title').replaceChildren(document.createTextNode(title));
+    const dot=document.createElement('span');dot.className='title-dot';dot.textContent='.';$('workspace-title').append(dot);
+    $('workspace-description').textContent=$('mode').value==='scan'?'Map the energy along a molecular coordinate.':'Explore structure, energy, and electronic properties.';
     $('viewer-meta').textContent=`${molecule.atoms.length} atoms · ${basisLabel(molecule.basis)}`;
+    if(!current){$('metric-basis').textContent=basisLabel(molecule.basis);$('metric-aos').textContent=info.nao;$('metric-cycles').textContent='...';}
     viewer.setMolecule(molecule,{reset});
     if(pair.some(i=>!molecule.atoms[i])) {$('scan-a').value=1;$('scan-b').value=Math.min(2,molecule.atoms.length);$('scan-moving').value=Math.min(2,molecule.atoms.length);}
     selection();renderData();
   } catch(error) {
     valid=false;$('input-message').textContent=error.message;
+    $('coordinates-editor').open=true;
     $('viewer-meta').textContent='Showing last valid geometry';
   }
   $('scan-controls').hidden=$('mode').value!=='scan';
@@ -117,6 +141,7 @@ function appendIteration(entry) {
 function drawSCF() {
   plot($('scf-chart'),history.map(entry=>({x:entry.iteration,y:entry.energy,label:`Cycle ${entry.iteration}: ${entry.energy.toFixed(12)} Eh`})),{
     xLabel:'SCF iteration',yLabel:'Energy / Eh',onSelect:index=>{
+      $('iteration-details').open=true;
       $('scf-history').querySelectorAll('tbody tr').forEach((row,i)=>row.classList.toggle('selected',i===index));
       const row=$('scf-history').querySelectorAll('tbody tr')[index];
       if(row) $('scf-history').scrollTop=row.offsetTop-$('scf-history').offsetTop;
@@ -153,6 +178,8 @@ function renderData() {
 }
 function showResult(result,{pointIndex=null}={}) {
   current=result;const r=result.rhf,n=result.nao;
+  $('metric-basis').textContent=basisLabel(result.molecule.basis);$('metric-aos').textContent=n;$('metric-cycles').textContent=r?.iterations??'N/A';
+  if(r&&!r.converged)document.querySelector('.summary-details').open=true;
   $('result-context').textContent=`${r?'RHF':'INTEGRALS'} / ${basisLabel(result.molecule.basis)}`;
   $('results-title').textContent=pointIndex===null?'Calculation details':`Scan point ${pointIndex+1} / ${scan.spec.count}`;
   if(r){
@@ -186,18 +213,23 @@ function options() {return {charge:Number($('charge').value),maxIterations:Numbe
 function run(event) {
   event?.preventDefault();if(busy||!ready) return;
   preview();if(!valid) return;
-  if($('mode').value!=='integrals'&&(!$('charge').reportValidity()||!$('maxiter').reportValidity()))return;
+  if($('mode').value!=='integrals'){
+    if(!$('maxiter').checkValidity())document.querySelector('.advanced-settings').open=true;
+    if(!$('charge').reportValidity()||!$('maxiter').reportValidity())return;
+  }
   const mode=$('mode').value;
   let spec;
   try {if(mode==='scan')spec=scanSpec(molecule,scanConfig());}
   catch(error){$('input-message').textContent=error.message;return;}
   jobId++;jobMode=mode;current=null;history=[];startHistory();drawSCF();renderOrbitals(null);renderMatrix();$('download').disabled=true;
   $('energy-value').textContent='...';badge('RUNNING');$('status').textContent='Computing molecular integrals...';$('summary').textContent='Running locally in your browser.';
+  document.querySelector('.summary-details').open=false;
   $('result-context').textContent=`${mode==='integrals'?'INTEGRALS':'RHF'} / ${basisLabel(molecule.basis)}`;
   $('job-progress').hidden=false;$('progress-fill').style.width='0%';$('progress-text').textContent=mode==='scan'?`0 / ${spec.count} scan points`:'Starting SCF';
   if(mode==='scan') {scan={spec,source:structuredClone(molecule),options:options(),points:[],cancelled:false};selectedPoint=-1;renderScan();setTab('pes');}
   else setTab(mode==='integrals'?'matrices':'scf');
   setBusy(true);
+  if(matchMedia('(max-width:850px)').matches)toggleSetup(false);
   worker.postMessage({id:jobId,geometry:$('geometry').value,unit:$('unit').value,basis:$('basis').value,mode,options:options(),scan:spec});
 }
 function selectPoint(index) {
@@ -211,6 +243,7 @@ function selectPoint(index) {
     current=null;history=[];startHistory();drawSCF();renderOrbitals(null);renderMatrix();
     $('ao-order').textContent='';$('eri-selectors').replaceChildren();renderERI();
     $('results-title').textContent=`Scan point ${index+1} / ${scan.spec.count}`;
+    $('metric-cycles').textContent='...';document.querySelector('.summary-details').open=true;
     badge('POINT FAILED','error');$('energy-value').textContent='...';$('status').textContent=`Scan point ${index+1} failed.`;$('summary').textContent=point.error;$('download').disabled=true;
   }
   renderScan();
@@ -257,7 +290,8 @@ worker.onmessage=({data})=>{
   }
   setBusy(false);$('job-progress').hidden=true;
   if(data.type==='result'){showResult(data.result);return;}
-  current=null;$('download').disabled=true;$('energy-value').textContent='...';
+  current=null;$('download').disabled=true;$('energy-value').textContent='...';$('metric-cycles').textContent='...';
+  document.querySelector('.summary-details').open=data.type!=='cancelled';
   badge(data.type==='cancelled'?'CANCELLED':'INPUT ERROR',data.type==='cancelled'?'warning':'error');
   $('status').textContent=data.type==='cancelled'?'Calculation cancelled.':'Input or calculation error.';$('summary').textContent=data.message??'You can adjust the settings and run again.';
 };
@@ -266,13 +300,22 @@ function save(name,content,type='text/plain') {
   const url=URL.createObjectURL(new Blob([content],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 $('controls').addEventListener('submit',run);
-$('cancel').addEventListener('click',()=>{worker.postMessage({type:'cancel',id:jobId});$('cancel').disabled=true;$('cancel').textContent='Stopping...';$('progress-text').textContent='Stopping after the current integral or SCF step...';});
+$('controls').addEventListener('invalid',event=>{
+  const details=event.target.closest('details');
+  if(details)details.open=true;
+},true);
+$('cancel').addEventListener('click',()=>{worker.postMessage({type:'cancel',id:jobId});$('cancel').disabled=true;$('cancel').textContent='Stopping...';$('mobile-run').disabled=true;$('mobile-run').textContent='Stopping...';$('progress-text').textContent='Stopping after the current integral or SCF step...';});
 $('controls').addEventListener('input',event=>{
   if(busy||event.target.id==='xyz-file')return;
   if(event.target.id==='geometry')$('preset').value='custom';
   invalidate();if(event.target.id.startsWith('scan-'))selection();
 });
-$('preset').addEventListener('change',()=>{if(busy)return;$('geometry').value=EXAMPLES[$('preset').value];$('unit').value='angstrom';$('charge').value='0';invalidate();preview({reset:true});});
+$('mode').addEventListener('change',()=>{
+  if(busy)return;
+  preview();
+  if($('mode').value==='scan')$('scan-controls').scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'});
+});
+$('preset').addEventListener('change',()=>{if(busy)return;selectionExplicit=false;$('geometry').value=EXAMPLES[$('preset').value];$('unit').value='angstrom';$('charge').value='0';invalidate();preview({reset:true});});
 $('water').addEventListener('click',()=>{if(busy)return;$('preset').value='water';$('geometry').value=WATER_XYZ;$('unit').value='angstrom';$('charge').value='0';invalidate();preview({reset:true});run();});
 $('xyz-file').addEventListener('change',async event=>{
   const file=event.target.files[0];if(!file)return;
@@ -291,4 +334,76 @@ $('download').addEventListener('click',()=>{if(current)save('calculation.json',J
 $('scan-csv').addEventListener('click',()=>save('pes-scan.csv',scanCSV(scan),'text/csv'));
 $('scan-xyz').addEventListener('click',()=>save('pes-scan.xyz',scanXYZ(scan)));
 $('scan-json').addEventListener('click',()=>save('pes-scan.json',JSON.stringify({...scan,points:scan.points.map(p=>({...p,...(p.result?{result:serializable(p.result)}:{})}))},null,2),'application/json'));
+// The setup drawer and viewer focus mode share the existing calculation state.
+function toggleSetup(open) {
+  const mobile=matchMedia('(max-width:850px)').matches;
+  document.body.classList.toggle('setup-open',mobile&&open);
+  $('setup-backdrop').hidden=!mobile||!open;
+  $('mobile-setup-toggle').setAttribute('aria-expanded',String(mobile&&open));
+  $('setup-panel').setAttribute('aria-hidden',String(mobile&&!open));
+  if(mobile&&open)$('preset').focus();
+  if(mobile&&!open&&$('setup-panel').contains(document.activeElement))$('mobile-setup-toggle').focus();
+}
+function focusViewer(enabled) {
+  document.body.classList.toggle('focus-view',enabled);
+  $('focus-view').setAttribute('aria-pressed',String(enabled));
+  $('focus-view').title=enabled?'Exit expanded viewer':'Expand molecule viewer';
+}
+function activateTool(id) {
+  document.querySelectorAll('.rail-button').forEach(button=>{
+    button.classList.toggle('active',button.id===id);
+    button.setAttribute('aria-pressed',String(button.id===id));
+  });
+}
+$('mobile-setup-toggle').addEventListener('click',()=>toggleSetup(!document.body.classList.contains('setup-open')));
+$('mobile-edit').addEventListener('click',()=>toggleSetup(true));
+$('close-setup').addEventListener('click',()=>toggleSetup(false));
+$('setup-backdrop').addEventListener('click',()=>toggleSetup(false));
+$('mobile-run').addEventListener('click',()=>busy?$('cancel').click():run());
+$('focus-view').addEventListener('click',()=>focusViewer(!document.body.classList.contains('focus-view')));
+$('help-open').addEventListener('click',()=>$('workspace-guide').showModal());
+for(const id of ['help-close','help-done'])$(id).addEventListener('click',()=>$('workspace-guide').close());
+$('nav-molecule').addEventListener('click',()=>{
+  activateTool('nav-molecule');$('coordinates-editor').open=true;toggleSetup(true);$('geometry').focus();
+});
+$('nav-setup').addEventListener('click',()=>{activateTool('nav-setup');toggleSetup(true);$('basis').focus();});
+$('nav-scan').addEventListener('click',()=>{
+  if(busy)return;
+  activateTool('nav-scan');$('mode').value='scan';invalidate();preview();setTab('pes');toggleSetup(true);$('scan-a').focus();
+});
+$('nav-results').addEventListener('click',()=>{
+  activateTool('nav-results');$('results-section').scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'});
+});
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape'){focusViewer(false);toggleSetup(false);}
+  if((event.metaKey||event.ctrlKey)&&event.key==='Enter'&&!$('workspace-guide').open&&!busy){event.preventDefault();run();}
+  if(event.key==='Tab'&&!$('workspace-guide').open){
+    const root=document.body.classList.contains('focus-view')?document.querySelector('.viewer-card'):document.body.classList.contains('setup-open')?$('setup-panel'):null;
+    if(root){
+      const elements=[...root.querySelectorAll('button,input,select,textarea,[tabindex]')].filter(element=>!element.disabled&&element.tabIndex>=0&&element.offsetParent!==null);
+      const first=elements[0],last=elements.at(-1);
+      if(first&&(!root.contains(document.activeElement)||event.shiftKey&&document.activeElement===first||!event.shiftKey&&document.activeElement===last)){
+        event.preventDefault();(event.shiftKey?last:first).focus();
+      }
+    }
+  }
+});
+matchMedia('(max-width:850px)').addEventListener('change',()=>toggleSetup(false));
+const chartWidths=new WeakMap();
+new ResizeObserver(entries=>{
+  for(const entry of entries){
+    const width=Math.round(entry.contentRect.width);
+    if(width>0&&chartWidths.get(entry.target)!==width){
+      chartWidths.set(entry.target,width);
+      if(entry.target.id==='scf-chart')drawSCF();else renderScan();
+    }
+  }
+}).observe($('scf-chart'));
+// Observe the second chart with the same width-only rule to avoid resize feedback.
+new ResizeObserver(entries=>{
+  for(const entry of entries){const width=Math.round(entry.contentRect.width);if(width>0&&chartWidths.get(entry.target)!==width){chartWidths.set(entry.target,width);renderScan();}}
+}).observe($('pes-chart'));
+toggleSetup(false);
+
 preview({reset:true});renderScan();plot($('scf-chart'),[]);renderOrbitals(null);renderMatrix();setBusy(false);
+

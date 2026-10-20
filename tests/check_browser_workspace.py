@@ -36,7 +36,7 @@ try:
         assert page.locator('#molecule-viewer').get_attribute('data-atom-count')=='3'
         image=download('#viewer-png','water.png')
         im=Image.open(image).convert('RGB');assert im.width>400 and im.height>200
-        colored=sum(1 for y in range(im.height) for x in range(im.width) if (lambda rgb:rgb[1]>rgb[0]*1.3 and rgb[1]>rgb[2]*1.02)(im.getpixel((x,y))))
+        colored=sum(1 for y in range(im.height) for x in range(im.width) if (lambda rgb:max(rgb)>90 and max(rgb)-min(rgb)>45)(im.getpixel((x,y))))
         assert colored>1000,'Molecule should occupy a visible area, rather than an empty canvas'
         canvas=page.locator('#molecule-viewer canvas');before=canvas.screenshot()
         box=canvas.bounding_box();page.mouse.move(box['x']+120,box['y']+100);page.mouse.down();page.mouse.move(box['x']+230,box['y']+150,steps=8);page.mouse.up()
@@ -56,6 +56,7 @@ try:
         data=json.loads(download('#download','water.json').read_text())
         expected=next(c for c in reference if c['name']=='water' and c['basis']=='cc-pvdz')
         assert data['nao']==24 and abs(data['rhf']['energy']-expected['energy'])<1e-9
+        page.locator('#nav-molecule').click()
         page.locator('#geometry').fill('Ne 0 0 0\nNe 0 0 3\nNe 0 0 6')
         page.wait_for_function('document.querySelector("#input-message").textContent.includes("40 AO")',polling=100)
         assert page.locator('#calculate').is_disabled()
@@ -102,7 +103,7 @@ try:
         assert 'Stopped' in page.locator('#progress-text').inner_text()
         # Nonconvergence is explicit in both the table and the exported point metadata.
         page.locator('#preset').select_option('water');page.locator('#basis').select_option('sto-3g');page.locator('#scan-a').fill('1');page.locator('#scan-b').fill('2');page.locator('#scan-moving').fill('2')
-        page.locator('#scan-count').fill('3');page.locator('#scan-start').fill('.8');page.locator('#scan-end').fill('1.2');page.locator('#maxiter').fill('1')
+        page.locator('.advanced-settings').evaluate('(e)=>e.open=true');page.locator('#scan-count').fill('3');page.locator('#scan-start').fill('.8');page.locator('#scan-end').fill('1.2');page.locator('#maxiter').fill('1')
         page.locator('#calculate').click();scan_complete()
         limited=json.loads(download('#scan-json','limited.json').read_text())
         assert all(p['status']=='not_converged' and not p['converged'] for p in limited['points'])
@@ -127,3 +128,4 @@ try:
         print('No JavaScript exceptions or external asset requests PASS')
 finally:
     server.shutdown();server.server_close()
+

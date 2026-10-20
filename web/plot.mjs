@@ -10,7 +10,7 @@ export function plot(container,points,{xLabel='Coordinate',yLabel='Energy / Eh',
   if(!points.length){container.replaceChildren();const p=document.createElement('p');p.className='empty-chart';p.textContent=empty;container.append(p);return;}
   const valid=points.filter(p=>Number.isFinite(p.y));
   if(!valid.length){container.textContent='No numerical energies are available yet.';return;}
-  const width=760,height=260,left=86,right=24,top=24,bottom=50;
+  const width=Math.max(container.clientWidth||760,320),height=230,left=90,right=16,top=22,bottom=48;
   let xmin=Math.min(...points.map(p=>p.x)),xmax=Math.max(...points.map(p=>p.x));
   let ymin=Math.min(...valid.map(p=>p.y)),ymax=Math.max(...valid.map(p=>p.y));
   if(xmin===xmax){xmin-=.5;xmax+=.5;}
@@ -21,7 +21,7 @@ export function plot(container,points,{xLabel='Coordinate',yLabel='Energy / Eh',
   const svg=node('svg',{viewBox:`0 0 ${width} ${height}`,role:'img','aria-label':`${yLabel} versus ${xLabel}`});
   for(let t=0;t<=4;t++) {
     const yy=top+t*(height-top-bottom)/4,value=ymax-t*(ymax-ymin)/4;
-    svg.append(node('line',{x1:left,y1:yy,x2:width-right,y2:yy,stroke:'#e6edf2'}));
+    svg.append(node('line',{x1:left,y1:yy,x2:width-right,y2:yy,stroke:'#eeedf6'}));
     svg.append(node('text',{x:left-12,y:yy+4,'text-anchor':'end',class:'axis-tick'},Math.abs(ymax-ymin)<.001?value.toExponential(2):value.toFixed(3)));
     const xx=left+t*(width-left-right)/4;
     svg.append(node('text',{x:xx,y:height-bottom+24,'text-anchor':'middle',class:'axis-tick'},(xmin+t*(xmax-xmin)/4).toFixed(2)));
@@ -31,10 +31,10 @@ export function plot(container,points,{xLabel='Coordinate',yLabel='Energy / Eh',
     if(!Number.isFinite(p.y)||p.failed){connected=false;continue;}
     path+=`${connected?'L':'M'}${x(p.x)},${y(p.y)} `;connected=true;
   }
-  svg.append(node('path',{d:path,fill:'none',stroke:'#159b90','stroke-width':2.5}));
+  svg.append(node('path',{d:path,fill:'none',stroke:'#9782e5','stroke-width':2.5}));
   for(const [i,p] of points.entries()) if(Number.isFinite(p.y)) {
     const circle=node('circle',{cx:x(p.x),cy:y(p.y),r:i===selected?6.5:4.5,
-      fill:p.failed?'#ed9f3e':i===selected?'#122c3e':'#ffffff',stroke:p.failed?'#c58324':'#159b90','stroke-width':2,
+      fill:p.failed?'#ed9f3e':i===selected?'#7059ed':'#ffffff',stroke:p.failed?'#c58324':'#9782e5','stroke-width':2,
       tabindex:'0',role:'button','aria-label':p.label??`Point ${i+1}`,'data-point':i});
     circle.append(node('title',{},p.label??`${p.x}: ${p.y}`));
     circle.addEventListener('click',()=>onSelect(i));
@@ -45,3 +45,4 @@ export function plot(container,points,{xLabel='Coordinate',yLabel='Energy / Eh',
   svg.append(node('text',{x:18,y:(top+height-bottom)/2,transform:`rotate(-90 18 ${(top+height-bottom)/2})`,'text-anchor':'middle',class:'axis-title'},yLabel));
   container.replaceChildren(svg);
 }
+
