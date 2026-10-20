@@ -7,7 +7,7 @@ export class MoleculeViewer {
     this.pair=[]; this.moving=[];
     try {
       if (!globalThis.$3Dmol) throw new Error('Viewer library could not be loaded.');
-      this.viewer=globalThis.$3Dmol.createViewer(element,{backgroundColor:'#ece7dc',antialias:true,minimumZoomToDistance:2.6});
+      this.viewer=globalThis.$3Dmol.createViewer(element,{backgroundColor:'#f0ece1',antialias:true,minimumZoomToDistance:2.6});
       if (!this.viewer) throw new Error('WebGL is unavailable.');
       this.viewer.setProjection('orthographic');
       new ResizeObserver(()=>{

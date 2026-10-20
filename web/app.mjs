@@ -7,9 +7,11 @@ import {distance,connectedFragment,scanSpec,scanCSV,scanXYZ,HARTREE_TO_KCAL} fro
 import {scfResult,totalEnergy,validateElectronicOptions} from './electronic.mjs';
 import {plot} from './plot.mjs';
 import {BUILD_ID,WORKER_PROTOCOL} from './build-info.mjs';
-import {captureRequest,assertResultMatches,presetMethod,restoreSettings,saveSettings,readSettings} from './settings.mjs';
+import {initializeWorkbench,toggleSetup,TASKS} from './workbench.mjs';
+import {captureRequest,assertResultMatches,presetMethod,restoreSettings,saveSettings,readSettings,SETTINGS_FIELDS} from './settings.mjs';
 
 const $=id=>document.getElementById(id);
+initializeWorkbench();
 const EXAMPLES={water:WATER_XYZ,h2:'2\nHydrogen / angstrom\nH 0 0 0\nH 0 0 0.74',
   methane:'5\nMethane / angstrom\nC 0 0 0\nH .63 .63 .63\nH -.63 -.63 .63\nH -.63 .63 -.63\nH .63 -.63 -.63',
   ammonia:'4\nAmmonia / angstrom\nN 0 0 .1\nH .93 0 -.25\nH -.465 .8054 -.25\nH -.465 -.8054 -.25',
@@ -37,23 +39,20 @@ function syncControls() {
   // Never reset all controls before locking a subset. In particular, leave a
   // native select alone when its enabled state has not actually changed.
   $('controls').querySelectorAll('input,select,textarea,button').forEach(element=>{
-    if(['calculate','cancel'].includes(element.id))return;
+    if(!SETTINGS_FIELDS.includes(element.id)&&!['xyz-file','water','auto-fragment'].includes(element.id))return;
     const inactive=element.closest('#scan-controls')&&mode!=='scan';
     const scf=mode==='integrals'&&['charge','maxiter','diis','multiplicity','guess'].includes(element.id);
     const spin=!uhf&&['multiplicity','guess'].includes(element.id);
     setDisabled(element,!!(busy||inactive||scf||spin));
   });
-  setDisabled($('cancel'),!busy);$('cancel').textContent='Stop calculation';
-  setDisabled($('toolbar-stop'),!busy);
+  setDisabled($('cancel'),!busy);$('cancel').hidden=!busy;$('cancel').textContent='■ Stop';
   setDisabled($('calculate'),busy||!ready||!valid);$('calculate').hidden=busy;
   setDisabled($('download'),busy||!current);
   setDisabled($('geometry-download'),!molecule);
   document.querySelector('#calculation-section .method-chip').textContent=mode==='integrals'?'AO':$('method').value.toUpperCase();
   document.querySelector('.spin-info strong').textContent=mode==='integrals'?'Any electron count':uhf?`Multiplicity ${$('multiplicity').value}`:'Closed-shell singlet';
-  $('run-label').textContent=mode==='scan'?'Run bond scan':'Run calculation';
-  $('toolbar-method').textContent=`${mode==='integrals'?'INTEGRALS':$('method').value.toUpperCase()} / ${$('basis').value.toUpperCase()}`;
-  setDisabled($('mobile-run'),!busy&&(!ready||!valid));
-  $('mobile-run').textContent=busy?'Stop calculation':mode==='scan'?'Run bond scan':'Run calculation';
+  $('run-label').textContent='Run';
+  $('calculate').title=mode==='scan'?'Run bond-length scan (Cmd/Ctrl + Enter)':'Run calculation (Cmd/Ctrl + Enter)';
   $('uhf-controls').hidden=!uhf||mode==='integrals';
   $('method-hint').textContent=uhf?'Separate alpha and beta orbitals, with spin diagnostics.':$('method').value==='mp2'?'All-electron MP2 correlation on an RHF reference.':'Restricted Hartree-Fock for closed-shell singlets.';
 }
@@ -161,7 +160,9 @@ function invalidate() {
   $('status').textContent='Settings changed. Ready to calculate.';
   $('summary').textContent='Run a calculation for the current settings.';
   $('scf-history').replaceChildren();$('orbital-table').replaceChildren();$('matrix').replaceChildren();
-  $('frontier-info').replaceChildren();$('ao-order').textContent='';$('eri-selectors').replaceChildren();$('eri-value').textContent='Run a single point to inspect integrals.';
+  $('frontier-info').replaceChildren();
+  document.dispatchEvent(new CustomEvent('lorentzian:orbital-select',{detail:null}));
+  $('ao-order').textContent='';$('eri-selectors').replaceChildren();$('eri-value').textContent='Run a single point to inspect integrals.';
   history=[];plot($('scf-chart'),[]);
   previewTimer=setTimeout(()=>preview(),120);
 }
@@ -189,18 +190,28 @@ function drawSCF() {
 }
 function renderOrbitals(r) {
   $('frontier-info').replaceChildren();
+  document.dispatchEvent(new CustomEvent('lorentzian:orbital-select',{detail:null}));
   if(!r){$('orbital-table').textContent='Run an electronic calculation to view orbitals.';return;}
   const uhf=r.method==='UHF';
   $('orbital-note').textContent=uhf?'Separate alpha and beta orbital energies in Hartree, occupation 1 or 0.':current?.mp2?'RHF reference orbital energies and occupations. These are not correlated MP2 orbitals.':'Spatial orbital energies in Hartree. Closed-shell occupation is 2 or 0.';
   const channels=uhf?[['Alpha',r.orbitalEnergiesAlpha,r.occupationsAlpha,r.nalpha],['Beta',r.orbitalEnergiesBeta,r.occupationsBeta,r.nbeta]]:[['',r.orbitalEnergies,r.occupations,r.electrons/2]];
   const rows=[];
   for(const [label,eps,occ,nocc] of channels) {
-    eps.forEach((e,i)=>rows.push([...(uhf?[label]:[]),i+1,e.toFixed(10),occ[i]]));
+    eps.forEach((e,i)=>rows.push({spin:label,index:i,energy:e,values:[...(uhf?[label]:[]),i+1,occ[i],e.toFixed(10),(e*27.211386245988).toFixed(6)]}));
     for(const [name,value] of [['HOMO',eps[nocc-1]],['LUMO',eps[nocc]],['Gap',nocc>0&&eps[nocc]!==undefined?eps[nocc]-eps[nocc-1]:undefined]]) {
       const box=document.createElement('div');box.textContent=`${label} ${name}`.trim();const strong=document.createElement('strong');strong.textContent=value===undefined?'Not in basis':`${value.toFixed(6)} Eh`;box.append(strong);$('frontier-info').append(box);
     }
   }
-  table($('orbital-table'),[...(uhf?['Spin']:[]),'Orbital','Energy / Eh','Occupation'],rows);
+  const body=table($('orbital-table'),[...(uhf?['Spin']:[]),'Orbital','Occupation','Energy / Eh','Energy / eV'],rows.map(row=>row.values));
+  [...body.rows].forEach((row,index)=>{
+    const orbital=rows[index];row.className='clickable';row.tabIndex=0;row.setAttribute('aria-selected','false');
+    row.setAttribute('aria-label',`${orbital.spin} orbital ${orbital.index+1}, ${orbital.energy.toFixed(6)} Hartree`);
+    function select(){
+      [...body.rows].forEach(other=>{other.classList.toggle('selected',other===row);other.setAttribute('aria-selected',String(other===row));});
+      document.dispatchEvent(new CustomEvent('lorentzian:orbital-select',{detail:orbital}));
+    }
+    row.addEventListener('click',select);row.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();select();}});
+  });
 }
 function renderMatrix() {
   if(!current){$('matrix').textContent='Run a calculation to inspect its matrices.';return;}
@@ -217,10 +228,13 @@ function renderERI() {
   $('eri-value').textContent=`(${i+1} ${j+1}|${k+1} ${l+1}) = ${current.eri[((i*n+j)*n+k)*n+l].toFixed(14)} Eh`;
 }
 function renderData() {
-  if(!molecule) return;
+  if(!molecule)return;
   $('geometry-output').textContent=toXYZ(molecule,'angstrom',`${basisLabel(molecule.basis)} / current geometry`);
   const info=basisSummary(molecule);$('data-meta').replaceChildren();
-  for(const text of [`${molecule.atoms.length} atoms`,basisLabel(molecule.basis),`${info.nao} AOs`,'Coordinates exported in angstrom']){const chip=document.createElement('span');chip.textContent=text;$('data-meta').append(chip);}
+  for(const text of [`${molecule.atoms.length} atoms`,basisLabel(molecule.basis),`${info.nao} AOs`]){const chip=document.createElement('span');chip.textContent=text;$('data-meta').append(chip);}
+  const atoms=molecule.atoms,label=(atom,i)=>`${atom.symbol}${i+1}`;
+  table($('coordinate-table'),['Atom','x / Å','y / Å','z / Å'],atoms.map((atom,i)=>[label(atom,i),...atom.xyz.map(x=>(x*ANGSTROM_PER_BOHR).toFixed(8))]));
+  table($('distance-matrix'),['Atom',...atoms.map(label)],atoms.map((atom,i)=>[label(atom,i),...atoms.map((_,j)=>(distance(molecule,i,j)*ANGSTROM_PER_BOHR).toFixed(5))]));
 }
 function referenceContext(mp2) {
   document.querySelector('#panel-scf h3').textContent=mp2?'RHF reference convergence':'SCF convergence';
@@ -300,7 +314,7 @@ function run(event) {
   if(request.mode==='scan') {
     scan={spec,source:structuredClone(target),options:{...request.options},points:[],cancelled:false};
     selectedPoint=-1;scanRevision=draftRevision;renderScan();setTab('pes');
-  } else setTab(request.mode==='integrals'?'matrices':'scf');
+  } else setTab(TASKS.find(task=>task.id===request.mode)?.tab??'scf');
   setBusy(true);
   if(matchMedia('(max-width:850px)').matches)toggleSetup(false);
   // All validation, labels and computation use this one immutable snapshot.
@@ -362,7 +376,7 @@ worker.onmessage=({data})=>{
     ready=true;$('engine-state').textContent='Local engine ready';$('engine-dot').classList.add('ready');
     preview();setBusy(false);if(draftRevision===0)run();return;
   }
-  if(data.type==='fatal') {ready=false;setBusy(false);badge('ENGINE ERROR','error');$('status').textContent='Engine unavailable.';$('summary').textContent=data.message;return;}
+  if(data.type==='fatal') {$('engine-state').textContent='Engine unavailable';ready=false;setBusy(false);badge('ENGINE ERROR','error');$('status').textContent='Engine unavailable.';$('summary').textContent=data.message;return;}
   if(data.id!==jobId||!activeRequest)return;
   if(data.protocol!==WORKER_PROTOCOL||data.buildId!==BUILD_ID) {
     activeRequest=null;current=null;ready=false;worker.terminate();setBusy(false);$('energy-value').textContent='...';
@@ -423,17 +437,19 @@ $('controls').addEventListener('invalid',event=>{
   const details=event.target.closest('details');
   if(details)details.open=true;
 },true);
-$('cancel').addEventListener('click',()=>{worker.postMessage({type:'cancel',id:jobId});$('cancel').disabled=true;$('cancel').textContent='Stopping...';$('mobile-run').disabled=true;$('mobile-run').textContent='Stopping...';$('progress-text').textContent='Stopping after the current integral or SCF step...';});
+$('cancel').addEventListener('click',()=>{worker.postMessage({type:'cancel',id:jobId});$('cancel').disabled=true;$('cancel').textContent='Stopping...';$('progress-text').textContent='Stopping after the current integral or SCF step...';});
 function settingsChanged({reset=false}={}) {
   invalidate();preview({reset});persistSettings();
 }
 $('controls').addEventListener('input',event=>{
+  if(!SETTINGS_FIELDS.includes(event.target.id))return;
   if(busy||['SELECT','BUTTON'].includes(event.target.tagName)||event.target.id==='xyz-file')return;
   if(event.target.id==='geometry')$('preset').value='custom';
   invalidate();persistSettings();
   if(event.target.id.startsWith('scan-'))selection();
 });
 $('controls').addEventListener('change',event=>{
+  if(!SETTINGS_FIELDS.includes(event.target.id))return;
   if(busy||event.target.id==='xyz-file')return;
   const id=event.target.id;
   if(id==='method')methodExplicit=true;
@@ -443,16 +459,16 @@ $('controls').addEventListener('change',event=>{
     if(!EXAMPLES[preset])return;
     $('geometry').value=EXAMPLES[preset];$('unit').value='angstrom';
     $('charge').value=settings?.charge??0;$('multiplicity').value=settings?.multiplicity??1;
-    $('method').value=presetMethod($('method').value,settings?.method,methodExplicit);
+    $('method').value=presetMethod($('method').value,settings?.method??'rhf',methodExplicit);
     if(settings?.method==='uhf')$('guess').value='core';
     pair=[0,1];$('scan-a').value='1';$('scan-b').value='2';$('scan-moving').value='2';
   }
   settingsChanged({reset:id==='preset'});
-  if(id==='mode'&&$('mode').value==='scan')$('scan-controls').scrollIntoView({block:'nearest',behavior:'instant'});
+  if(id==='mode'&&$('mode').value==='scan')$('task-popover').open=true;
 });
 $('water').addEventListener('click',()=>{
   if(busy)return;
-  methodExplicit=false;$('controls').reset();$('geometry').value=WATER_XYZ;
+  methodExplicit=false;$('controls').reset();$('geometry').value=WATER_XYZ;viewer.setLabels($('atom-labels').checked);
   selectionExplicit=false;pair=[0,1];settingsChanged({reset:true});run();
 });
 $('xyz-file').addEventListener('change',async event=>{
@@ -472,47 +488,9 @@ $('download').addEventListener('click',()=>{if(current)save('calculation.json',J
 $('scan-csv').addEventListener('click',()=>save('pes-scan.csv',scanCSV(scan),'text/csv'));
 $('scan-xyz').addEventListener('click',()=>save('pes-scan.xyz',scanXYZ(scan)));
 $('scan-json').addEventListener('click',()=>save('pes-scan.json',JSON.stringify({...scan,points:scan.points.map(p=>({...p,...(p.result?{result:serializable(p.result)}:{})}))},null,2),'application/json'));
-// The setup drawer and viewer focus mode share the existing calculation state.
-function toggleSetup(open) {
-  const mobile=matchMedia('(max-width:850px)').matches;
-  document.body.classList.toggle('setup-open',mobile&&open);
-  $('setup-backdrop').hidden=!mobile||!open;
-  $('mobile-setup-toggle').setAttribute('aria-expanded',String(mobile&&open));
-  $('setup-panel').setAttribute('aria-hidden',String(mobile&&!open));
-  if(mobile&&open)$('preset').focus();
-  if(mobile&&!open&&$('setup-panel').contains(document.activeElement))$('mobile-setup-toggle').focus();
-}
-function focusViewer(enabled) {
-  document.body.classList.toggle('focus-view',enabled);
-  $('focus-view').setAttribute('aria-pressed',String(enabled));
-  $('focus-view').title=enabled?'Exit expanded viewer':'Expand molecule viewer';
-}
-$('mobile-setup-toggle').addEventListener('click',()=>toggleSetup(!document.body.classList.contains('setup-open')));
-$('mobile-edit').addEventListener('click',()=>toggleSetup(true));
-$('close-setup').addEventListener('click',()=>toggleSetup(false));
-$('setup-backdrop').addEventListener('click',()=>toggleSetup(false));
-$('mobile-run').addEventListener('click',()=>busy?$('cancel').click():run());
-$('focus-view').addEventListener('click',()=>focusViewer(!document.body.classList.contains('focus-view')));
-$('help-open').addEventListener('click',()=>$('workspace-guide').showModal());
-for(const id of ['help-close','help-done'])$(id).addEventListener('click',()=>$('workspace-guide').close());
 document.addEventListener('keydown',event=>{
-  if(event.key==='Escape'){
-    if(document.querySelector('.menu.open')){closeMenus();return;}
-    focusViewer(false);toggleSetup(false);
-  }
   if((event.metaKey||event.ctrlKey)&&event.key==='Enter'&&!$('workspace-guide').open&&!busy){event.preventDefault();run();}
-  if(event.key==='Tab'&&!$('workspace-guide').open){
-    const root=document.body.classList.contains('focus-view')?document.querySelector('.viewer-card'):document.body.classList.contains('setup-open')?$('setup-panel'):null;
-    if(root){
-      const elements=[...root.querySelectorAll('button,input,select,textarea,[tabindex]')].filter(element=>!element.disabled&&element.tabIndex>=0&&element.offsetParent!==null);
-      const first=elements[0],last=elements.at(-1);
-      if(first&&(!root.contains(document.activeElement)||event.shiftKey&&document.activeElement===first||!event.shiftKey&&document.activeElement===last)){
-        event.preventDefault();(event.shiftKey?last:first).focus();
-      }
-    }
-  }
 });
-matchMedia('(max-width:850px)').addEventListener('change',()=>toggleSetup(false));
 const chartWidths=new WeakMap();
 new ResizeObserver(entries=>{
   for(const entry of entries){
@@ -532,7 +510,6 @@ toggleSetup(false);
 preview({reset:true});renderScan();plot($('scf-chart'),[]);renderOrbitals(null);renderMatrix();setBusy(false);
 globalThis.addEventListener('pageshow',event=>{if(event.persisted&&!busy){invalidate();preview();}});
 
-const ACTIVITY_TITLE={molecule:'Molecule',method:'Calculation',jobs:'Jobs',analysis:'Analysis'};
 function rememberCompletedJob(result,{kind}={}) {
   const list=$('job-list');
   if(!list) return 0;
@@ -594,75 +571,4 @@ function openListedJob(id) {
   persistSettings();
   renderJobList();
 }
-function setActivity(name,{scroll=true}={}) {
-  const activity=ACTIVITY_TITLE[name]?name:'molecule';
-  document.body.dataset.activity=activity;
-  document.querySelectorAll('.rail-button').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.activity===activity)));
-  $('inspector-title').textContent=ACTIVITY_TITLE[activity];
-  $('inspector-kicker').textContent='Properties';
-  if(!scroll) return;
-  if(activity==='molecule') $('structure-section').scrollIntoView({block:'nearest'});
-  if(activity==='method') $('calculation-section').scrollIntoView({block:'nearest'});
-  if(activity==='jobs') document.body.classList.add('jobs-open');
-  if(activity==='analysis') $('results-section').scrollIntoView({block:'nearest'});
-}
-function closeMenus() {
-  document.querySelectorAll('.menu.open').forEach(menu=>menu.classList.remove('open'));
-  document.querySelectorAll('.menu-button').forEach(button=>button.setAttribute('aria-expanded','false'));
-}
-function handleMenu(action,element) {
-  if(action==='import') $('xyz-file').click();
-  if(action==='export-xyz') $('geometry-download').click();
-  if(action==='export') $('download').click();
-  if(action==='scan-csv') $('scan-csv').click();
-  if(action==='scan-xyz') $('scan-xyz').click();
-  if(action==='scan-json') $('scan-json').click();
-  if(action==='preset') {
-    $('preset').value=element.dataset.preset;
-    $('preset').dispatchEvent(new Event('change',{bubbles:true}));
-    setActivity('molecule');
-  }
-  if(action==='coordinates') {setActivity('molecule');$('coordinates-editor').open=true;}
-  if(action==='reset') $('water').click();
-  if(action==='mode') {
-    $('mode').value=element.dataset.mode;
-    $('mode').dispatchEvent(new Event('change',{bubbles:true}));
-    setActivity('method');
-  }
-  if(action==='convergence') {setActivity('method');document.querySelector('.advanced-settings').open=true;}
-  if(action==='run'&&!busy) run();
-  if(action==='stop') $('cancel').click();
-  if(action==='tab') {setTab(element.dataset.tabName);setActivity('analysis');}
-  if(action==='labels') {$('atom-labels').checked=!$('atom-labels').checked;$('atom-labels').dispatchEvent(new Event('change'));}
-  if(action==='fit') $('fit-view').click();
-  if(action==='expand') $('focus-view').click();
-  if(action==='jobs-panel') {
-    document.body.classList.toggle('jobs-open');
-    if(document.body.classList.contains('jobs-open')) setActivity('jobs');
-  }
-  if(action==='guide') $('workspace-guide').showModal();
-  closeMenus();
-}
-document.querySelectorAll('.rail-button').forEach(button=>button.addEventListener('click',()=>setActivity(button.dataset.activity)));
-document.querySelectorAll('.menu-button').forEach(button=>button.addEventListener('click',event=>{
-  event.stopPropagation();
-  const menu=button.parentElement,open=menu.classList.contains('open');
-  closeMenus();
-  if(!open){menu.classList.add('open');button.setAttribute('aria-expanded','true');}
-}));
-document.querySelectorAll('[data-menu]').forEach(element=>element.addEventListener('click',event=>{
-  event.preventDefault();
-  handleMenu(element.dataset.menu,element);
-}));
-document.addEventListener('click',event=>{
-  if(!event.target.closest('.menu')) closeMenus();
-});
-setActivity(document.body.dataset.activity||'molecule',{scroll:false});
 renderJobList();
-const demoMenu=new URLSearchParams(location.search).get('menu');
-if(demoMenu) document.querySelectorAll('.menu-button').forEach(button=>{
-  if(button.textContent.trim()===demoMenu){button.parentElement.classList.add('open');button.setAttribute('aria-expanded','true');}
-});
-
-
-

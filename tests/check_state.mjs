@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import fs from 'node:fs';
+import {TASKS} from '../web/workbench.mjs';
 
 function check(value,message) {if(!value)throw new Error(message);}
 function equal(a,b,message) {check(Object.is(a,b),message+': '+JSON.stringify(a)+' != '+JSON.stringify(b));}
@@ -31,9 +32,9 @@ export function runStateTests(appSource,settingsSource) {
     const form=node('controls'),storage={getItem:k=>memory.get(k)??null,setItem:(k,v)=>memory.set(k,v)};
     const explicit=settings.restoreSettings(form,storage);
     const sent=[],shown=[];
-    const env={$:node,document:{querySelector:selector=>node(selector),querySelectorAll:()=>[]},worker:{postMessage:r=>sent.push(r),terminate(){}},
+    const env={$:node,document:{querySelector:selector=>node(selector),querySelectorAll:()=>[],dispatchEvent(){}},worker:{postMessage:r=>sent.push(r),terminate(){}},
       BUILD_ID:'test-build',WORKER_PROTOCOL:2,EXAMPLES:{water:defaults.geometry,hehplus:'He 0 0 0\nH 0 0 .8',h2plus:'H 0 0 0\nH 0 0 1.06'},EXAMPLE_SETTINGS:{hehplus:{method:'rhf',charge:1,multiplicity:1},h2plus:{method:'uhf',charge:1,multiplicity:2}},WATER_XYZ:defaults.geometry,
-      ...settings,structuredClone:v=>JSON.parse(JSON.stringify(v)),Number,Object,Array,Math,Set,
+      ...settings,TASKS,viewer:{setLabels(){}},structuredClone:v=>JSON.parse(JSON.stringify(v)),Number,Object,Array,Math,Set,
       setTimeout:fn=>{queue.set(++clock,fn);return clock;},clearTimeout:id=>queue.delete(id),
       parseGeometry:(geometry,unit,basis)=>({geometry,unit,basis,atoms:[{charge:1,xyz:[0,0,0]},{charge:1,xyz:[0,0,2]}]}),
       validateElectronicOptions:(_m,o)=>{if(!['rhf','uhf','mp2'].includes(o.method))throw Error('Invalid method');return o;},
@@ -95,6 +96,13 @@ export function runStateTests(appSource,settingsSource) {
   equal(reopened.node('charge').value,'1','Reopen restores charge with geometry and method');
   reopened.api.run();equal(reopened.sent.at(-1).options.method,'mp2','Reopened request uses restored MP2');
   reports.push('Reopen restores one coherent draft instead of partial browser form state');
+  const analysis=controller();analysis.api.run();analysis.api.setBusy(false);
+  const revisionBefore=analysis.api.snapshot().jobId;
+  for(const id of ['matrix-kind','pes-energy-unit','atom-labels']) {
+    analysis.node(id).emit('input');analysis.node(id).emit('change');
+  }
+  equal(analysis.api.snapshot().jobId,revisionBefore,'Analysis and viewer controls must not invalidate calculations');
+  reports.push('Analysis and viewer controls preserve the current result');
   const menu=controller();menu.api.preview();const assignments=[];
   const native=menu.node('method');let nativeDisabled=native.disabled;
   Object.defineProperty(native,'disabled',{get:()=>nativeDisabled,set:v=>{assignments.push(v);nativeDisabled=v;}});

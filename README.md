@@ -168,29 +168,35 @@ browser regression also covers repeated RHF/UHF/MP2 changes, reload and reopenin
 
 ## Interface and navigation
 
-The workbench is a desktop-style scientific IDE: File / Molecule / Calculate /
-Analysis / View / Help, a calculation toolbar, an activity rail, and docked
-structure / energy / analysis panes. Completed single points, integrals and
-scans appear in **View → Toggle job list**.
+The workbench uses a canvas-first layout: a single compute pipeline above a full-height
+molecular stage and a unified results dock. The app stays inside the viewport;
+plots, tables, and drawers scroll within their own panes.
 
-Method and basis sit together in a compact inspector, with readable labels,
-charge/electron counts and explicit spin state. The Run/Stop control stays
-visible while the inspector scrolls. Results share one analysis pane below the
-structure and energy.
+- The **Molecule pill** contains examples, XYZ import, and reset. **XYZ** opens
+  the coordinate editor over the left edge of the canvas.
+- The **Task pill** selects single-point energy, bond-length scan, or molecular
+  integrals. Scan ranges and fragment controls appear inside this popover.
+- **Method / basis**, **charge and spin**, and **Solver** settings share the
+  pipeline. Solver controls adapt to RHF, UHF, MP2, and integral-only tasks.
+- **Run** becomes **Stop** during computation. **Cmd+Enter** or **Ctrl+Enter**
+  runs the selected calculation. Completed calculations appear in **Jobs**.
+- **Export** is the home for geometry XYZ, result JSON, and scan CSV/XYZ/JSON.
+  Canvas PNG export sits with labels, fit, and expand in the floating viewer toolbar.
+- Drag the divider to resize the stage from 35% to 70%, or focus the divider
+  and use arrow keys, Home, and End. Double-click restores the 55% split.
+- The results dock keeps energy, status, cycles, and frontier orbital energies
+  visible above its tabs. **Conventions** includes numerical and method diagnostics.
+- Tabs support arrow keys, Home, and End. SCF chart points highlight iteration
+  rows. Orbital rows expose selection events for future isosurface rendering;
+  the current implementation displays the selected orbital and its energy.
+- **Geometry** contains Cartesian coordinates, internuclear distances, and
+  **Copy XYZ**. **Esc** closes popovers, jobs, the coordinate drawer, or viewer expansion.
+- Below 800 px the stage and dock stack vertically. The same pipeline controls
+  remain available; no duplicate setup or run bar is added.
 
-- **Cartesian coordinates** expands the XYZ editor. **Import XYZ** loads a file.
-- **Calculation** selects a single point, bond-length scan, or molecular integrals.
-  Scan controls appear when needed. **Convergence settings** contains iteration
-  limits and DIIS; numerical summaries and iteration logs expand independently.
-- Result tabs support arrow keys, Home and End. Selecting an SCF chart point
-  opens and highlights its log row.
-- The expand icon gives the molecule a larger canvas; **Esc** restores the
-  workbench. Molecular framing adapts to the canvas dimensions.
-- **Cmd+Enter** or **Ctrl+Enter** runs the calculation. **Guide** opens a short
-  explanation of the workflow.
-- On phones and tablets, **Setup** opens the configuration drawer. The bottom
-  action bar keeps setup and Run/Stop available while viewing results. Running
-  closes the drawer, and **Esc** closes it without starting a calculation.
+Task/tab registries, method-specific solver groups, canvas overlay slots, and
+split/drawer behavior live in `web/workbench.mjs`. Calculation settings and
+worker requests remain in `web/app.mjs` and `web/settings.mjs`.
 
 ### Ions and open-shell examples
 
@@ -217,8 +223,6 @@ points** against PySCF. Scan CSV and XYZ now include charge and electron count
 in addition to method, multiplicity and energy. Browser tests verify preset
 settings, superscript charges, charged scans and exports, invalid spin states,
 method rejection for odd-electron MP2, and mobile recovery.
-
-![Molecular workspace](docs/workspace.png)
 
 ## Explore a molecule and scan a bond
 
@@ -349,9 +353,12 @@ picking, connected-fragment selection, PNG export, cc-pVDZ worker results,
 AO preflight, XYZ upload, PES point inspection, CSV/XYZ/JSON downloads, stopping
 a scan, failed-point cleanup, nonconvergence, recovery and mobile layout.
 
-The interface browser check additionally verifies persistent actions,
-side-by-side scientific layout, convergence controls, keyboard navigation, help, viewer focus,
-mobile single-point and scan workflows, and layouts from 360 to 1440 pixels.
+The interface browser check targets the resizable two-zone layout, canonical actions,
+orbital selection, retained results after analysis changes, convergence controls,
+keyboard navigation, help, viewer expansion, mobile scans, and widths from 360 to
+1512 pixels. Browser interaction helpers reveal each control's popover before editing.
+The canvas-first redesign has passed state/worker checks, packaging checks, and
+real-WASM numerical tests. Its browser interaction and visual checks still need to run.
 
 Initial native and WASM validation passed on Linux x86_64 with Emscripten 4.0.10,
 Node 24, PySCF 2.14.0, and headless Chromium 134. Across the 18 atom/molecule cases,
@@ -521,6 +528,7 @@ retains an input buffer. A null result is accompanied by a `qc_error` message.
 | `web/engine.mjs`, `web/worker.mjs` | WASM memory interface and background computation |
 | `web/rhf.mjs`, `web/uhf.mjs`, `web/mp2.mjs`, `web/electronic.mjs` | Method validation, memory ownership, iterations and progress |
 | `web/index.html`, `web/styles.css`, `web/app.mjs` | Workspace, results inspection and exports |
+| `web/workbench.mjs` | Task/tab registries, solver groups, popovers, drawers, and split resizing |
 | `web/viewer.mjs`, `web/vendor/` | Local 3Dmol molecule viewer and license |
 | `web/scan.mjs`, `web/plot.mjs` | Scan geometries, runner, exports and interactive SVG charts |
 | `tests/` | Numerical comparisons, PySCF reference, and browser checks |
