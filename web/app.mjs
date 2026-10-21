@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
+import {estimateResources,deviceBudget,memoryText,retainedBytes} from './resources.mjs';
 import {parseGeometry,packBasis,basisSummary,toXYZ,WATER_XYZ,ANGSTROM_PER_BOHR} from './molecule.mjs';
 import {METHOD_SPECS,isUnrestricted,isMP2} from './methods.mjs';
 import {basisLabel} from './basis.mjs';
@@ -30,7 +31,7 @@ let listedJobs=[],listedJobSeq=0,activeListedJob=0;
 const viewer=new MoleculeViewer($('molecule-viewer'),selectAtom,(a,b)=>pesSetup.pickBond(a,b));
 const pesSetup=new PESSetup({getMolecule:()=>molecule,isBusy:()=>busy,changed:()=>settingsChanged()});
 let eriQuery=0,eriPending=null;
-const worker=new Worker(new URL('./worker.mjs',import.meta.url),{type:'module'});
+let worker=new Worker(new URL('./worker.mjs',import.meta.url),{type:'module'});
 $('controls').reset();
 $('geometry').value=WATER_XYZ;
 function storage() {try {return globalThis.localStorage;} catch {return null;}}
@@ -59,7 +60,7 @@ function syncControls() {
   document.querySelector('#solver-popover .method-chip').textContent=mode==='integrals'?'AO':$('method').value.toUpperCase();
   document.querySelector('.spin-info strong').textContent=mode==='integrals'?'Any electron count':uhf?`Multiplicity ${$('multiplicity').value}`:'Closed-shell singlet';
   $('run-label').textContent='Run';
-  $('calculate').title=mode==='scan'?'Run PES scan (Cmd/Ctrl + Enter)':'Run calculation (Cmd/Ctrl + Enter)';
+  $('calculate').title=!valid?$('input-message').textContent:mode==='scan'?'Run PES scan (Cmd/Ctrl + Enter)':'Run calculation (Cmd/Ctrl + Enter)';
   $('uhf-controls').hidden=!uhf||mode==='integrals';
   $('method-hint').textContent=METHOD_SPECS[$('method').value].densityFitted?`All-electron ${$('method').value.toUpperCase()} correlation on an ${uhf?'UHF':'RHF'} reference, using cc-pVDZ-RI fitting.`:uhf?'Separate alpha and beta orbitals, with spin diagnostics.':$('method').value==='mp2'?'All-electron MP2 correlation on an RHF reference.':'Restricted Hartree-Fock for closed-shell singlets.';
 }
@@ -108,11 +109,19 @@ function preview({reset=false}={}) {
   try {
     molecule=parseGeometry($('geometry').value,$('unit').value,$('basis').value);
     const info=basisSummary(molecule);
-    valid=info.fits&&($('mode').value!=='scan'||molecule.atoms.length>1);
-    $('basis-info').classList.toggle('over-limit',!info.fits);
-    $('ao-count').textContent=`${info.nao} AOs${!info.fits?' / limit 40':''}`;
-    $('eri-memory').textContent=$('mode').value!=='integrals'&&$('scf-integrals').value==='df'?'DF-JK · three-index factors':`${(info.eriBytes/1e6).toFixed(2)} MB ERIs`;
-    $('input-message').textContent=!info.fits?'This basis exceeds the 40 AO limit. Select a smaller basis or molecule.':'';
+    const draft=captureRequest($('controls'),{id:0,protocol:WORKER_PROTOCOL,buildId:BUILD_ID});
+    const cost=estimateResources(molecule,{...draft.options,mode:draft.mode,scanCount:draft.scan?.count});
+    valid=!cost.blocked&&($('mode').value!=='scan'||molecule.atoms.length>1);
+    $('basis-info').classList.toggle('over-limit',cost.blocked);
+    $('ao-count').textContent=`${info.nao} AOs`;
+    $('eri-memory').textContent=`est. ${memoryText(cost.peakBytes)}`;
+    $('resource-estimate').hidden=false;$('resource-estimate').dataset.level=cost.level;
+    $('resource-summary').textContent=cost.summary;$('resource-detail').textContent=cost.detail;
+    $('resource-facts').replaceChildren();
+    for(const [label,value] of [['Atomic orbitals',cost.nao],['SCF auxiliary functions',cost.jkfitFunctions||'Exact'],['Correlation auxiliaries',cost.correlationFunctions||'None'],['Estimated peak allocation',memoryText(cost.peakBytes)],['Calculation budget',memoryText(cost.budgetBytes)],['Sequential scan points',cost.steps]]){
+      const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=value;$('resource-facts').append(dt,dd);
+    }
+    $('input-message').textContent=cost.blocked?cost.reasons.join(' ')+' '+cost.advice:'';
     $('formula').textContent=formula(molecule.atoms);
     const title=EXAMPLE_SETTINGS[$('preset').value]?.name??{water:'Water',h2:'Hydrogen',methane:'Methane',ammonia:'Ammonia'}[$('preset').value]??'Custom molecule';
     $('header-molecule').textContent=title;
@@ -130,7 +139,7 @@ function preview({reset=false}={}) {
     viewer.setMolecule(molecule,{reset});
     selection();renderData();
   } catch(error) {
-    valid=false;$('input-message').textContent=error.message;
+    valid=false;$('resource-estimate').hidden=true;$('input-message').textContent=error.message;
     $('coordinates-editor').open=true;
     $('viewer-meta').textContent='Showing last valid geometry';
   }
@@ -457,7 +466,19 @@ $('controls').addEventListener('invalid',event=>{
   const details=event.target.closest('details');
   if(details)details.open=true;
 },true);
-$('cancel').addEventListener('click',()=>{worker.postMessage({type:'cancel',id:jobId});$('cancel').disabled=true;$('cancel').textContent='Stopping...';$('progress-text').textContent='Stopping after the current integral or SCF step...';});
+$('cancel').addEventListener('click',()=>{
+  if(!busy)return;
+  // Terminate even during a synchronous integral/metric call, then start a clean engine.
+  const replacement=new Worker(new URL('./worker.mjs',import.meta.url),{type:'module'});
+  replacement.onmessage=worker.onmessage;replacement.onerror=worker.onerror;
+  worker.onmessage=null;worker.onerror=null;worker.terminate();worker=replacement;
+  ++jobId;++draftRevision;activeRequest=null;ready=false;
+  if(jobMode==='scan'&&scan){scan.cancelled=true;scan.summary={cancelled:true,completed:scan.points.length,requested:scan.spec.count};renderScan();}
+  setBusy(false);$('engine-state').textContent='Restarting local engine';$('engine-dot').classList.remove('ready');
+  badge('STOPPED','warning');$('status').textContent='Calculation stopped. Restarting the local engine.';
+  $('progress-text').textContent=scan&&jobMode==='scan'?`Stopped · ${scan.points.length} points retained`:'Stopped';
+  $('job-progress').hidden=false;
+});
 function settingsChanged({reset=false}={}) {
   invalidate();preview({reset});persistSettings();
 }
@@ -554,6 +575,9 @@ function rememberCompletedJob(result,{kind}={}) {
     selectedPoint:scanJob?selectedPoint:-1
   });
   if(listedJobs.length>24) listedJobs.length=24;
+  // Retain recent results within the preflight's history reserve; keep the active result.
+  const historyBudget=Math.min(32*1024**2,deviceBudget()/8);
+  while(listedJobs.length>1&&retainedBytes(listedJobs)>historyBudget)listedJobs.pop();
   activeListedJob=id;
   renderJobList();
   return id;

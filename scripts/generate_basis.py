@@ -23,6 +23,6 @@ source += '// General contractions are split into single-contraction shells in t
 source += '// See README for scientific references and data provenance.\n'
 source += 'export const BASIS_CATALOG = '+json.dumps(catalog,separators=(',',':'))+';\n'
 source += 'export const STO3G = BASIS_CATALOG["sto-3g"].elements;\n'
-source += 'export const MAX_AO = 40;\n'
+source += "export {MAX_AO} from './limits.mjs';\n"
 source += 'export function basisLabel(name) { return BASIS_CATALOG[name]?.label ?? name; }\n'
 (Path(__file__).resolve().parents[1]/'web/basis.mjs').write_text(source)

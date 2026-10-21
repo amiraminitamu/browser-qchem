@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only
+import {assertResources} from './resources.mjs';
 import { packBasis } from './molecule.mjs';
 
 // Copy results before freeing C memory. Allocations may replace WASM heap views.
-export function prepareIntegrals(engine, molecule, dense=true) {
+export function prepareIntegrals(engine, molecule, dense=true, options={}) {
+  if(dense)assertResources(molecule,{...options,mode:'integrals'});
   const data = packBasis(molecule), allocations = [];
   let handle = 0;
   function copyIn(values, integer = false) {
@@ -38,9 +40,11 @@ export function prepareIntegrals(engine, molecule, dense=true) {
   }
 }
 
-export function computeIntegrals(engine, molecule) {
-  const { handle, result } = prepareIntegrals(engine, molecule);
+export function computeIntegrals(engine, molecule, options={}) {
+  const resources=assertResources(molecule,{...options,mode:'integrals'});
+  const { handle, result } = prepareIntegrals(engine, molecule,true,options);
   engine._qc_free(handle);
+  result.resources=resources;
   return result;
 }
 

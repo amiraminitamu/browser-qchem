@@ -1,0 +1,98 @@
+{
+  "reference": "PySCF 2.14.0, def2-universal-JKFIT SCF + independent cc-pVDZ-RI MP2 or exact MP2",
+  "cases": [
+    {
+      "name": "water_trimer",
+      "geometry": "O 0 0 0\nH 0 -0.757 0.587\nH 0 0.757 0.587\nO 4 0 0\nH 4 -0.757 0.587\nH 4 0.757 0.587\nO 8 0 0\nH 8 -0.757 0.587\nH 8 0.757 0.587",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -228.07674362272064,
+      "energy": -228.68932165230717,
+      "correlationEnergy": -0.6125780295865253,
+      "oppositeSpinEnergy": -0.4576706047391159,
+      "sameSpinEnergy": -0.15490742484740944,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 339,
+      "jkfitRank": 339,
+      "spinSquare": 0,
+      "eriIndices": [
+        0,
+        71,
+        1,
+        71
+      ],
+      "exactERI": 0.0
+    },
+    {
+      "name": "water_trimer",
+      "geometry": "O 0 0 0\nH 0 -0.757 0.587\nH 0 0.757 0.587\nO 4 0 0\nH 4 -0.757 0.587\nH 4 0.757 0.587\nO 8 0 0\nH 8 -0.757 0.587\nH 8 0.757 0.587",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -228.07674362272076,
+      "energy": -228.6893216523059,
+      "correlationEnergy": -0.612578029585134,
+      "oppositeSpinEnergy": -0.45767060473825344,
+      "sameSpinEnergy": -0.15490742484688047,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 339,
+      "jkfitRank": 339,
+      "spinSquare": -3.552713678800501e-15,
+      "eriIndices": [
+        0,
+        71,
+        1,
+        71
+      ],
+      "exactERI": 0.0
+    },
+    {
+      "name": "hydrogen_chain",
+      "geometry": "H 0 0 0.0\nH 0 0 0.85\nH 0 0 1.7\nH 0 0 2.55\nH 0 0 3.4\nH 0 0 4.25\nH 0 0 5.1\nH 0 0 5.95\nH 0 0 6.8\nH 0 0 7.6499999999999995",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -5.347393186305215,
+      "energy": -5.525565917430272,
+      "correlationEnergy": -0.1781727311250564,
+      "oppositeSpinEnergy": -0.15695122163071284,
+      "sameSpinEnergy": -0.021221509494343566,
+      "conventionalCorrelationEnergy": -0.17822726468201477,
+      "jkfitFunctions": 180,
+      "jkfitRank": 180,
+      "spinSquare": 0,
+      "eriIndices": [
+        0,
+        49,
+        1,
+        49
+      ],
+      "exactERI": 0.0
+    }
+  ],
+  "exactCase": {
+    "geometry": "Ne 0 0 0\nNe 0 0 4\nNe 0 0 8",
+    "basis": "cc-pvdz",
+    "unit": "angstrom",
+    "energy": -385.46632673571725
+  }
+}

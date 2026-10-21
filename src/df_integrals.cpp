@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 #include "df_integrals.h"
+#include "limits.h"
 extern "C" {
 #include "cint.h"
 #include "cint_funcs.h"
@@ -22,7 +23,7 @@ extern "C" QCDF *qc_df_compute(int natm,const int *charges,const double *xyz,
   error.clear();
   try {
     require(natm>=1&&natm<=32&&charges&&xyz,"Invalid DF atom arrays.");
-    require(nshell>=1&&nshell<=128&&shells&&nprim>=1&&nprim<=4096&&exponents&&coefficients,"Invalid DF orbital basis.");
+    require(nshell>=1&&nshell<=QC_MAX_SHELLS&&shells&&nprim>=1&&nprim<=4096&&exponents&&coefficients,"Invalid DF orbital basis.");
     require(nauxshell>=1&&nauxshell<=1024&&auxshells&&nauxprim>=1&&nauxprim<=32768&&auxexponents&&auxcoefficients,"Invalid DF auxiliary basis.");
     const int count=nshell+nauxshell;
     std::vector<int> atoms(natm*ATM_SLOTS,0),basis(count*BAS_SLOTS,0),offsets(count+1,0);
@@ -52,8 +53,10 @@ extern "C" QCDF *qc_df_compute(int natm,const int *charges,const double *xyz,
       require(used==primitives,"DF primitive count mismatch.");
     }
     auto r=std::make_unique<QCDF>();r->n=offsets[nshell];r->m=offsets[count]-r->n;
-    require(r->n<=40&&r->m<=1024,"DF size exceeds the 40 orbital / 1024 auxiliary function limits.");
-    const size_t n=r->n,m=r->m;r->metric.resize(m*m);r->three.resize(n*n*m);
+    require(r->n<=QC_MAX_AO&&r->m<=QC_MAX_AUXILIARY,"DF size exceeds the 256 orbital / 2048 auxiliary function limits.");
+    const size_t n=r->n,m=r->m;
+    require(8.0*(2.0*n*n*m+6.0*m*m+48.0*n*n)<=QC_MAX_FITTING_BYTES,"DF fitting workspace exceeds 384 MiB. Use a smaller basis or molecule.");
+    r->metric.resize(m*m);r->three.resize(n*n*m);
     std::vector<double> buffer(static_cast<size_t>(maxdim)*maxdim*maxdim);
     // libcint's shell blocks are first-index-fastest; all public arrays are row-major.
     for(int p=nshell;p<count;++p)for(int q=nshell;q<count;++q){

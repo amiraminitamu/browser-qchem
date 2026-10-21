@@ -1,0 +1,9 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+#ifndef LORENTZIAN_LIMITS_H
+#define LORENTZIAN_LIMITS_H
+#define QC_MAX_AO 256
+#define QC_MAX_SHELLS 512
+#define QC_MAX_AUXILIARY 2048
+#define QC_MAX_DENSE_BYTES (256.0*1024*1024)
+#define QC_MAX_FITTING_BYTES (384.0*1024*1024)
+#endif

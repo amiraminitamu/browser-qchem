@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 #include "rhf.h"
 #include "df_factors.h"
+#include "limits.h"
 #include <Eigen/Dense>
 #include <algorithm>
 #include <cmath>
@@ -95,7 +96,7 @@ extern "C" QCRHF *qc_rhf_create_df(const QCResult *integrals,const QCDF *df,int 
     last_error.clear();
     try {
         const int n=qc_nao(integrals);
-        if (n<1 || n>40 || nelectron<2 || nelectron%2 || nelectron>2*n)
+        if (n<1 || n>QC_MAX_AO || nelectron<2 || nelectron%2 || nelectron>2*n)
             throw std::runtime_error("RHF requires a positive even electron count that fits the basis (closed-shell singlet).");
         if (maxiter<1 || maxiter>500 || !std::isfinite(etol) || !std::isfinite(dtol) ||
             !std::isfinite(rtol) || etol<=0 || dtol<=0 || rtol<=0)

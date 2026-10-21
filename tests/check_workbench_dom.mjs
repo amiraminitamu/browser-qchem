@@ -82,6 +82,18 @@ try{
   set('mode','scan');set('scan-start','.8');set('scan-end','1.2');set('scan-count','3');$('calculate').click();
   await waitFor(()=>$('progress-text').textContent.startsWith('Complete'),'DF-UMP2 ion scan');assert.match($('pes-note').textContent,/DF-UMP2/);
   assert.equal($('scan-point-table').querySelectorAll('tbody tr').length,3);
+  $('water').click();await waitFor(()=>$('status').textContent.startsWith('CONVERGED'),'reset before resources');
+  set('geometry',Array.from({length:20},(_,i)=>`H 0 0 ${i*.85}`).join('\n'));set('basis','cc-pvdz');
+  assert.match($('resource-summary').textContent,/Heavy calculation/);assert.equal($('calculate').disabled,false);
+  set('scf-integrals','exact');assert.equal($('calculate').disabled,true);assert.match($('input-message').textContent,/DF-JK/);
+  set('scf-integrals','df');assert.equal($('calculate').disabled,false);
+  set('mode','scan');set('scan-count','101');assert.equal($('calculate').disabled,true);assert.match($('input-message').textContent,/budget/);
+  set('mode','rhf');$('calculate').click();assert.equal($('cancel').hidden,false);
+  await new Promise(resolve=>setTimeout(resolve,25));$('cancel').click();
+  assert.equal($('result-badge').textContent,'STOPPED');assert.ok(workers.length>=2);
+  await waitFor(()=>$('engine-state').textContent==='Local engine ready','worker recovery after hard Stop');
+  $('water').click();await waitFor(()=>$('status').textContent.startsWith('CONVERGED'),'water after hard Stop');
+  assert.match($('resource-summary').textContent,/Light calculation/);
   assert.ok(!errors.length,errors.map(String).join('\n'));
-  console.log('DOM + actual worker/WASM: initial RHF, mode gating, angle and torsion UI scans, fragments, plot preview, unit conversion, MP2, both DF methods, spin controls and DF PES PASS');
+  console.log('DOM + actual worker/WASM: initial RHF, mode gating, angle and torsion UI scans, fragments, plot preview, unit conversion, MP2, both DF methods, spin controls, resource preflight, hard Stop/recovery and DF PES PASS');
 }finally{for(const worker of workers)await worker.terminate();window.close();}

@@ -24,7 +24,7 @@ source += '''export function packAuxiliary(molecule,catalog=AUXILIARY_BASIS) {
     if(!element)throw new Error('No auxiliary basis for '+atom.symbol+'.');
     for(const shell of element.shells){shells.push(index,shell.l,shell.exponents.length);exponents.push(...shell.exponents);coefficients.push(...shell.coefficients);nao+=2*shell.l+1;}
   });
-  if(nao>1024)throw new Error('The auxiliary basis exceeds the 1024-function limit.');
+  if(nao>2048)throw new Error('The auxiliary basis exceeds the 2048-function limit.');
   return {shells,exponents,coefficients,nao};
 }
 '''

@@ -142,7 +142,8 @@ The DF reference computes S/T/V without allocating, evaluating, or copying a ful
 four-center AO tensor. Three-index factor storage scales as O(N²M), with an
 O(M²) Coulomb metric during setup; exchange uses occupied-orbital contractions.
 This does not imply cubic-scaling HF exchange or a speedup for tiny molecules.
-The existing **40 AO**, **32 atom**, and **1024 auxiliary-function** limits remain.
+The 40 AO cutoff has been removed. Resource preflight allows larger jobs within
+the **256 AO**, **32 atom**, and **2048 auxiliary-function** structural bounds.
 The exact ERI inspector evaluates a requested shell quartet on demand and labels
 it as exact. Conventional MP2 on a DF reference also obtains exact correlation
 integrals directly in shell blocks, retaining O(N³) transformation workspace
@@ -167,6 +168,58 @@ saved backend choices, and PES metadata. They run before Pages publishing.
 node tests/check_df_scf.mjs
 python3 tests/check_df_scf_native.py build/native/libqc_core.so --write-fixtures
 python3 scripts/generate_jkfit_basis.py
+```
+
+## Calculation resource preflight
+
+The former 40 AO cutoff is replaced by a live **Calculation resources** readout
+in the molecular stage. It shows **Light**, **Moderate**, **Heavy**, or **Over
+budget**, estimated peak allocation, the calculation budget, orbital and fitting
+counts, and sequential scan-point count. Heavy jobs remain runnable. Over-budget
+jobs are disabled before allocation, with suggestions to use DF-JK, choose
+DF-RMP2 instead of conventional MP2, reduce scan points, or select a smaller basis.
+The same policy runs in the worker and public JavaScript calculation APIs.
+
+Memory estimates include native and JavaScript ERI copies for exact SCF, both
+fitting catalogs, untruncated auxiliary rank, Coulomb-metric eigensolver workspace,
+retained SCF factors during correlation, MP2 transformation workspace, and SCF
+result/history storage. PES points run sequentially, so only one integral/solver
+workspace is counted; both worker and UI copies of all retained point results
+are included. Recent jobs are evicted within a typed-array history reserve,
+retaining the active result. The model adds a 35% workspace margin and a fixed
+engine allowance. It is an allocation estimate, not measured free RAM or a
+wall-clock forecast. The workload label uses relative integral, metric, exchange,
+correlation, iteration-limit, and scan effort, without promising elapsed seconds.
+
+The default calculation budget is **256 MiB** when no device hint is available.
+When the browser exposes [`navigator.deviceMemory`](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/deviceMemory),
+the budget is 64 MiB per reported GiB, clamped to **64 to 512 MiB**. This is a coarse
+capability hint, not available memory. Browsers, other tabs, allocator fragmentation,
+and exports can still affect memory use; the estimate cannot guarantee that a tab
+will survive. No allocation probes or remote hardware reporting are used.
+
+Structural bounds are 256 orbital AOs, 512 orbital shells, 4096 orbital primitives,
+32 atoms, and 2048 auxiliary functions (1024 auxiliary shells). Native checks also
+reject exact tensors larger than 256 MiB and estimated fitting construction
+workspaces larger than 384 MiB before evaluating integrals. These ceilings protect
+against calls that bypass the UI; device preflight is normally tighter. The WASM
+heap grows to at most **512 MiB**, with failed allocations returned or caught
+rather than intentionally aborting the runtime. The numeric limits are explicit
+in `web/limits.mjs` and `src/limits.h`.
+
+**Stop** terminates the worker immediately, including synchronous libcint and
+metric-factorization phases, then initializes a fresh engine. Completed scan
+points remain inspectable. The interactive Stop flow and recovery are tested
+with the actual production worker and WASM engine through the DOM harness.
+
+Independent native and WASM checks cover **50 and 72 AO** DF-RHF/UHF references,
+DF-RMP2/DF-UMP2, direct conventional MP2, and **42 AO exact SCF** against PySCF,
+as well as device budgets, scan retention, native allocation bounds, rejected
+jobs making no WASM allocations, and recovery after a denied allocation.
+
+```sh
+node tests/check_resources.mjs
+python3 tests/check_df_scf_native.py build/native/libqc_core.so --large --write-fixtures
 ```
 
 ## Molecular integral foundation
@@ -402,7 +455,8 @@ method rejection for odd-electron MP2, and mobile recovery.
 
 1. Select an example or upload an XYZ file. Choose the coordinate unit and basis.
    The viewer and AO count update before you calculate. Water uses 7 AOs in
-   STO-3G, 13 in 6-31G, and 24 in cc-pVDZ. Calculations above 40 AOs are disabled.
+   STO-3G, 13 in 6-31G, and 24 in cc-pVDZ. Larger calculations are checked against
+   the selected method, fitting dimensions, and device calculation budget.
 2. Drag to rotate, scroll to zoom, and use **Fit** to frame the structure.
    Atom labels match the one-based indices in the geometry input. **PNG** exports
    the current view; **Export XYZ** writes an XYZ file in angstrom.
@@ -590,7 +644,7 @@ requires converged RHF orbitals from either SCF backend.
 Each occupied orbital is transformed in four stages, retaining only O(N^3)
 additional intermediate storage. Exact SCF retains O(N^4) AO ERIs; DF-SCF
 uses a direct shell-block first transformation instead. Transformation cost is O(N^5). One occupied block is processed per worker step so progress and
-cancellation are available between blocks. The existing **40 AO** limit remains.
+cancellation are available between blocks. Resource preflight controls larger jobs.
 
 The correlation energy is the sum over all occupied i,j and virtual a,b of
 (ia|jb) [2(ia|jb) - (ib|ja)] / (epsilon_i + epsilon_j - epsilon_a - epsilon_b).
@@ -680,8 +734,9 @@ Every exported array is flat and row-major. For N AOs:
 - Coordinates in exported molecule data are in bohr. S is dimensionless;
   T, V, ERIs, and nuclear repulsion use atomic units.
 
-The prototype limits input to 32 atoms and **40 AOs**. The optional exact backend
-retains a dense ERI tensor of at most 20.48 MB and evaluates all shell quartets.
+The build supports 32 atoms and up to **256 AOs**, subject to resource preflight.
+The optional exact backend evaluates all shell quartets and has a 256 MiB
+per-tensor native allocation ceiling; the live-copy budget is usually tighter.
 DF-SCF retains three-index factors instead. Screening and parallel integral
 evaluation remain future optimizations. Co-located nuclei, unsupported elements, malformed input,
 and excessive sizes produce explicit errors. Editing geometry clears old results.

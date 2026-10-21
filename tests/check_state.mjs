@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import fs from 'node:fs';
 import {METHOD_SPECS,isUnrestricted,isMP2} from '../web/methods.mjs';
+import {deviceBudget} from '../web/resources.mjs';
 import {scfBackend} from '../web/scf-integrals.mjs';
 import {mathText} from '../web/format.mjs';
 import {TASKS} from '../web/workbench.mjs';
 
 function check(value,message) {if(!value)throw new Error(message);}
 function equal(a,b,message) {check(Object.is(a,b),message+': '+JSON.stringify(a)+' != '+JSON.stringify(b));}
-function exported(source,names) {return Function('METHOD_SPECS','isUnrestricted','isMP2',source.replace(/^import .*;$/gm,'').replace(/^export /gm,'')+'\nreturn {'+names.join(',')+'};')(METHOD_SPECS,isUnrestricted,isMP2);}
+function exported(source,names) {return Function('deviceBudget','METHOD_SPECS','isUnrestricted','isMP2',source.replace(/^import .*;$/gm,'').replace(/^export /gm,'')+'\nreturn {'+names.join(',')+'};')(deviceBudget,METHOD_SPECS,isUnrestricted,isMP2);}
 function functionBlock(source,start,end) {const a=source.indexOf(start),b=source.indexOf(end,a);check(a>=0&&b>a,'Controller test source anchors');return source.slice(a,b);}
 
 export function runStateTests(appSource,settingsSource) {
@@ -150,8 +151,8 @@ export function runStateTests(appSource,settingsSource) {
 
 export async function runWorkerTests(workerSource,electronicSource) {
   const sent=[],calls=[];
-  const electronic=Function('scfBackend','METHOD_SPECS','isUnrestricted','isMP2','computeRHF','computeUHF','validateRHFOptions','validateUHFOptions',
-    electronicSource.replace(/^import .*;$/gm,'').replace(/^export /gm,'')+'\nreturn {computeElectronic};')(scfBackend,METHOD_SPECS,isUnrestricted,isMP2,
+  const electronic=Function('assertResources','scfBackend','METHOD_SPECS','isUnrestricted','isMP2','computeRHF','computeUHF','validateRHFOptions','validateUHFOptions',
+    electronicSource.replace(/^import .*;$/gm,'').replace(/^export /gm,'')+'\nreturn {computeElectronic};')(()=>({}),scfBackend,METHOD_SPECS,isUnrestricted,isMP2,
       async(_e,_m,o)=>{calls.push(o.dfmp2?'DF-RMP2':o.mp2?'MP2':'RHF');return {rhf:{charge:o.charge},...(o.mp2||o.dfmp2?{mp2:{status:'complete',energy:-1.1}}:{})};},
       async(_e,_m,o)=>{calls.push(o.dfmp2?'DF-UMP2':'UHF');return {uhf:{charge:o.charge,multiplicity:o.multiplicity},...(o.dfmp2?{mp2:{status:'complete',energy:-1.1}}:{})};},
       (_m,o)=>{if(o.charge===1)throw new Error('RHF requires a positive even electron count.');return {charge:o.charge};},

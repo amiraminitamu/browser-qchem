@@ -5,10 +5,11 @@
 #include "cint.h"
 #include "cint_funcs.h"
 #include "integrals.h"
+#include "limits.h"
 
 #define MAX_ATOMS 32
-#define MAX_SHELLS 128
-#define MAX_AO 40
+#define MAX_SHELLS QC_MAX_SHELLS
+#define MAX_AO QC_MAX_AO
 #define MAX_PRIMITIVES 4096
 
 struct QCResult {
@@ -85,9 +86,10 @@ QCResult *qc_compute_mode(int dense, int natm, const int *charges, const double 
         if (2*l+1 > max_dim) max_dim = 2*l+1;
     }
     if (primitive_count != nprim || offsets[nshell] > MAX_AO) {
-        last_error = "Primitive count mismatch or more than 40 AOs (dense ERI demo limit).";
+        last_error = "Primitive count mismatch or more than 256 AOs.";
         return NULL;
     }
+    if(dense && 8.0*pow(offsets[nshell],4)>QC_MAX_DENSE_BYTES){last_error="Exact ERI allocation exceeds 256 MiB. Use DF-JK or a smaller basis.";return NULL;}
     for (int p = 0; p < nprim; ++p) {
         if (!isfinite(exponents[p]) || exponents[p] <= 0 || exponents[p] > 1e8 ||
             !isfinite(coefficients[p]) || fabs(coefficients[p]) > 1e8) {

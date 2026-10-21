@@ -8,7 +8,7 @@ export function validateUHFOptions(molecule,options={}) {
   if(!Number.isSafeInteger(charge)) throw new Error('Molecular charge must be a safe integer.');
   if(!Number.isInteger(maxIterations)||maxIterations<1||maxIterations>500) throw new Error('Maximum iterations must be an integer from 1 to 500.');
   const electrons=molecule.atoms.reduce((sum,a)=>sum+a.charge,0)-charge,spin=multiplicity-1;
-  if(!Number.isSafeInteger(electrons)||electrons<1||electrons>80) throw new Error('UHF requires 1 to 80 electrons. Check the charge.');
+  if(!Number.isSafeInteger(electrons)||electrons<1) throw new Error('UHF requires a positive electron count. Check the charge.');
   if(!Number.isInteger(multiplicity)||multiplicity<1||spin>electrons||(electrons+spin)%2) throw new Error('Multiplicity must be a positive integer consistent with the electron count: even electrons need odd multiplicity, odd electrons need even multiplicity.');
   const nalpha=(electrons+spin)/2,nbeta=(electrons-spin)/2;
   if(nalpha>basisSummary(molecule).nao) throw new Error('The spin populations do not fit this basis.');
