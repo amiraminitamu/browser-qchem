@@ -17,7 +17,7 @@ export function pesFigureModel(scan,{unit='kcal',relative=true}={}) {
     points:scan.points.map(p=>({x:p.coordinate,y:Number.isFinite(p.energy)?(p.energy-(relative?minimum.energy:0))*u.factor:null,failed:!p.converged,label:mathText(`Point ${p.index+1}: ${p.coordinate.toFixed(4)} ${symbol}; ${p.energy??'no energy'} Eₕ; ${p.status}`)})),
     metadata:[
       ['Molecule',`${scan.moleculeName??'Custom molecule'}${scan.formula?' · '+scan.formula:''} · ${source.atoms.length} atoms`],
-      ['Calculation',`${(spec.method??'rhf').toUpperCase()} / ${basisLabel(spec.basis)} · charge ${spec.charge??0} · multiplicity ${spec.multiplicity??1}`],
+      ['Calculation',`${(spec.method??'rhf').toUpperCase()} / ${basisLabel(spec.basis)}${spec.auxiliaryBasis?' · auxiliary '+spec.auxiliaryBasis:''} · charge ${spec.charge??0} · multiplicity ${spec.multiplicity??1}`],
       ['Coordinate',`${coordinate} · moving atoms ${(spec.moving??[]).map(i=>i+1).join(', ')}`],
       ['Sampled minimum',`${meta.symbol} = ${minimum.coordinate.toFixed(6)} ${symbol}; E = ${minimum.energy.toFixed(12)} Eₕ; trajectory point ${minimum.index+1}${!converged.length?' (unconverged)':''}`],
       ['Scan range',`${spec.start} → ${spec.end} ${symbol} · ${scan.points.length}/${spec.count} points · unrelaxed${scan.cancelled?' · stopped':''}`],

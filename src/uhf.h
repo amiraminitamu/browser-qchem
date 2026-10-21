@@ -13,6 +13,7 @@ QCUHF *qc_uhf_create(const QCResult *,int nalpha,int nbeta,int maxiter,int diis,
                      int guess,double etol,double dtol,double rtol);
 const char *qc_uhf_error(void);
 int qc_uhf_step(QCUHF *);
+int qc_uhf_nao(const QCUHF *);
 int qc_uhf_status(const QCUHF *);
 int qc_uhf_iteration(const QCUHF *);
 /* 0 E, 1 delta E, 2 spin-averaged density RMS, 3 spin-averaged residual RMS,

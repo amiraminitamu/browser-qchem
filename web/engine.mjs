@@ -65,3 +65,20 @@ export function serializable(value) {
   if(value&&typeof value==='object') return Object.fromEntries(Object.entries(value).map(([k,v])=>[k,serializable(v)]));
   return value;
 }
+
+// Correlation fitting is independent of the conventional SCF integral handle.
+export function prepareDFIntegrals(engine,molecule,auxiliary) {
+  const orbital=packBasis(molecule),allocations=[];
+  const copy=(values,integer=false)=>{
+    const pointer=engine._malloc(values.length*(integer?4:8));
+    if(!pointer)throw new Error('Could not allocate DF input memory.');
+    allocations.push(pointer);(integer?engine.HEAP32:engine.HEAPF64).set(values,pointer/(integer?4:8));return pointer;
+  };
+  try {
+    const charges=copy(orbital.charges,true),xyz=copy(orbital.xyz),shells=copy(orbital.shells,true),exponents=copy(orbital.exponents),coefficients=copy(orbital.coefficients);
+    const auxshells=copy(auxiliary.shells,true),auxexponents=copy(auxiliary.exponents),auxcoefficients=copy(auxiliary.coefficients);
+    const handle=engine._qc_df_compute(orbital.charges.length,charges,xyz,orbital.shells.length/3,shells,orbital.exponents.length,exponents,coefficients,auxiliary.shells.length/3,auxshells,auxiliary.exponents.length,auxexponents,auxcoefficients);
+    if(!handle)throw new Error(engine.UTF8ToString(engine._qc_df_error()));
+    return handle;
+  }finally{allocations.forEach(pointer=>engine._free(pointer));}
+}

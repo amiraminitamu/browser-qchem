@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
+import {METHOD_SPECS} from './methods.mjs';
 import createQChem from './qc_core.mjs';
 import { parseGeometry } from './molecule.mjs';
 import { computeIntegrals } from './engine.mjs';
@@ -20,7 +21,7 @@ try {
     try {
       if(data.protocol!==WORKER_PROTOCOL||data.buildId!==BUILD_ID)throw new Error('Page and engine versions differ. Reload the page.');
       if(!['rhf','scan','integrals'].includes(data.mode))throw new Error('Calculation type is missing or invalid.');
-      if(data.mode!=='integrals'&&!['rhf','uhf','mp2'].includes(data.options?.method))throw new Error('Electronic method is missing or invalid. Choose RHF, UHF, or MP2 and reload if necessary.');
+      if(data.mode!=='integrals'&&!Object.hasOwn(METHOD_SPECS,data.options?.method))throw new Error('Electronic method is missing or invalid. Choose a supported electronic method and reload if necessary.');
       const start=performance.now();
       const molecule=parseGeometry(data.geometry,data.unit,data.basis);
       const options={...data.options,isCancelled:()=>job.cancelled};

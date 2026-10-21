@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
+import {computeDFMP2} from './df-mp2.mjs';
 import {prepareIntegrals} from './engine.mjs';
 import {basisSummary} from './molecule.mjs';
 import {RHF_THRESHOLDS,CalculationCancelled} from './rhf.mjs';
@@ -15,7 +16,7 @@ export function validateUHFOptions(molecule,options={}) {
   if(!['core','mix'].includes(guess)) throw new Error('UHF guess must be core or mix.');
   return {charge,maxIterations,multiplicity,electrons,spin,nalpha,nbeta,guess};
 }
-export async function computeUHF(engine,molecule,options={},onIteration=()=>{}) {
+export async function computeUHF(engine,molecule,options={},onIteration=()=>{},onProgress=()=>{}) {
   const check=()=>{if(options.isCancelled?.()) throw new CalculationCancelled();};check();
   const settings=validateUHFOptions(molecule,options),{handle,result}=prepareIntegrals(engine,molecule);let uhf=0;
   try {
@@ -36,6 +37,7 @@ export async function computeUHF(engine,molecule,options={},onIteration=()=>{}) 
       const pointer=engine._qc_uhf_data(uhf,kind),size=kind<6?n*n:n;r[key]=engine.HEAPF64.slice(pointer/8,pointer/8+size);
     });
     r.density=r.densityAlpha.map((v,i)=>v+r.densityBeta[i]);r.spinDensity=r.densityAlpha.map((v,i)=>v-r.densityBeta[i]);
+    if(options.dfmp2)result.mp2=r.converged?await computeDFMP2(engine,uhf,molecule,{...options,reference:'UHF'},onProgress):{method:'DF-UMP2',reference:'UHF',allElectron:true,densityFitted:true,auxiliaryBasis:'cc-pVDZ-RI',status:'not_computed',energy:null,reason:'UHF did not converge.'};
     return result;
   } finally {if(uhf) engine._qc_uhf_free(uhf);engine._qc_free(handle);}
 }

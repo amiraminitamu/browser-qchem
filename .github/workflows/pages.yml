@@ -27,6 +27,14 @@ jobs:
       - name: Build WASM workbench
         run: bash scripts/build_wasm.sh
 
+      - name: Validate numerical methods and workbench state
+        run: |
+          node tests/check_state.mjs
+          node tests/check_methods.mjs
+          node tests/check_df_mp2.mjs
+          node tests/check_workspace.mjs
+          node tests/check_coordinates.mjs
+
       - name: Prepare Pages tree
         run: |
           install -m 0644 LICENSE build/wasm/dist/LICENSE

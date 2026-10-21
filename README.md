@@ -8,18 +8,20 @@ English adjective from Lorentz — the same pattern as Gaussian, and the competi
 spectroscopic lineshape.
 
 The packaged workbench is at
-**https://amiraminitamu.github.io/browser-qchem/**.
+**https://amiraminitamu.github.io/lorentzian/**.
 GitHub Pages serves the WASM build from the `gh-pages` branch. Enable it once
 under **Settings → Pages → Deploy from a branch → `gh-pages` / `/ (root)`**.
 Later pushes to `main` rebuild that branch through `.github/workflows/pages.yml`.
 
 ## Molecular workspace
 
-Run RHF, unrestricted Hartree-Fock (UHF), and small conventional RHF-MP2 calculations directly in the browser. Enter a
+Run RHF, UHF, conventional RHF-MP2, restricted density-fitted MP2 (DF-RMP2),
+and unrestricted density-fitted MP2 (DF-UMP2) directly in the browser. Enter a
 geometry and molecular charge, follow live SCF iterations, inspect orbital
 energies, density and Fock matrices, and export numerical results as JSON. UHF adds
 spin multiplicity, separate alpha/beta orbitals and matrices, and spin diagnostics.
-MP2 adds the all-electron correlation and total energies on an RHF reference.
+MP2 adds all-electron correlation and total energies. Restricted methods use an
+RHF reference; DF-UMP2 uses a UHF reference with the specified multiplicity.
 Choose STO-3G, 6-31G, or cc-pVDZ for H through Ne. The workspace includes a
 rotatable 3D molecule, XYZ upload, atom picking, live SCF and PES plots, matrix
 inspection, and numerical exports. The default water/STO-3G calculation converges
@@ -30,6 +32,79 @@ The solver uses libcint integrals and Eigen diagonalization and linear solves.
 The default convergence criteria are energy change < 1e-10 Eh, AO density RMS
 change < 1e-8, and orthonormal-basis commutator RMS < 1e-8. Results that reach
 the iteration limit are labeled **NOT CONVERGED**, including in JSON metadata.
+
+## Restricted and unrestricted density-fitted MP2
+
+Choose **DF-RMP2** or **DF-UMP2** in the method selector. Both support single
+points, internal-coordinate PES scans, cancellation, saved settings, session jobs,
+and raw/figure exports. DF-UMP2 exposes multiplicity and the existing core or
+orbital-mixing UHF guess. A failed SCF reference never produces an MP2 energy.
+
+The auxiliary basis is **cc-pVDZ-RI**, bundled locally for H through Ne, with real
+spherical auxiliary functions through f angular momentum. It is used for all
+three orbital bases; the set is optimized for cc-pVDZ, so fitting errors can differ
+for STO-3G and 6-31G. The conventional MP2 option remains available for comparison.
+No auxiliary basis download, Python runtime, or remote computation is required.
+The Solver panel shows the fitting basis; result diagnostics and JSON record its
+size, retained metric rank, cutoff, reference energy, and spin contributions.
+
+The implementation evaluates genuine three-center Coulomb integrals and the
+auxiliary Coulomb metric with libcint:
+
+\[
+T_{\mu\nu P}=(\mu\nu|P),\qquad J_{PQ}=(P|Q),\qquad
+B_{\mu\nu Q}=\sum_P T_{\mu\nu P}U_{PQ}/\sqrt{\lambda_Q}.
+\]
+
+Here \(J=U\lambda U^T\). Eigenvalues at or below the absolute cutoff \(10^{-10}\)
+are discarded. A significantly indefinite metric is rejected. Each spin's
+occupied/virtual MO coefficients transform these factors independently:
+
+\[
+B^Q_{ia,\sigma}=\sum_{\mu\nu} C^\sigma_{\mu i}C^\sigma_{\nu a}B_{\mu\nu Q},\qquad
+(ia|jb)_{\sigma\tau}\approx\sum_Q B^Q_{ia,\sigma}B^Q_{jb,\tau}.
+\]
+
+DF-UMP2 accumulates alpha-beta opposite-spin energy and both same-spin
+contributions with their respective orbital-energy denominators. Same-spin
+contractions use the standard one-half direct/exchange weight. The restricted
+closed-shell limit agrees with DF-RMP2, and one-electron correlation is exactly
+zero. Non-negative or near-zero excitation denominators are rejected.
+
+Density fitting applies **only to the correlation stage**. The RHF/UHF reference
+continues to build and use exact four-center AO ERIs, and the existing **40 AO
+limit remains**. The DF stage stores three-index factors and contracts occupied
+blocks without retaining a four-index MO tensor or MP2 amplitudes. Correlation
+factors are released when the calculation ends or is cancelled. Orbital tables,
+densities, Fock matrices, SCF convergence, and spin diagnostics describe the
+reference, not an MP2-corrected density or wavefunction.
+
+Validation includes **42 independent PySCF 2.14.0 reference cases** across STO-3G,
+6-31G, and cc-pVDZ: skew water, H2, broken-symmetry stretched H2, HeH+, methyl,
+triplet O2, He, H2+, and H. Tests compare total, correlation, opposite-spin, and
+same-spin energies. All H-Ne two-/three-center integral entries are also checked;
+redundant auxiliary functions exercise metric truncation and handle ownership.
+The WASM suite covers failed references, cancellation, repeated calculations,
+closed-shell spin limits, one-electron ions, and PES exports.
+
+```sh
+# After building WASM:
+node tests/check_df_mp2.mjs
+
+# Independent native validation and fixture regeneration (development only):
+python3 -m pip install pyscf==2.14.0
+cmake -S . -B build/native -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+cmake --build build/native --parallel 4
+python3 tests/check_df_mp2_native.py build/native/libqc_core.so --write-fixtures
+python3 scripts/generate_auxiliary_basis.py
+```
+
+On macOS, use `build/native/libqc_core.dylib` for the native-library argument.
+
+The auxiliary parameters are transcribed from
+[PySCF's cc-pVDZ-RI catalog](https://github.com/pyscf/pyscf/blob/v2.14.0/pyscf/gto/basis/cc-pvdz-ri.dat),
+which records the fitting-basis literature and provenance. The numerical
+reference uses [PySCF's density-fitted MP2](https://pyscf.org/user/mp.html).
 
 ## Molecular integral foundation
 
@@ -94,6 +169,7 @@ node tests/check_molecular.mjs
 node tests/check_rhf.mjs
 node tests/check_workspace.mjs
 node tests/check_methods.mjs
+node tests/check_df_mp2.mjs
 node tests/check_state.mjs
 python3 scripts/serve.py --directory build/wasm/dist
 ```
@@ -473,6 +549,7 @@ Validation commands (PySCF is only needed to regenerate/check references):
 
 ```bash
 node tests/check_methods.mjs
+node tests/check_df_mp2.mjs
 python3 tests/check_methods.py
 python3 tests/check_methods_native.py build/native/libqc_core.dylib
 python3 tests/check_browser_methods.py
@@ -565,12 +642,14 @@ retains an input buffer. A null result is accompanied by a `qc_error` message.
 | `src/rhf.cpp`, `src/rhf.h` | RHF iteration, DIIS, diagonalization, and convergence |
 | `src/uhf.cpp`, `src/uhf.h` | Spin-resolved UHF, joint DIIS and spin diagnostics |
 | `src/mp2.cpp`, `src/mp2.h` | Blockwise all-electron conventional RHF-MP2 |
+| `src/df_integrals.cpp`, `src/df_mp2.cpp` | Three-center Coulomb fitting, metric whitening, DF-RMP2 and DF-UMP2 |
 | `CMakeLists.txt` | Build native or WebAssembly targets |
 | `scripts/build_wasm.sh` | Configure and compile the browser module |
 | `web/basis.mjs`, `web/molecule.mjs` | Three basis catalogs, input parsing, and AO labels |
 | `web/engine.mjs`, `web/worker.mjs` | WASM memory interface and background computation |
 | `web/rhf.mjs`, `web/uhf.mjs`, `web/mp2.mjs`, `web/electronic.mjs` | Method validation, memory ownership, iterations and progress |
 | `web/index.html`, `web/styles.css`, `web/app.mjs` | Workspace, results inspection and exports |
+| `web/methods.mjs`, `web/df-mp2.mjs`, `web/auxiliary-basis.mjs` | Method registry, DF post-SCF wrapper and pinned auxiliary parameters |
 | `web/workbench.mjs` | Task/tab registries, solver groups, popovers, drawers, and split resizing |
 | `web/viewer.mjs`, `web/vendor/` | Local 3Dmol molecule viewer and license |
 | `web/scan.mjs`, `web/plot.mjs` | Scan runner, raw exports and interactive SVG charts |

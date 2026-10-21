@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import {parseGeometry,packBasis,basisSummary,toXYZ,WATER_XYZ,ANGSTROM_PER_BOHR} from './molecule.mjs';
+import {METHOD_SPECS,isUnrestricted,isMP2} from './methods.mjs';
 import {basisLabel} from './basis.mjs';
 import {serializable} from './engine.mjs';
 import {MoleculeViewer} from './viewer.mjs';
@@ -39,7 +40,7 @@ globalThis.addEventListener('pagehide',persistSettings);
 function setDisabled(element,value) {if(element.disabled!==value)element.disabled=value;}
 function setBusy(value) {busy=value;syncControls();}
 function syncControls() {
-  const mode=$('mode').value,uhf=$('method').value==='uhf';
+  const mode=$('mode').value,uhf=isUnrestricted($('method').value);
   // Never reset all controls before locking a subset. In particular, leave a
   // native select alone when its enabled state has not actually changed.
   $('controls').querySelectorAll('input,select,textarea,button').forEach(element=>{
@@ -59,7 +60,7 @@ function syncControls() {
   $('run-label').textContent='Run';
   $('calculate').title=mode==='scan'?'Run PES scan (Cmd/Ctrl + Enter)':'Run calculation (Cmd/Ctrl + Enter)';
   $('uhf-controls').hidden=!uhf||mode==='integrals';
-  $('method-hint').textContent=uhf?'Separate alpha and beta orbitals, with spin diagnostics.':$('method').value==='mp2'?'All-electron MP2 correlation on an RHF reference.':'Restricted Hartree-Fock for closed-shell singlets.';
+  $('method-hint').textContent=METHOD_SPECS[$('method').value].densityFitted?`All-electron ${$('method').value.toUpperCase()} correlation on an ${uhf?'UHF':'RHF'} reference, using cc-pVDZ-RI fitting.`:uhf?'Separate alpha and beta orbitals, with spin diagnostics.':$('method').value==='mp2'?'All-electron MP2 correlation on an RHF reference.':'Restricted Hartree-Fock for closed-shell singlets.';
 }
 function badge(text,kind='neutral') { $('result-badge').textContent=text;$('result-badge').className=`status-badge ${kind}`; }
 function setTab(name) {
@@ -116,7 +117,7 @@ function preview({reset=false}={}) {
     $('header-molecule').textContent=title;
     $('workspace-title').replaceChildren(document.createTextNode(title));
     const charge=Number($('charge').value),electrons=molecule.atoms.reduce((sum,a)=>sum+a.charge,0)-charge;
-    const mult=$('method').value==='uhf'?Number($('multiplicity').value):1;
+    const mult=isUnrestricted($('method').value)?Number($('multiplicity').value):1;
     const spinLabel=({1:'singlet',2:'doublet',3:'triplet',4:'quartet',5:'quintet'})[mult]??`multiplicity ${mult}`;
     const chargeLabel=Number.isSafeInteger(charge)?charge===0?'Neutral':`Charge ${charge>0?'+':''}${charge}`:'Invalid charge';
     $('molecule-state').textContent=mathText($('mode').value==='integrals'?chargeLabel:`${chargeLabel} · ${spinLabel}`);
@@ -144,7 +145,7 @@ function invalidate() {
   $('energy-label').textContent=$('mode').value==='integrals'?'ATOMIC ORBITALS':`TOTAL ${method} ENERGY`;
   $('energy-unit').textContent='Eₕ';
   $('result-context').textContent=`${$('mode').value==='integrals'?'INTEGRALS':method} / ${basisLabel($('basis').value)}`;
-  referenceContext(method==='MP2');
+  referenceContext(isMP2($('method').value));
   current=null;$('method-details').hidden=true;$('download').disabled=true;badge('READY');$('energy-value').textContent=mathText('...');
   $('job-progress').hidden=true;
   $('status').textContent='Settings changed. Ready to calculate.';
@@ -183,7 +184,7 @@ function renderOrbitals(r) {
   document.dispatchEvent(new CustomEvent('lorentzian:orbital-select',{detail:null}));
   if(!r){$('orbital-table').textContent='Run an electronic calculation to view orbitals.';return;}
   const uhf=r.method==='UHF';
-  $('orbital-note').textContent=uhf?'Separate alpha and beta orbital energies in Hartree, occupation 1 or 0.':current?.mp2?'RHF reference orbital energies and occupations. These are not correlated MP2 orbitals.':'Spatial orbital energies in Hartree. Closed-shell occupation is 2 or 0.';
+  $('orbital-note').textContent=current?.mp2?`${uhf?'UHF':'RHF'} reference orbital energies and occupations. These are not correlated MP2 orbitals.`:uhf?'Separate alpha and beta orbital energies in Hartree, occupation 1 or 0.':'Spatial orbital energies in Hartree. Closed-shell occupation is 2 or 0.';
   const channels=uhf?[['Alpha',r.orbitalEnergiesAlpha,r.occupationsAlpha,r.nalpha],['Beta',r.orbitalEnergiesBeta,r.occupationsBeta,r.nbeta]]:[['',r.orbitalEnergies,r.occupations,r.electrons/2]];
   const rows=[];
   for(const [label,eps,occ,nocc] of channels) {
@@ -226,19 +227,26 @@ function renderData() {
   table($('coordinate-table'),['Atom','x / Å','y / Å','z / Å'],atoms.map((atom,i)=>[label(atom,i),...atom.xyz.map(x=>(x*ANGSTROM_PER_BOHR).toFixed(8))]));
   table($('distance-matrix'),['Atom',...atoms.map(label)],atoms.map((atom,i)=>[label(atom,i),...atoms.map((_,j)=>(distance(molecule,i,j)*ANGSTROM_PER_BOHR).toFixed(5))]));
 }
-function referenceContext(mp2) {
-  document.querySelector('#panel-scf h3').textContent=mp2?'RHF reference convergence':'SCF convergence';
-  document.querySelector('#panel-scf .panel-intro p').textContent=mp2?'The SCF curve belongs to the RHF reference; correlation is computed after convergence.':'Follow the total SCF energy as the density converges.';
+function referenceContext(mp2,reference=isUnrestricted($('method').value)?'UHF':'RHF') {
+  document.querySelector('#panel-scf h3').textContent=mp2?`${reference} reference convergence`:'SCF convergence';
+  document.querySelector('#panel-scf .panel-intro p').textContent=mp2?`The SCF curve belongs to the ${reference} reference; correlation is computed after convergence.`:'Follow the total SCF energy as the density converges.';
 }
 function renderMethodDetails(result) {
-  referenceContext(!!result.mp2);
+  referenceContext(!!result.mp2,result.uhf?'UHF':'RHF');
   const box=$('method-details');box.replaceChildren();const u=result.uhf,m=result.mp2;
-  $('method-note').textContent='SCF convergence does not establish wavefunction stability or the lowest-energy state.';
-  box.hidden=!u&&!m;if(box.hidden)return;
-  const values=u?[['Alpha / beta electrons',`${u.nalpha} / ${u.nbeta}`],['Multiplicity',u.multiplicity],['⟨S²⟩ / target',`${u.spinSquare.toFixed(6)} / ${u.targetSpinSquare.toFixed(6)}`],['Spin contamination',u.spinContamination.toFixed(6)]]:
-    m.status==='complete'?[['RHF reference',`${m.referenceEnergy.toFixed(10)} Eh`],['MP2 correlation',`${m.correlationEnergy.toFixed(10)} Eh`],['Opposite spin',`${m.oppositeSpinEnergy.toFixed(10)} Eh`],['Same spin',`${m.sameSpinEnergy.toFixed(10)} Eh`]]:[['MP2','Not computed: RHF did not converge']];
+  box.hidden=!u&&!m;$('method-note').textContent='SCF convergence does not establish wavefunction stability or the lowest-energy state.';
+  if(box.hidden)return;
+  const values=[];
+  if(u)values.push(['Alpha / beta electrons',`${u.nalpha} / ${u.nbeta}`],['Multiplicity',u.multiplicity],['⟨S²⟩ / target',`${u.spinSquare.toFixed(6)} / ${u.targetSpinSquare.toFixed(6)}`],['Spin contamination',u.spinContamination.toFixed(6)]);
+  if(m?.status==='complete'){
+    values.push([`${m.reference} reference`,`${m.referenceEnergy.toFixed(10)} Eₕ`],['MP2 correlation',`${m.correlationEnergy.toFixed(10)} Eₕ`],['Opposite spin',`${m.oppositeSpinEnergy.toFixed(10)} Eₕ`],['Same spin',`${m.sameSpinEnergy.toFixed(10)} Eₕ`]);
+    if(m.densityFitted)values.push(['Correlation fitting basis',m.auxiliaryBasis],['Auxiliary functions / retained rank',`${m.auxiliaryFunctions} / ${m.metricRank}`],['Metric eigenvalue cutoff',m.metricEigenvalueCutoff.toExponential(1)]);
+  }else if(m)values.push(['MP2',m.reason??'Reference did not converge.']);
   for(const [label,value] of values){const item=document.createElement('div');item.textContent=label;const strong=document.createElement('strong');strong.textContent=mathText(value);item.append(strong);box.append(item);}
-  $('method-note').textContent=u?`Guess: ${u.mixedGuessApplied?'opposite alpha/beta HOMO-LUMO mixing':'core Hamiltonian'}. UHF is not generally an eigenstate of total spin; convergence does not guarantee the lowest or stable SCF solution.`:'All-electron conventional MP2. Orbitals, density, Fock matrices and SCF history belong to the RHF reference. MP2 can be unreliable near bond dissociation or small orbital gaps.';
+  const notes=[];
+  if(u)notes.push(`Guess: ${u.mixedGuessApplied?'opposite alpha/beta HOMO-LUMO mixing':'core Hamiltonian'}. UHF is not generally an eigenstate of total spin; convergence does not guarantee the lowest or stable SCF solution.`);
+  if(m)notes.push(`All-electron ${m.densityFitted?'density-fitted':'conventional'} MP2. Orbitals, densities, Fock matrices and SCF history belong to the ${m.reference} reference. MP2 can be unreliable near bond dissociation or small orbital gaps.${m.densityFitted?' Only correlation uses density fitting; SCF retains exact four-center integrals.':''}`);
+  $('method-note').textContent=notes.join(' ');
 }
 function showResult(result,{pointIndex=null,skipRemember=false}={}) {
   current=result;const r=scfResult(result),n=result.nao,method=result.method??r?.method??'INTEGRALS',energy=totalEnergy(result);
@@ -250,7 +258,7 @@ function showResult(result,{pointIndex=null,skipRemember=false}={}) {
   if(r){
     badge(r.converged?'CONVERGED':'NOT CONVERGED',r.converged?'success':'warning');
     $('energy-label').textContent=r.converged?`TOTAL ${method} ENERGY`:'UNCONVERGED ENERGY';$('energy-value').textContent=mathText((energy??r.energy).toFixed(10));$('energy-unit').textContent='Eₕ';
-    $('status').textContent=r.converged?`CONVERGED: ${method}/${basisLabel(result.molecule.basis)}.`:result.mp2?'NOT CONVERGED: RHF reference; MP2 not computed.':'NOT CONVERGED: maximum iterations reached.';
+    $('status').textContent=r.converged?`CONVERGED: ${method}/${basisLabel(result.molecule.basis)}.`:result.mp2?`NOT CONVERGED: ${result.mp2.reference} reference; MP2 not computed.`:'NOT CONVERGED: maximum iterations reached.';
     $('summary').textContent=mathText([r.converged?`Total ${method} energy  ${(energy??r.energy).toFixed(12)} Eh`:`Unconverged energy ${r.energy.toFixed(12)} Eh`,
       `Electronic energy ${r.electronicEnergy.toFixed(10)}`,`Nuclear repulsion ${result.nuclearRepulsion.toFixed(10)}`,
       `Electrons / charge ${r.electrons} / ${r.charge}`,`Cycles / DIIS      ${r.iterations} / ${r.diis?'on':'off'}`,
@@ -292,7 +300,7 @@ function run(event) {
     document.querySelector('.summary-details').open=true;return;
   }
   persistSettings();
-  $('method-details').hidden=true;referenceContext(request.options.method==='mp2');
+  $('method-details').hidden=true;referenceContext(isMP2(request.options.method));
   jobId=request.id;jobMode=request.mode;activeRequest=request;current=null;history=[];
   startHistory();drawSCF();renderOrbitals(null);renderMatrix();$('download').disabled=true;
   $('energy-value').textContent=mathText('...');badge('RUNNING');
@@ -380,11 +388,13 @@ worker.onmessage=({data})=>{
     document.querySelector('.summary-details').open=true;return;
   }
   if(data.type==='post-scf') {
-    const p=data.progress;$('status').textContent=`MP2 correlation: occupied block ${p.completed} / ${p.occupied}`;
+    const p=data.progress;
+    if(p.phase==='fitting'||p.phase==='metric'){$('status').textContent=p.phase==='fitting'?'Building three-center correlation fitting integrals…':'Whitening the Coulomb metric and transforming occupied–virtual factors…';$('progress-text').textContent=`${p.method} · ${p.phase==='fitting'?'auxiliary integrals':'metric factorization'}`;return;}
+    $('status').textContent=`${p.method??'MP2'} correlation: occupied block ${p.completed} / ${p.occupied}`;
     $('progress-text').textContent=`${data.index===undefined?'':`Point ${data.index+1} · `}MP2 ${p.completed} / ${p.occupied} occupied orbitals`;return;
   }
   if(data.type==='iteration') {
-    $('energy-label').textContent=activeRequest.options.method==='mp2'?'RHF REFERENCE IN PROGRESS':'SCF ENERGY IN PROGRESS';
+    $('energy-label').textContent=isMP2(activeRequest.options.method)?`${isUnrestricted(activeRequest.options.method)?'UHF':'RHF'} REFERENCE IN PROGRESS`:'SCF ENERGY IN PROGRESS';
     if(jobMode==='scan') {
       $('progress-text').textContent=`Point ${data.index+1} / ${scan.spec.count} · SCF cycle ${data.entry.iteration}`;
       if(!current){$('status').textContent=`SCF iteration ${data.entry.iteration} at scan point ${data.index+1}`;$('energy-value').textContent=mathText(data.entry.energy.toFixed(10));}

@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import fs from 'node:fs';
+import {METHOD_SPECS,isUnrestricted,isMP2} from '../web/methods.mjs';
 import {mathText} from '../web/format.mjs';
 import {TASKS} from '../web/workbench.mjs';
 
 function check(value,message) {if(!value)throw new Error(message);}
 function equal(a,b,message) {check(Object.is(a,b),message+': '+JSON.stringify(a)+' != '+JSON.stringify(b));}
-function exported(source,names) {return Function(source.replace(/^export /gm,'')+'\nreturn {'+names.join(',')+'};')();}
+function exported(source,names) {return Function('METHOD_SPECS','isUnrestricted','isMP2',source.replace(/^import .*;$/gm,'').replace(/^export /gm,'')+'\nreturn {'+names.join(',')+'};')(METHOD_SPECS,isUnrestricted,isMP2);}
 function functionBlock(source,start,end) {const a=source.indexOf(start),b=source.indexOf(end,a);check(a>=0&&b>a,'Controller test source anchors');return source.slice(a,b);}
 
 export function runStateTests(appSource,settingsSource) {
@@ -35,10 +36,10 @@ export function runStateTests(appSource,settingsSource) {
     const sent=[],shown=[];
     const env={$:node,document:{querySelector:selector=>node(selector),querySelectorAll:()=>[],dispatchEvent(){}},worker:{postMessage:r=>sent.push(r),terminate(){}},
       BUILD_ID:'test-build',WORKER_PROTOCOL:2,EXAMPLES:{water:defaults.geometry,hehplus:'He 0 0 0\nH 0 0 .8',h2plus:'H 0 0 0\nH 0 0 1.06'},EXAMPLE_SETTINGS:{hehplus:{method:'rhf',charge:1,multiplicity:1},h2plus:{method:'uhf',charge:1,multiplicity:2}},WATER_XYZ:defaults.geometry,
-      ...settings,TASKS,mathText,viewer:{setLabels(){},setMolecule(){}},structuredClone:v=>JSON.parse(JSON.stringify(v)),Number,Object,Array,Math,Set,
+      ...settings,TASKS,mathText,METHOD_SPECS,isUnrestricted,isMP2,viewer:{setLabels(){},setMolecule(){}},structuredClone:v=>JSON.parse(JSON.stringify(v)),Number,Object,Array,Math,Set,
       setTimeout:fn=>{queue.set(++clock,fn);return clock;},clearTimeout:id=>queue.delete(id),
       parseGeometry:(geometry,unit,basis)=>({geometry,unit,basis,atoms:[{charge:1,xyz:[0,0,0]},{charge:1,xyz:[0,0,2]}]}),
-      validateElectronicOptions:(_m,o)=>{if(!['rhf','uhf','mp2'].includes(o.method))throw Error('Invalid method');return o;},
+      validateElectronicOptions:(_m,o)=>{if(!Object.hasOwn(METHOD_SPECS,o.method))throw Error('Invalid method');return o;},
       scanSpec:(_m,c)=>({...c,basis:node('basis').value}),basisLabel:b=>b,
       matchMedia:()=>({matches:false}),referenceContext(){},plot(){},startHistory(){},drawSCF(){},renderOrbitals(){},renderMatrix(){},setTab(){},renderScan(){},selection(){},toggleSetup(){},toXYZ:()=> 'H 0 0 0\nH 0 0 2',
       showResult:r=>shown.push(r),badge:(text)=>{node('result-badge').textContent=text;},renderERI(){}};
@@ -121,20 +122,30 @@ export function runStateTests(appSource,settingsSource) {
   check(mismatch,'Wrong-method result must be rejected');
   menu.node('method').value='rhf';equal(rq.options.method,'uhf','DOM changes cannot mutate a captured job');
   reports.push('Wrong-method result rejected; captured settings independent of form');
+  for(const method of ['df-rmp2','df-ump2']){
+    const fitted=controller();fitted.node('method').value=method;fitted.node('method').emit('change');fitted.api.run();
+    equal(fitted.sent.at(-1).options.method,method,'DF method captured without fallback');
+    equal(fitted.sent.at(-1).options.auxiliaryBasis,'cc-pvdz-ri','Auxiliary basis captured with DF request');
+    const restored=controller(fitted.memory);equal(restored.node('method').value,method,'DF method survives reopening');
+    const request=fitted.sent.at(-1);let rejected=false;
+    try{settings.assertResultMatches(request,{method:method.toUpperCase(),molecule:{basis:request.basis},mp2:{densityFitted:false,reference:method==='df-ump2'?'UHF':'RHF'}});}catch{rejected=true;}
+    check(rejected,'A conventional result cannot masquerade as DF-MP2');
+  }
+  reports.push('DF method and auxiliary basis persist; conventional results cannot masquerade as density fitted');
   return reports;
 }
 
 export async function runWorkerTests(workerSource,electronicSource) {
   const sent=[],calls=[];
-  const electronic=Function('computeRHF','computeUHF','validateRHFOptions','validateUHFOptions',
-    electronicSource.replace(/^import .*;$/gm,'').replace(/^export /gm,'')+'\nreturn {computeElectronic};')(
-      async(_e,_m,o)=>{calls.push(o.mp2?'MP2':'RHF');return {rhf:{charge:o.charge},...(o.mp2?{mp2:{status:'complete',energy:-1.1}}:{})};},
-      async(_e,_m,o)=>{calls.push('UHF');return {uhf:{charge:o.charge,multiplicity:o.multiplicity}};},
+  const electronic=Function('METHOD_SPECS','isUnrestricted','isMP2','computeRHF','computeUHF','validateRHFOptions','validateUHFOptions',
+    electronicSource.replace(/^import .*;$/gm,'').replace(/^export /gm,'')+'\nreturn {computeElectronic};')(METHOD_SPECS,isUnrestricted,isMP2,
+      async(_e,_m,o)=>{calls.push(o.dfmp2?'DF-RMP2':o.mp2?'MP2':'RHF');return {rhf:{charge:o.charge},...(o.mp2||o.dfmp2?{mp2:{status:'complete',energy:-1.1}}:{})};},
+      async(_e,_m,o)=>{calls.push(o.dfmp2?'DF-UMP2':'UHF');return {uhf:{charge:o.charge,multiplicity:o.multiplicity},...(o.dfmp2?{mp2:{status:'complete',energy:-1.1}}:{})};},
       (_m,o)=>{if(o.charge===1)throw new Error('RHF requires a positive even electron count.');return {charge:o.charge};},
       (_m,o)=>({charge:o.charge,multiplicity:o.multiplicity}));
   const self={postMessage:data=>sent.push(data)};
   let wasmURL='';
-  const env={self,BUILD_ID:'test-build',WORKER_PROTOCOL:2,URL,performance:{now:()=>0},ArrayBuffer,Set,Object,
+  const env={self,METHOD_SPECS,BUILD_ID:'test-build',WORKER_PROTOCOL:2,URL,performance:{now:()=>0},ArrayBuffer,Set,Object,
     createQChem:async config=>{wasmURL=config.locateFile('qc_core.wasm','https://test.invalid/');return {};},
     parseGeometry:(_g,_u,basis)=>({basis}),
     computeIntegrals:()=>({nao:2}),computeElectronic:electronic.computeElectronic,
@@ -145,11 +156,11 @@ export async function runWorkerTests(workerSource,electronicSource) {
   check(wasmURL.endsWith('qc_core.wasm?v=test-build'),'WASM fetch must use the same build ID');
   let id=0;
   async function request(options,extra={}) {await self.onmessage({data:{id:++id,protocol:2,buildId:'test-build',geometry:'H 0 0 0',unit:'bohr',basis:'sto-3g',mode:'rhf',options,...extra}});return sent.at(-1);}
-  for(const method of ['rhf','uhf','mp2','uhf','rhf','mp2']) {
+  for(const method of ['rhf','uhf','mp2','df-rmp2','df-ump2','uhf','rhf','mp2']) {
     const response=await request({method,charge:0,multiplicity:1});
     equal(response.type,'result','Explicit method returns a result');
     equal(response.result.method,method.toUpperCase(),'Worker dispatcher must use the selected method');
-    if(method==='mp2')check(!!response.result.mp2,'MP2 result must include its correlation calculation');
+    if(isMP2(method))check(!!response.result.mp2,'MP2 result must include its correlation calculation');
   }
   const count=calls.length;
   equal((await request({charge:0})).type,'error','Missing method must not fall back to RHF');
@@ -157,7 +168,7 @@ export async function runWorkerTests(workerSource,electronicSource) {
   equal((await request({method:'uhf',charge:1},{buildId:'old'})).type,'error','Mixed build must be rejected');
   equal(calls.length,count,'Invalid or stale requests must not start a solver');
   const odd=await request({method:'mp2',charge:1});equal(odd.type,'error','Odd-electron MP2 validation');check(odd.message.startsWith('MP2 requires'),'MP2 validation explains its RHF reference');
-  return ['RHF/UHF/MP2 repeated worker dispatch','No silent RHF fallback for missing method','Page/worker/WASM build consistency','Explicit MP2-reference validation'];
+  return ['RHF/UHF/MP2/DF-RMP2/DF-UMP2 repeated worker dispatch','No silent RHF fallback for missing method','Page/worker/WASM build consistency','Explicit MP2-reference validation'];
 }
 
 if(import.meta.url===new URL(process.argv[1], 'file:').href) {
