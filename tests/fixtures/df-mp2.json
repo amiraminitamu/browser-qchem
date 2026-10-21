@@ -1,0 +1,761 @@
+{
+  "reference": "PySCF 2.14.0, exact SCF + cc-pVDZ-RI correlation fitting",
+  "cases": [
+    {
+      "name": "water",
+      "geometry": "O .14 -.23 .31\n H .79 .02 .91\n H -.51 .61 .44",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -74.95197172816592,
+      "naux": 84,
+      "energy": -74.9920549112353,
+      "correlationEnergy": -0.040083183069390134,
+      "oppositeSpinEnergy": -0.03757771999321815,
+      "sameSpinEnergy": -0.002505463076171985
+    },
+    {
+      "name": "water",
+      "geometry": "O .14 -.23 .31\n H .79 .02 .91\n H -.51 .61 .44",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -74.95197172816594,
+      "naux": 84,
+      "energy": -74.99205491123533,
+      "correlationEnergy": -0.0400831830693842,
+      "oppositeSpinEnergy": -0.037577719993212855,
+      "sameSpinEnergy": -0.0025054630761713464
+    },
+    {
+      "name": "hydrogen",
+      "geometry": "H 0 0 0\n H 0 0 .74",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -1.1167593073964253,
+      "naux": 28,
+      "energy": -1.129895642888211,
+      "correlationEnergy": -0.013136335491785684,
+      "oppositeSpinEnergy": -0.013136335491785684,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "hydrogen",
+      "geometry": "H 0 0 0\n H 0 0 .74",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -1.1167593073964253,
+      "naux": 28,
+      "energy": -1.129895642888211,
+      "correlationEnergy": -0.013136335491785684,
+      "oppositeSpinEnergy": -0.013136335491785684,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "stretched_hydrogen",
+      "geometry": "H 0 0 0\n H 0 0 3",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -0.656048251145591,
+      "naux": 28,
+      "energy": -0.8813965840152795,
+      "correlationEnergy": -0.2253483328696886,
+      "oppositeSpinEnergy": -0.2253483328696886,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "stretched_hydrogen",
+      "geometry": "H 0 0 0\n H 0 0 3",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "mix"
+      },
+      "referenceEnergy": -0.9332846583338115,
+      "naux": 28,
+      "energy": -0.9332847428847142,
+      "correlationEnergy": -8.455090267762682e-08,
+      "oppositeSpinEnergy": -8.455090267762682e-08,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "hehplus",
+      "geometry": "He 0 0 0\n H 0 0 .8",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 1,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -2.846231250360148,
+      "naux": 23,
+      "energy": -2.8533653166769364,
+      "correlationEnergy": -0.007134066316788252,
+      "oppositeSpinEnergy": -0.007134066316788252,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "hehplus",
+      "geometry": "He 0 0 0\n H 0 0 .8",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 1,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -2.8462312503601463,
+      "naux": 23,
+      "energy": -2.8533653166769346,
+      "correlationEnergy": -0.007134066316788256,
+      "oppositeSpinEnergy": -0.007134066316788256,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "methyl",
+      "geometry": "C 0 0 0\n H 1.07 0 0\n H -.535 .92665 0\n H -.535 -.92665 0",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core"
+      },
+      "referenceEnergy": -39.07653722127236,
+      "naux": 98,
+      "energy": -39.11426012624308,
+      "correlationEnergy": -0.03772290497072202,
+      "oppositeSpinEnergy": -0.03618440362641898,
+      "sameSpinEnergy": -0.0015385013443030317
+    },
+    {
+      "name": "oxygen",
+      "geometry": "O 0 0 0\n O 0 0 1.21",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 3,
+        "guess": "core"
+      },
+      "referenceEnergy": -147.3802550213895,
+      "naux": 112,
+      "energy": -147.42211482986147,
+      "correlationEnergy": -0.04185980847197476,
+      "oppositeSpinEnergy": -0.0309546528032238,
+      "sameSpinEnergy": -0.010905155668750964
+    },
+    {
+      "name": "helium",
+      "geometry": "He 0 0 0",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -2.807783957539974,
+      "naux": 9,
+      "energy": -2.807783957539974,
+      "correlationEnergy": 0.0,
+      "oppositeSpinEnergy": 0.0,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "helium",
+      "geometry": "He 0 0 0",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -2.807783957539974,
+      "naux": 9,
+      "energy": -2.807783957539974,
+      "correlationEnergy": 0.0,
+      "oppositeSpinEnergy": 0.0,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "h2plus",
+      "geometry": "H 0 0 0\n H 0 0 1.06",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 1,
+        "multiplicity": 2,
+        "guess": "core"
+      },
+      "referenceEnergy": -0.5826965597947078,
+      "naux": 28,
+      "energy": -0.5826965597947078,
+      "correlationEnergy": 0.0,
+      "oppositeSpinEnergy": 0.0,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "hydrogen_atom",
+      "geometry": "H 0 0 0",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core"
+      },
+      "referenceEnergy": -0.46658184955727533,
+      "naux": 14,
+      "energy": -0.46658184955727533,
+      "correlationEnergy": 0.0,
+      "oppositeSpinEnergy": 0.0,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "water",
+      "geometry": "O .14 -.23 .31\n H .79 .02 .91\n H -.51 .61 .44",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -75.96878791491152,
+      "naux": 84,
+      "energy": -76.10138330057504,
+      "correlationEnergy": -0.13259538566351808,
+      "oppositeSpinEnergy": -0.10176266034856968,
+      "sameSpinEnergy": -0.030832725314948392
+    },
+    {
+      "name": "water",
+      "geometry": "O .14 -.23 .31\n H .79 .02 .91\n H -.51 .61 .44",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -75.96878791491166,
+      "naux": 84,
+      "energy": -76.10138330058291,
+      "correlationEnergy": -0.13259538567125473,
+      "oppositeSpinEnergy": -0.10176266035392861,
+      "sameSpinEnergy": -0.0308327253173261
+    },
+    {
+      "name": "hydrogen",
+      "geometry": "H 0 0 0\n H 0 0 .74",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -1.1267553171969733,
+      "naux": 28,
+      "energy": -1.144119440010576,
+      "correlationEnergy": -0.017364122813602778,
+      "oppositeSpinEnergy": -0.017364122813602778,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "hydrogen",
+      "geometry": "H 0 0 0\n H 0 0 .74",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -1.1267553171969733,
+      "naux": 28,
+      "energy": -1.1441194400105312,
+      "correlationEnergy": -0.01736412281355795,
+      "oppositeSpinEnergy": -0.01736412281355795,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "stretched_hydrogen",
+      "geometry": "H 0 0 0\n H 0 0 3",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -0.8155917722706605,
+      "naux": 28,
+      "energy": -0.9199810625175008,
+      "correlationEnergy": -0.1043892902468403,
+      "oppositeSpinEnergy": -0.1043892902468403,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "stretched_hydrogen",
+      "geometry": "H 0 0 0\n H 0 0 3",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "mix"
+      },
+      "referenceEnergy": -0.996704022959058,
+      "naux": 28,
+      "energy": -0.9967157831352751,
+      "correlationEnergy": -1.1760176217106854e-05,
+      "oppositeSpinEnergy": -1.1760176217106854e-05,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "hehplus",
+      "geometry": "He 0 0 0\n H 0 0 .8",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 1,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -2.9093206576940966,
+      "naux": 23,
+      "energy": -2.926153754717653,
+      "correlationEnergy": -0.016833097023556485,
+      "oppositeSpinEnergy": -0.016833097023556485,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "hehplus",
+      "geometry": "He 0 0 0\n H 0 0 .8",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 1,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -2.909320657694095,
+      "naux": 23,
+      "energy": -2.9261537547176513,
+      "correlationEnergy": -0.016833097023556495,
+      "oppositeSpinEnergy": -0.016833097023556495,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "methyl",
+      "geometry": "C 0 0 0\n H 1.07 0 0\n H -.535 .92665 0\n H -.535 -.92665 0",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core"
+      },
+      "referenceEnergy": -39.54665772772309,
+      "naux": 98,
+      "energy": -39.622892212356334,
+      "correlationEnergy": -0.07623448463324567,
+      "oppositeSpinEnergy": -0.06328342370544776,
+      "sameSpinEnergy": -0.012951060927797901
+    },
+    {
+      "name": "oxygen",
+      "geometry": "O 0 0 0\n O 0 0 1.21",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 3,
+        "guess": "core"
+      },
+      "referenceEnergy": -149.54546256607318,
+      "naux": 112,
+      "energy": -149.7857546839599,
+      "correlationEnergy": -0.24029211788673122,
+      "oppositeSpinEnergy": -0.1608829272844971,
+      "sameSpinEnergy": -0.0794091906022341
+    },
+    {
+      "name": "helium",
+      "geometry": "He 0 0 0",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -2.8551604261544448,
+      "naux": 9,
+      "energy": -2.8663575420021044,
+      "correlationEnergy": -0.011197115847659447,
+      "oppositeSpinEnergy": -0.011197115847659447,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "helium",
+      "geometry": "He 0 0 0",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -2.8551604261544448,
+      "naux": 9,
+      "energy": -2.8663575420021044,
+      "correlationEnergy": -0.011197115847659447,
+      "oppositeSpinEnergy": -0.011197115847659447,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "h2plus",
+      "geometry": "H 0 0 0\n H 0 0 1.06",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 1,
+        "multiplicity": 2,
+        "guess": "core"
+      },
+      "referenceEnergy": -0.58402745958406,
+      "naux": 28,
+      "energy": -0.58402745958406,
+      "correlationEnergy": 0.0,
+      "oppositeSpinEnergy": 0.0,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "hydrogen_atom",
+      "geometry": "H 0 0 0",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core"
+      },
+      "referenceEnergy": -0.4982329107290701,
+      "naux": 14,
+      "energy": -0.4982329107290701,
+      "correlationEnergy": 0.0,
+      "oppositeSpinEnergy": 0.0,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "water",
+      "geometry": "O .14 -.23 .31\n H .79 .02 .91\n H -.51 .61 .44",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -76.01251682934382,
+      "naux": 84,
+      "energy": -76.21974947879555,
+      "correlationEnergy": -0.20723264945172204,
+      "oppositeSpinEnergy": -0.1551096791103861,
+      "sameSpinEnergy": -0.05212297034133595
+    },
+    {
+      "name": "water",
+      "geometry": "O .14 -.23 .31\n H .79 .02 .91\n H -.51 .61 .44",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -76.01251682934397,
+      "naux": 84,
+      "energy": -76.21974947878901,
+      "correlationEnergy": -0.20723264944504927,
+      "oppositeSpinEnergy": -0.15510967910613885,
+      "sameSpinEnergy": -0.05212297033891042
+    },
+    {
+      "name": "hydrogen",
+      "geometry": "H 0 0 0\n H 0 0 .74",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -1.128700093556442,
+      "naux": 28,
+      "energy": -1.1550604321252012,
+      "correlationEnergy": -0.026360338568759165,
+      "oppositeSpinEnergy": -0.026360338568759165,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "hydrogen",
+      "geometry": "H 0 0 0\n H 0 0 .74",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -1.128700093556442,
+      "naux": 28,
+      "energy": -1.1550604321246112,
+      "correlationEnergy": -0.026360338568169283,
+      "oppositeSpinEnergy": -0.026360338568169283,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "stretched_hydrogen",
+      "geometry": "H 0 0 0\n H 0 0 3",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -0.826447843885751,
+      "naux": 28,
+      "energy": -0.9255684746984078,
+      "correlationEnergy": -0.09912063081265673,
+      "oppositeSpinEnergy": -0.09912063081265673,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "stretched_hydrogen",
+      "geometry": "H 0 0 0\n H 0 0 3",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "mix"
+      },
+      "referenceEnergy": -0.9987211254605657,
+      "naux": 28,
+      "energy": -0.998762292058905,
+      "correlationEnergy": -4.116659833928752e-05,
+      "oppositeSpinEnergy": -4.116659833928752e-05,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "hehplus",
+      "geometry": "He 0 0 0\n H 0 0 .8",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 1,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -2.9235319266703117,
+      "naux": 23,
+      "energy": -2.952863911756508,
+      "correlationEnergy": -0.029331985086196135,
+      "oppositeSpinEnergy": -0.029331985086196135,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "hehplus",
+      "geometry": "He 0 0 0\n H 0 0 .8",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-ump2",
+        "charge": 1,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -2.9235319266703117,
+      "naux": 23,
+      "energy": -2.952863911756508,
+      "correlationEnergy": -0.02933198508619609,
+      "oppositeSpinEnergy": -0.02933198508619609,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "methyl",
+      "geometry": "C 0 0 0\n H 1.07 0 0\n H -.535 .92665 0\n H -.535 -.92665 0",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core"
+      },
+      "referenceEnergy": -39.56354213615741,
+      "naux": 98,
+      "energy": -39.692309854934635,
+      "correlationEnergy": -0.1287677187772239,
+      "oppositeSpinEnergy": -0.10351789679317093,
+      "sameSpinEnergy": -0.02524982198405297
+    },
+    {
+      "name": "oxygen",
+      "geometry": "O 0 0 0\n O 0 0 1.21",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 3,
+        "guess": "core"
+      },
+      "referenceEnergy": -149.62730738725747,
+      "naux": 112,
+      "energy": -149.97669559155648,
+      "correlationEnergy": -0.34938820429900586,
+      "oppositeSpinEnergy": -0.24200989620031813,
+      "sameSpinEnergy": -0.10737830809868774
+    },
+    {
+      "name": "helium",
+      "geometry": "He 0 0 0",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -2.85516047724274,
+      "naux": 9,
+      "energy": -2.880984970736766,
+      "correlationEnergy": -0.02582449349402585,
+      "oppositeSpinEnergy": -0.02582449349402585,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "helium",
+      "geometry": "He 0 0 0",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core"
+      },
+      "referenceEnergy": -2.85516047724274,
+      "naux": 9,
+      "energy": -2.880984970736766,
+      "correlationEnergy": -0.02582449349402585,
+      "oppositeSpinEnergy": -0.02582449349402585,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "h2plus",
+      "geometry": "H 0 0 0\n H 0 0 1.06",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-ump2",
+        "charge": 1,
+        "multiplicity": 2,
+        "guess": "core"
+      },
+      "referenceEnergy": -0.6002572844066536,
+      "naux": 28,
+      "energy": -0.6002572844066536,
+      "correlationEnergy": 0.0,
+      "oppositeSpinEnergy": 0.0,
+      "sameSpinEnergy": 0.0
+    },
+    {
+      "name": "hydrogen_atom",
+      "geometry": "H 0 0 0",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core"
+      },
+      "referenceEnergy": -0.49927840341958307,
+      "naux": 14,
+      "energy": -0.49927840341958307,
+      "correlationEnergy": 0.0,
+      "oppositeSpinEnergy": 0.0,
+      "sameSpinEnergy": 0.0
+    }
+  ]
+}

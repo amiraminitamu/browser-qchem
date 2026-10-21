@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
+import {computeDFMP2} from './df-mp2.mjs';
 import { computeMP2 } from './mp2.mjs';
 import { prepareIntegrals } from './engine.mjs';
 import { basisSummary } from './molecule.mjs';
@@ -51,7 +52,8 @@ export async function computeRHF(engine, molecule, options = {}, onIteration = (
       const pointer = engine._qc_rhf_data(rhf,kind), size = kind < 3 ? n*n : n;
       result.rhf[key] = engine.HEAPF64.slice(pointer/8,pointer/8+size);
     });
-    if(options.mp2) result.mp2=result.rhf.converged?await computeMP2(engine,rhf,options,onProgress):{method:'MP2',reference:'RHF',allElectron:true,densityFitted:false,status:'not_computed',energy:null,reason:'RHF did not converge.'};
+    if(options.dfmp2)result.mp2=result.rhf.converged?await computeDFMP2(engine,rhf,molecule,{...options,reference:'RHF'},onProgress):{method:'DF-RMP2',reference:'RHF',allElectron:true,densityFitted:true,auxiliaryBasis:'cc-pVDZ-RI',status:'not_computed',energy:null,reason:'RHF did not converge.'};
+    else if(options.mp2) result.mp2=result.rhf.converged?await computeMP2(engine,rhf,options,onProgress):{method:'MP2',reference:'RHF',allElectron:true,densityFitted:false,status:'not_computed',energy:null,reason:'RHF did not converge.'};
     return result;
   } finally {
     if (rhf) engine._qc_rhf_free(rhf);

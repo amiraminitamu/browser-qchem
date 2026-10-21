@@ -67,6 +67,15 @@ try{
   $('scan-clear').click();assert.equal($('scan-a').value,'');assert.equal($('scan-d').value,'');
   $('water').click();await waitFor(()=>$('status').textContent.startsWith('CONVERGED'),'full reset');
   assert.equal($('scan-coordinate').value,'bond');assert.equal($('scan-a').value,'1');assert.equal($('scan-unit').value,'angstrom');
+  set('method','df-rmp2');$('calculate').click();await waitFor(()=>$('status').textContent.startsWith('CONVERGED: DF-RMP2'),'DF-RMP2 water');
+  assert.equal($('uhf-controls').hidden,true);assert.match($('method-details').textContent,/cc-pVDZ-RI/);assert.match($('method-details').textContent,/MP2 correlation/);
+  assert.equal(document.querySelector('#panel-scf h3').textContent,'RHF reference convergence');
+  set('method','df-ump2');set('preset','h2plus');$('calculate').click();await waitFor(()=>$('status').textContent.startsWith('CONVERGED: DF-UMP2'),'DF-UMP2 ion');
+  assert.equal($('method').value,'df-ump2');assert.equal($('uhf-controls').hidden,false);assert.match($('method-details').textContent,/Spin contamination/);assert.match($('method-details').textContent,/MP2 correlation/);
+  assert.equal(document.querySelector('#panel-scf h3').textContent,'UHF reference convergence');
+  set('mode','scan');set('scan-start','.8');set('scan-end','1.2');set('scan-count','3');$('calculate').click();
+  await waitFor(()=>$('progress-text').textContent.startsWith('Complete'),'DF-UMP2 ion scan');assert.match($('pes-note').textContent,/DF-UMP2/);
+  assert.equal($('scan-point-table').querySelectorAll('tbody tr').length,3);
   assert.ok(!errors.length,errors.map(String).join('\n'));
-  console.log('DOM + actual worker/WASM: initial RHF, mode gating, angle and torsion UI scans, fragments, plot preview, unit conversion, MP2 and clear PASS');
+  console.log('DOM + actual worker/WASM: initial RHF, mode gating, angle and torsion UI scans, fragments, plot preview, unit conversion, MP2, both DF methods, spin controls and DF PES PASS');
 }finally{for(const worker of workers)await worker.terminate();window.close();}

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // New tasks, methods and tabs register here without changing the workspace grid.
+import {METHOD_SPECS,isUnrestricted} from './methods.mjs';
 export const TASKS=[
   {id:'rhf',label:'Single-point energy',tab:'scf',solver:true,picking:'none',context:null},
   {id:'scan',label:'PES Scan',tab:'pes',solver:true,picking:'internal-coordinate',context:'scan-controls'},
@@ -21,7 +22,7 @@ export const TABS=[
   {id:'matrices',label:'AO matrices'}, {id:'pes',label:'Potential energy',count:true},
   {id:'data',label:'Geometry'}
 ];
-export const METHODS={rhf:{groups:['scf']},uhf:{groups:['scf','uhf']},mp2:{groups:['scf','mp2']}};
+export const METHODS=METHOD_SPECS;
 const $=id=>document.getElementById(id);
 export function closeMenus(except=null) {
   document.querySelectorAll('.popover[open]').forEach(panel=>{if(panel!==except)panel.open=false;});
@@ -53,7 +54,7 @@ export function initializeWorkbench() {
     document.querySelectorAll('[data-task-context]').forEach(bar=>bar.hidden=bar.id!==task.context);
     document.body.dataset.task=task.id;
     $('task-label').textContent=task.label;
-    const mult=$('method').value==='uhf'?Number($('multiplicity').value):1;
+    const mult=isUnrestricted($('method').value)?Number($('multiplicity').value):1;
     const spin={1:'Singlet',2:'Doublet',3:'Triplet',4:'Quartet',5:'Quintet'}[mult]??`2S+1: ${mult}`;
     $('spin-label').textContent=`Q: ${$('charge').value.replace('-', '−')} · ${task.solver?spin:'Integrals'}`;
     document.querySelectorAll('[data-solver-group]').forEach(group=>group.hidden=!task.solver||!METHODS[$('method').value].groups.includes(group.dataset.solverGroup));

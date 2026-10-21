@@ -126,6 +126,7 @@ extern "C" int qc_uhf_step(QCUHF *r){
         r->d=std::move(next);r->f=std::move(f);r->energy=e;r->status=converged?1:r->iteration>=r->maxiter?2:0;return r->status;
     }catch(const std::exception &e){last_error=e.what();r->status=-1;return -1;}
 }
+extern "C" int qc_uhf_nao(const QCUHF *r){return r?r->n:0;}
 extern "C" int qc_uhf_status(const QCUHF *r){return r?r->status:-1;}
 extern "C" int qc_uhf_iteration(const QCUHF *r){return r?r->iteration:0;}
 extern "C" double qc_uhf_scalar(const QCUHF *r,int kind){

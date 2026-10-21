@@ -72,7 +72,7 @@
 
         </div>
       </details>
-      <label class="recipe-field"><span class="visually-hidden">Method</span><select id="method"><option value="rhf">RHF</option><option value="uhf">UHF</option><option value="mp2">MP2</option></select></label>
+      <label class="recipe-field"><span class="visually-hidden">Method</span><select id="method"><option value="rhf">RHF</option><option value="uhf">UHF</option><option value="mp2">MP2</option><option value="df-rmp2">DF-RMP2</option><option value="df-ump2">DF-UMP2</option></select></label>
       <span class="recipe-slash" aria-hidden="true">/</span>
       <label class="recipe-field"><span class="visually-hidden">Basis set</span><select id="basis"><option value="sto-3g">STO-3G</option><option value="6-31g">6-31G</option><option value="cc-pvdz">cc-pVDZ</option></select></label>
       <details id="spin-popover" class="popover">
@@ -88,7 +88,8 @@
         <div class="popover-panel"><h2><span class="method-chip">RHF</span> solver</h2>
           <div data-solver-group="scf"><label for="maxiter">Maximum SCF cycles</label><input id="maxiter" type="number" min="1" max="500" step="1" value="100" required><label class="check-label"><input id="diis" type="checkbox" checked> DIIS acceleration</label><p class="small-muted">ΔE &lt; 10⁻¹⁰ Eₕ<br>Density &amp; residual &lt; 10⁻⁸</p></div>
           <div data-solver-group="uhf" hidden><label for="guess">Initial guess</label><select id="guess"><option value="mix">Orbital mixing</option><option value="core">Core Hamiltonian</option></select></div>
-          <p data-solver-group="mp2" class="small-muted" hidden>All-electron MP2 on an RHF reference.</p>
+          <p data-solver-group="mp2" class="small-muted" hidden>All-electron MP2 correlation on the selected RHF or UHF reference.</p>
+          <p data-solver-group="df" class="small-muted" hidden>Correlation auxiliary basis: <strong>cc-pVDZ-RI</strong>. Density fitting applies to MP2; the SCF reference uses exact four-center integrals.</p>
           <p id="integrals-solver-note" class="small-muted" hidden>No iterative solver is used for molecular integrals.</p>
         </div>
       </details>
