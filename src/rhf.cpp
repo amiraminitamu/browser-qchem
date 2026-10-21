@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 #include "rhf.h"
+#include "df_factors.h"
 #include <Eigen/Dense>
 #include <algorithm>
 #include <cmath>
@@ -18,6 +19,7 @@ struct QCRHF {
     bool use_diis;
     double enuc, energy, de=0, drms=0, residual=0, overlap_min;
     double etol, dtol, rtol;
+    std::unique_ptr<DFFactors> df;
     const double *eri;
     const QCResult *integrals;
     Matrix s, h, x, d, f, c;
@@ -28,6 +30,7 @@ struct QCRHF {
 static Matrix build_fock(const QCRHF &r, const Matrix &d)
 {
     Matrix f=r.h;
+    if(r.df) return (r.h+r.df->coulomb(d)-r.df->exchange(r.c.leftCols(r.nocc))).eval();
     const size_t n=r.n;
     for (size_t i=0; i<n; ++i) for (size_t j=0; j<n; ++j) {
         double g=0;
@@ -86,7 +89,7 @@ static Matrix diis_fock(QCRHF &r)
 }
 
 extern "C" const char *qc_rhf_error(void) { return last_error.c_str(); }
-extern "C" QCRHF *qc_rhf_create(const QCResult *integrals,int nelectron,int maxiter,
+extern "C" QCRHF *qc_rhf_create_df(const QCResult *integrals,const QCDF *df,int nelectron,int maxiter,
                                 int use_diis,double etol,double dtol,double rtol)
 {
     last_error.clear();
@@ -101,6 +104,8 @@ extern "C" QCRHF *qc_rhf_create(const QCResult *integrals,int nelectron,int maxi
         r->n=n; r->nocc=nelectron/2; r->maxiter=maxiter; r->use_diis=use_diis!=0;
         r->etol=etol; r->dtol=dtol; r->rtol=rtol; r->enuc=qc_enuc(integrals);
         r->eri=qc_data(integrals,3); r->integrals=integrals;
+        if(df)r->df=std::make_unique<DFFactors>(df,n);
+        else if(!r->eri)throw std::runtime_error("Exact SCF requires four-center integrals.");
         r->s=Eigen::Map<const Matrix>(qc_data(integrals,0),n,n);
         r->h=Eigen::Map<const Matrix>(qc_data(integrals,1),n,n)
              +Eigen::Map<const Matrix>(qc_data(integrals,2),n,n);
@@ -171,3 +176,7 @@ extern "C" void qc_rhf_free(QCRHF *r) { delete r; }
 
 
 extern "C" const QCResult *qc_rhf_integrals(const QCRHF *r) { return r ? r->integrals : nullptr; }
+
+extern "C" QCRHF *qc_rhf_create(const QCResult *i,int ne,int mi,int di,double e,double d,double r){return qc_rhf_create_df(i,nullptr,ne,mi,di,e,d,r);}
+
+extern "C" int qc_rhf_df_rank(const QCRHF *r){return r&&r->df?r->df->rank:0;}

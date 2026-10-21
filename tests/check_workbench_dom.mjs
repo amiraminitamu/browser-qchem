@@ -41,6 +41,12 @@ const waitFor=async(fn,label)=>{const end=Date.now()+15000;while(!fn()){if(Date.
 try{
   await import(pathToFileURL(root+'/build/wasm/dist/app.mjs'));
   await waitFor(()=>$('status').textContent.startsWith('CONVERGED'),'initial water');
+  assert.equal($('scf-integrals').value,'df');assert.match($('method-details').textContent,/Density fitted \(DF-JK\)/);
+  await waitFor(()=>$('eri-value').textContent.includes('exact, on demand'),'DF exact ERI inspector');
+  const dfERI=$('eri-value').textContent.split(' Eₕ')[0];
+  set('scf-integrals','exact');$('calculate').click();await waitFor(()=>$('status').textContent.startsWith('CONVERGED'),'exact water');
+  assert.match($('method-details').textContent,/Exact four-center/);assert.equal($('eri-value').textContent,dfERI+' Eₕ');
+  set('scf-integrals','df');$('calculate').click();await waitFor(()=>$('status').textContent.startsWith('CONVERGED'),'DF water again');
   assert.equal($('energy-value').textContent[0],'−');assert.equal($('scan-a').value,'1');assert.equal($('scan-b').value,'2');
   assert.equal($('scan-controls').hidden,true);assert.equal($('selection-info').hidden,true);
   set('mode','scan');document.querySelector('[data-coordinate=angle]').click();

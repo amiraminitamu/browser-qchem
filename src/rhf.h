@@ -2,6 +2,7 @@
 #ifndef BROWSER_QCHEM_RHF_H
 #define BROWSER_QCHEM_RHF_H
 #include "integrals.h"
+#include "df_integrals.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -15,6 +16,9 @@ typedef struct QCRHF QCRHF;
 QCRHF *qc_rhf_create(const QCResult *integrals, int nelectron, int maxiter,
                      int use_diis, double energy_tol, double density_tol,
                      double residual_tol);
+/* DF factors are copied at construction; the QCDF may then be freed. */
+QCRHF *qc_rhf_create_df(const QCResult *,const QCDF *,int nelectron,int maxiter,int diis,double etol,double dtol,double rtol);
+int qc_rhf_df_rank(const QCRHF *);
 const char *qc_rhf_error(void);
 int qc_rhf_step(QCRHF *rhf);
 int qc_rhf_status(const QCRHF *rhf);

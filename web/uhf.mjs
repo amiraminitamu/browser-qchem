@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import {computeDFMP2} from './df-mp2.mjs';
-import {prepareIntegrals} from './engine.mjs';
+import {prepareSCF} from './scf-integrals.mjs';
 import {basisSummary} from './molecule.mjs';
 import {RHF_THRESHOLDS,CalculationCancelled} from './rhf.mjs';
 export function validateUHFOptions(molecule,options={}) {
@@ -18,12 +18,13 @@ export function validateUHFOptions(molecule,options={}) {
 }
 export async function computeUHF(engine,molecule,options={},onIteration=()=>{},onProgress=()=>{}) {
   const check=()=>{if(options.isCancelled?.()) throw new CalculationCancelled();};check();
-  const settings=validateUHFOptions(molecule,options),{handle,result}=prepareIntegrals(engine,molecule);let uhf=0;
+  const settings=validateUHFOptions(molecule,options),prepared=prepareSCF(engine,molecule,options),{handle,result}=prepared;let uhf=0,df=prepared.df;
   try {
     if(!result.checks.passed) throw new Error('Integral normalization or symmetry checks failed. UHF was not started.');
     const t=RHF_THRESHOLDS;
-    uhf=engine._qc_uhf_create(handle,settings.nalpha,settings.nbeta,settings.maxIterations,options.diis===false?0:1,settings.guess==='mix'?1:0,t.energy,t.density,t.residual);
+    uhf=engine._qc_uhf_create_df(handle,df,settings.nalpha,settings.nbeta,settings.maxIterations,options.diis===false?0:1,settings.guess==='mix'?1:0,t.energy,t.density,t.residual);
     if(!uhf) throw new Error(engine.UTF8ToString(engine._qc_uhf_error()));
+    if(df){result.scfIntegrals.metricRank=engine._qc_uhf_df_rank(uhf);engine._qc_df_free(df);df=0;}
     const history=[];let status=0;
     while(status===0) {
       check();status=engine._qc_uhf_step(uhf);
@@ -39,5 +40,5 @@ export async function computeUHF(engine,molecule,options={},onIteration=()=>{},o
     r.density=r.densityAlpha.map((v,i)=>v+r.densityBeta[i]);r.spinDensity=r.densityAlpha.map((v,i)=>v-r.densityBeta[i]);
     if(options.dfmp2)result.mp2=r.converged?await computeDFMP2(engine,uhf,molecule,{...options,reference:'UHF'},onProgress):{method:'DF-UMP2',reference:'UHF',allElectron:true,densityFitted:true,auxiliaryBasis:'cc-pVDZ-RI',status:'not_computed',energy:null,reason:'UHF did not converge.'};
     return result;
-  } finally {if(uhf) engine._qc_uhf_free(uhf);engine._qc_free(handle);}
+  } finally {if(uhf) engine._qc_uhf_free(uhf);if(df)engine._qc_df_free(df);engine._qc_free(handle);}
 }

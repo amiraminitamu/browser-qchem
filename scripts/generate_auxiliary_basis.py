@@ -17,10 +17,10 @@ source = '// SPDX-License-Identifier: AGPL-3.0-only\n'
 source += '// cc-pVDZ-RI correlation-fitting parameters from PySCF 2.14.0.\n'
 source += '// Spherical functions; general contractions split in PySCF AO order.\n'
 source += 'export const AUXILIARY_BASIS='+json.dumps({'id':'cc-pvdz-ri','label':'cc-pVDZ-RI','elements':elements},separators=(',',':'))+';\n'
-source += '''export function packAuxiliary(molecule) {
+source += '''export function packAuxiliary(molecule,catalog=AUXILIARY_BASIS) {
   const shells=[],exponents=[],coefficients=[];let nao=0;
   molecule.atoms.forEach((atom,index)=>{
-    const element=AUXILIARY_BASIS.elements[atom.symbol];
+    const element=catalog.elements[atom.symbol];
     if(!element)throw new Error('No auxiliary basis for '+atom.symbol+'.');
     for(const shell of element.shells){shells.push(index,shell.l,shell.exponents.length);exponents.push(...shell.exponents);coefficients.push(...shell.coefficients);nao+=2*shell.l+1;}
   });

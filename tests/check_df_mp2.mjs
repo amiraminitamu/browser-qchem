@@ -11,7 +11,7 @@ const engine=await createQChem();
 const fixture=JSON.parse(fs.readFileSync(new URL('./fixtures/df-mp2.json',import.meta.url)));
 const near=(a,b,t=2e-8)=>assert.ok(Math.abs(a-b)<t,`${a} != ${b}`);
 for(const c of fixture.cases){
-  const m=parseGeometry(c.geometry,c.unit,c.basis),r=await computeElectronic(engine,m,c.options),p=r.mp2;
+  const m=parseGeometry(c.geometry,c.unit,c.basis),r=await computeElectronic(engine,m,{...c.options,scfIntegrals:'exact'}),p=r.mp2;
   assert.equal(r.method,c.options.method.toUpperCase());assert.equal(p.reference,c.options.method==='df-ump2'?'UHF':'RHF');
   assert.equal(p.status,'complete');assert.equal(p.densityFitted,true);assert.equal(p.allElectron,true);assert.equal(p.auxiliaryBasis,'cc-pVDZ-RI');assert.equal(p.auxiliaryFunctions,c.naux);
   assert.ok(p.metricRank>0&&p.metricRank<=p.auxiliaryFunctions);assert.equal(p.metricEigenvalueCutoff,1e-10);

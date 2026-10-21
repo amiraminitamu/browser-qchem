@@ -71,11 +71,11 @@ contractions use the standard one-half direct/exchange weight. The restricted
 closed-shell limit agrees with DF-RMP2, and one-electron correlation is exactly
 zero. Non-negative or near-zero excitation denominators are rejected.
 
-Density fitting applies **only to the correlation stage**. The RHF/UHF reference
-continues to build and use exact four-center AO ERIs, and the existing **40 AO
-limit remains**. The DF stage stores three-index factors and contracts occupied
-blocks without retaining a four-index MO tensor or MP2 amplitudes. Correlation
-factors are released when the calculation ends or is cancelled. Orbital tables,
+SCF independently defaults to **density-fitted Coulomb and exchange (DF-JK)**.
+Choose **Solver → SCF integrals → Exact four-center** to retain the original
+reference backend. MP2 correlation fitting remains independent of this choice.
+The DF correlation stage stores three-index factors and contracts occupied
+blocks without retaining a four-index MO tensor or MP2 amplitudes. Orbital tables,
 densities, Fock matrices, SCF convergence, and spin diagnostics describe the
 reference, not an MP2-corrected density or wavefunction.
 
@@ -105,6 +105,69 @@ The auxiliary parameters are transcribed from
 [PySCF's cc-pVDZ-RI catalog](https://github.com/pyscf/pyscf/blob/v2.14.0/pyscf/gto/basis/cc-pvdz-ri.dat),
 which records the fitting-basis literature and provenance. The numerical
 reference uses [PySCF's density-fitted MP2](https://pyscf.org/user/mp.html).
+
+## Density-fitted SCF (default)
+
+RHF and UHF both use DF-JK by default, including references for conventional
+MP2, DF-RMP2, DF-UMP2, and PES scans. The Solver panel independently selects
+**Density fitted (DF-JK)** or **Exact four-center** SCF integrals. Existing saved
+settings without this new field adopt the DF default; an explicit backend choice
+is preserved on reopening, in job snapshots, and when inspecting saved scans.
+Full Reset restores DF. Molecular-integrals mode still produces exact integrals.
+
+The SCF auxiliary basis is **def2-universal-JKFIT**, bundled for H through Ne
+from [PySCF 2.14.0's catalog](https://github.com/pyscf/pyscf/blob/v2.14.0/pyscf/gto/basis/def2-universal-jkfit.dat).
+It is a Coulomb/exchange fitting set, distinct from the **cc-pVDZ-RI** correlation
+set. It was developed for def2 orbital bases and is used here as an explicit,
+fixed auxiliary choice for all three supported orbital bases. Fitting error
+therefore depends on the orbital basis and geometry; use exact SCF for comparison.
+
+The same Coulomb-metric whitening and absolute eigenvalue cutoff of 1e-10 are
+used by both fitting stages. With whitened AO factors \(B_{\mu\nu Q}\), SCF builds
+
+\[
+q_Q=\sum_{\mu\nu} B_{\mu\nu Q}D_{\mu\nu},\quad
+J_{\mu\nu}=\sum_Q B_{\mu\nu Q}q_Q,\quad
+L^\sigma_{\mu iQ}=\sum_\nu B_{\mu\nu Q}C^\sigma_{\nu i},\quad
+K^\sigma_{\mu\nu}=\sum_{iQ}L^\sigma_{\mu iQ}L^\sigma_{\nu iQ}.
+\]
+
+RHF uses its spin-summed density for J and singly occupied spatial coefficients
+for K, giving \(F=h+J[D]-K[C_{occ}]\). UHF uses the total alpha-plus-beta density
+for J and each spin's occupied coefficients for K. DIIS, guesses, convergence
+thresholds, final physical-Fock checks, and spin diagnostics are shared with the
+exact backend.
+
+The DF reference computes S/T/V without allocating, evaluating, or copying a full
+four-center AO tensor. Three-index factor storage scales as O(N²M), with an
+O(M²) Coulomb metric during setup; exchange uses occupied-orbital contractions.
+This does not imply cubic-scaling HF exchange or a speedup for tiny molecules.
+The existing **40 AO**, **32 atom**, and **1024 auxiliary-function** limits remain.
+The exact ERI inspector evaluates a requested shell quartet on demand and labels
+it as exact. Conventional MP2 on a DF reference also obtains exact correlation
+integrals directly in shell blocks, retaining O(N³) transformation workspace
+rather than constructing an N⁴ AO array. This direct option can be slower.
+
+JSON records `scfIntegrals` (backend, JKFIT identity, auxiliary count, retained
+rank, cutoff, and storage policy) separately from `mp2` correlation metadata.
+DF results omit `eri`; `checks.eriSymmetryError` is null because the full tensor
+was not evaluated. PES CSV/XYZ and publication captions retain the SCF backend
+and both applicable fitting bases. Exact single points retain the original ERI
+array and its symmetry check.
+
+Validation includes 42 independent PySCF DF-JK RHF/UHF cases across STO-3G,
+6-31G, and cc-pVDZ, including broken symmetry, triplet O2, ions, and one-electron
+limits. Native tests compare every JKFIT metric/three-center entry, physical
+Fock matrices, energies, spin squares, DF-MP2, and direct conventional MP2. The
+same fixtures run through actual WASM. Tests verify absent dense ERIs, exact
+on-demand queries, both backends, no-DIIS convergence, cancellation and recovery,
+saved backend choices, and PES metadata. They run before Pages publishing.
+
+```sh
+node tests/check_df_scf.mjs
+python3 tests/check_df_scf_native.py build/native/libqc_core.so --write-fixtures
+python3 scripts/generate_jkfit_basis.py
+```
 
 ## Molecular integral foundation
 
@@ -377,9 +440,9 @@ Core guesses can converge to excited SCF roots, including for N2. Inspect the
 curve for discontinuities and verify the electronic state before interpreting a
 PES. Restricted HF also cannot describe general bond dissociation correctly.
 
-Single-point JSON contains all integrals. Scan JSON omits the large ERI tensor at
-each point, retaining one-electron matrices and electronic results. To inspect a scan
-geometry's ERIs, select the point and run **Single-point energy**. Exported JSON
+Exact single-point JSON contains all integrals; DF single points omit the dense
+ERI tensor. Scan JSON retains one-electron matrices and electronic results. To
+inspect a scan geometry's exact ERIs, select the point and use the ERI inspector. Exported JSON
 molecular coordinates are in bohr; XYZ coordinates are in angstrom. Units and
 status accompany all scan energies. Selecting an older completed point during a
 scan keeps that point selected while later points continue to calculate.
@@ -522,10 +585,11 @@ lowest or stable SCF solution; different guesses and DIIS trajectories can
 select distinct stationary roots, particularly in open-shell species.
 
 MP2 currently means **all-electron, conventional RHF-MP2** with no frozen core,
-no density fitting, and no UMP2. The calculation requires converged RHF orbitals.
+exact correlation integrals. DF-UMP2 is a separate method. The calculation
+requires converged RHF orbitals from either SCF backend.
 Each occupied orbital is transformed in four stages, retaining only O(N^3)
-additional intermediate storage. The AO ERIs remain O(N^4); the transformation
-cost is O(N^5). One occupied block is processed per worker step so progress and
+additional intermediate storage. Exact SCF retains O(N^4) AO ERIs; DF-SCF
+uses a direct shell-block first transformation instead. Transformation cost is O(N^5). One occupied block is processed per worker step so progress and
 cancellation are available between blocks. The existing **40 AO** limit remains.
 
 The correlation energy is the sum over all occupied i,j and virtual a,b of
@@ -616,10 +680,10 @@ Every exported array is flat and row-major. For N AOs:
 - Coordinates in exported molecule data are in bohr. S is dimensionless;
   T, V, ERIs, and nuclear repulsion use atomic units.
 
-The prototype limits input to 32 atoms and **40 AOs**, with a dense ERI tensor
-of at most 20.48 MB. All shell quartets are evaluated; direct Fock construction,
-screening strategies, tensor compression, and parallel integral evaluation are
-later optimizations. Co-located nuclei, unsupported elements, malformed input,
+The prototype limits input to 32 atoms and **40 AOs**. The optional exact backend
+retains a dense ERI tensor of at most 20.48 MB and evaluates all shell quartets.
+DF-SCF retains three-index factors instead. Screening and parallel integral
+evaluation remain future optimizations. Co-located nuclei, unsupported elements, malformed input,
 and excessive sizes produce explicit errors. Editing geometry clears old results.
 
 The generic C API in `src/integrals.h` accepts arrays of nuclear charges,
@@ -642,7 +706,8 @@ retains an input buffer. A null result is accompanied by a `qc_error` message.
 | `src/rhf.cpp`, `src/rhf.h` | RHF iteration, DIIS, diagonalization, and convergence |
 | `src/uhf.cpp`, `src/uhf.h` | Spin-resolved UHF, joint DIIS and spin diagnostics |
 | `src/mp2.cpp`, `src/mp2.h` | Blockwise all-electron conventional RHF-MP2 |
-| `src/df_integrals.cpp`, `src/df_mp2.cpp` | Three-center Coulomb fitting, metric whitening, DF-RMP2 and DF-UMP2 |
+| `src/df_integrals.cpp`, `src/df_factors.h`, `src/df_mp2.cpp` | Three-center Coulomb fitting, shared metric whitening, DF-JK and DF-MP2 |
+| `web/scf-integrals.mjs`, `web/jkfit-basis.mjs` | Independent SCF backend selection and bundled JKFIT basis |
 | `CMakeLists.txt` | Build native or WebAssembly targets |
 | `scripts/build_wasm.sh` | Configure and compile the browser module |
 | `web/basis.mjs`, `web/molecule.mjs` | Three basis catalogs, input parsing, and AO labels |

@@ -15,6 +15,10 @@ struct QCResult {
     int nao;
     double enuc;
     double *data[4];
+    int natm, nshell;
+    int *atoms, *basis;
+    double *environment;
+    int offsets[MAX_SHELLS+1];
 };
 static const char *last_error = "";
 const char *qc_error(void) { return last_error; }
@@ -28,15 +32,16 @@ void qc_free(QCResult *r)
 {
     if (!r) return;
     for (int i = 0; i < 4; ++i) free(r->data[i]);
+    free(r->atoms); free(r->basis); free(r->environment);
     free(r);
 }
 
-QCResult *qc_compute(int natm, const int *charges, const double *xyz,
+QCResult *qc_compute_mode(int dense, int natm, const int *charges, const double *xyz,
                      int nshell, const int *shells, int nprim,
                      const double *exponents, const double *coefficients)
 {
     last_error = "";
-    if (natm < 1 || natm > MAX_ATOMS || nshell < 1 || nshell > MAX_SHELLS ||
+    if ((dense != 0 && dense != 1) || natm < 1 || natm > MAX_ATOMS || nshell < 1 || nshell > MAX_SHELLS ||
         nprim < 1 || nprim > MAX_PRIMITIVES || !charges || !xyz || !shells ||
         !exponents || !coefficients) {
         last_error = "Invalid input sizes or missing arrays.";
@@ -101,7 +106,7 @@ QCResult *qc_compute(int natm, const int *charges, const double *xyz,
     r->nao = offsets[nshell];
     r->enuc = enuc;
     size_t n = (size_t)r->nao, n2 = n*n;
-    for (int kind = 0; kind < 4; ++kind) {
+    for (int kind = 0; kind < (dense ? 4 : 3); ++kind) {
         r->data[kind] = calloc(kind == 3 ? n2*n2 : n2, sizeof(double));
         if (!r->data[kind]) goto allocation_failed;
     }
@@ -159,6 +164,7 @@ QCResult *qc_compute(int natm, const int *charges, const double *xyz,
             }
         }
     }
+    if (dense) {
     int2e_optimizer(&optimizer,atm,natm,bas,nshell,env);
     for (int a = 0; a < nshell; ++a) {
         int da = offsets[a+1]-offsets[a];
@@ -186,7 +192,11 @@ QCResult *qc_compute(int natm, const int *charges, const double *xyz,
         }
     }
     CINTdel_optimizer(&optimizer);
-    free(atm); free(bas); free(env); free(buffer);
+    }
+    r->natm=natm; r->nshell=nshell;
+    r->atoms=atm; r->basis=bas; r->environment=env;
+    memcpy(r->offsets,offsets,sizeof(offsets));
+    free(buffer);
     return r;
 
 allocation_failed:
@@ -196,4 +206,33 @@ failed:
     free(atm); free(bas); free(env); free(buffer);
     qc_free(r);
     return NULL;
+}
+
+QCResult *qc_compute(int natm,const int *charges,const double *xyz,int nshell,const int *shells,int nprim,const double *exponents,const double *coefficients) {
+    return qc_compute_mode(1,natm,charges,xyz,nshell,shells,nprim,exponents,coefficients);
+}
+/* Evaluate exactly one shell quartet, retaining no dense ERI tensor. */
+double qc_eri(const QCResult *r,int i,int j,int k,int l) {
+    if(!r || i<0 || j<0 || k<0 || l<0 || i>=r->nao || j>=r->nao || k>=r->nao || l>=r->nao) return NAN;
+    if(r->data[3])return r->data[3][((i*r->nao+j)*r->nao+k)*r->nao+l];
+    int indices[4]={i,j,k,l},shls[4],local[4],dim[4];
+    for(int a=0;a<4;++a){int s=0;while(r->offsets[s+1]<=indices[a])++s;shls[a]=s;local[a]=indices[a]-r->offsets[s];dim[a]=r->offsets[s+1]-r->offsets[s];}
+    double buffer[625]={0}; /* orbital angular momentum <=2 */
+    int2e_sph(buffer,NULL,shls,r->atoms,r->natm,r->basis,r->nshell,r->environment,NULL,NULL);
+    return buffer[local[0]+dim[0]*(local[1]+dim[1]*(local[2]+dim[2]*local[3]))];
+}
+/* First quarter transform for conventional MP2. O(N^3) output, no N^4 storage. */
+int qc_eri_transform(const QCResult *r,const double *c,double *out) {
+    if(!r||!c||!out)return 0;
+    const int n=r->nao;memset(out,0,(size_t)n*n*n*sizeof(double));
+    double buffer[625];
+    for(int a=0;a<r->nshell;++a)for(int b=0;b<r->nshell;++b)
+    for(int csh=0;csh<r->nshell;++csh)for(int d=0;d<r->nshell;++d){
+        int da=r->offsets[a+1]-r->offsets[a],db=r->offsets[b+1]-r->offsets[b],dc=r->offsets[csh+1]-r->offsets[csh],dd=r->offsets[d+1]-r->offsets[d];
+        int shls[4]={a,b,csh,d};memset(buffer,0,(size_t)da*db*dc*dd*sizeof(double));
+        int2e_sph(buffer,NULL,shls,r->atoms,r->natm,r->basis,r->nshell,r->environment,NULL,NULL);
+        for(int l=0;l<dd;++l)for(int k=0;k<dc;++k)for(int j=0;j<db;++j)for(int i=0;i<da;++i)
+            out[((r->offsets[b]+j)*n+r->offsets[csh]+k)*n+r->offsets[d]+l]+=c[r->offsets[a]+i]*buffer[i+da*(j+db*(k+dc*l))];
+    }
+    return 1;
 }

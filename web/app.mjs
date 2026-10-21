@@ -29,6 +29,7 @@ let scan=null,selectedPoint=-1,history=[],previewTimer=null,activeRequest=null,d
 let listedJobs=[],listedJobSeq=0,activeListedJob=0;
 const viewer=new MoleculeViewer($('molecule-viewer'),selectAtom,(a,b)=>pesSetup.pickBond(a,b));
 const pesSetup=new PESSetup({getMolecule:()=>molecule,isBusy:()=>busy,changed:()=>settingsChanged()});
+let eriQuery=0,eriPending=null;
 const worker=new Worker(new URL('./worker.mjs',import.meta.url),{type:'module'});
 $('controls').reset();
 $('geometry').value=WATER_XYZ;
@@ -46,7 +47,7 @@ function syncControls() {
   $('controls').querySelectorAll('input,select,textarea,button').forEach(element=>{
     if(!SETTINGS_FIELDS.includes(element.id)&&!['xyz-file','water','auto-fragment'].includes(element.id))return;
     const inactive=element.closest('#scan-controls')&&(mode!=='scan'||(['scan-c','scan-d'].includes(element.id)&&Number(element.id==='scan-c'?3:4)>({bond:2,angle:3,dihedral:4})[$('scan-coordinate').value]));
-    const scf=mode==='integrals'&&['charge','maxiter','diis','multiplicity','guess'].includes(element.id);
+    const scf=mode==='integrals'&&['scf-integrals','charge','maxiter','diis','multiplicity','guess'].includes(element.id);
     const spin=!uhf&&['multiplicity','guess'].includes(element.id);
     setDisabled(element,!!(busy||inactive||scf||spin));
   });
@@ -110,7 +111,7 @@ function preview({reset=false}={}) {
     valid=info.fits&&($('mode').value!=='scan'||molecule.atoms.length>1);
     $('basis-info').classList.toggle('over-limit',!info.fits);
     $('ao-count').textContent=`${info.nao} AOs${!info.fits?' / limit 40':''}`;
-    $('eri-memory').textContent=`${(info.eriBytes/1e6).toFixed(2)} MB ERIs`;
+    $('eri-memory').textContent=$('mode').value!=='integrals'&&$('scf-integrals').value==='df'?'DF-JK · three-index factors':`${(info.eriBytes/1e6).toFixed(2)} MB ERIs`;
     $('input-message').textContent=!info.fits?'This basis exceeds the 40 AO limit. Select a smaller basis or molecule.':'';
     $('formula').textContent=formula(molecule.atoms);
     const title=EXAMPLE_SETTINGS[$('preset').value]?.name??{water:'Water',h2:'Hydrogen',methane:'Methane',ammonia:'Ammonia'}[$('preset').value]??'Custom molecule';
@@ -212,11 +213,16 @@ function renderMatrix() {
   table($('matrix'),['AO',...Array.from({length:n},(_,i)=>i+1)],Array.from({length:n},(_,i)=>[`${i+1}: ${aoLabels[i]}`,...Array.from({length:n},(_,j)=>data[i*n+j].toFixed(8))]));
 }
 function renderERI() {
-  if(!current?.eri){$('eri-value').textContent='Run a single-point calculation at this geometry to inspect ERIs.';return;}
+  eriPending=null;++eriQuery;
   const inputs=[...$('eri-selectors').querySelectorAll('input')];
+  if(!current||inputs.length!==4){$('eri-value').textContent='Run a calculation at this geometry to inspect ERIs.';return;}
   if(inputs.some(input=>!input.checkValidity()||!Number.isInteger(Number(input.value)))){$('eri-value').textContent='Choose four valid integer AO indices.';return;}
-  const [i,j,k,l]=inputs.map(input=>Number(input.value)-1),n=current.nao;
-  $('eri-value').textContent=mathText(`(${i+1} ${j+1}|${k+1} ${l+1}) = ${current.eri[((i*n+j)*n+k)*n+l].toFixed(14)} Eₕ`);
+  const indices=inputs.map(input=>Number(input.value)-1),[i,j,k,l]=indices,n=current.nao;
+  if(current.eri){$('eri-value').textContent=mathText(`(${i+1} ${j+1}|${k+1} ${l+1}) = ${current.eri[((i*n+j)*n+k)*n+l].toFixed(14)} Eₕ`);return;}
+  if(busy){$('eri-value').textContent='Inspect exact ERIs after the calculation finishes.';return;}
+  eriPending={query:eriQuery,result:current,indices};
+  $('eri-value').textContent='Evaluating exact shell quartet…';
+  worker.postMessage({type:'eri-query',query:eriQuery,protocol:WORKER_PROTOCOL,buildId:BUILD_ID,geometry:toXYZ(current.molecule,'bohr'),unit:'bohr',basis:current.molecule.basis,indices});
 }
 function renderData() {
   if(!molecule)return;
@@ -234,9 +240,10 @@ function referenceContext(mp2,reference=isUnrestricted($('method').value)?'UHF':
 function renderMethodDetails(result) {
   referenceContext(!!result.mp2,result.uhf?'UHF':'RHF');
   const box=$('method-details');box.replaceChildren();const u=result.uhf,m=result.mp2;
-  box.hidden=!u&&!m;$('method-note').textContent='SCF convergence does not establish wavefunction stability or the lowest-energy state.';
+  box.hidden=!u&&!m&&!result.scfIntegrals;$('method-note').textContent='SCF convergence does not establish wavefunction stability or the lowest-energy state.';
   if(box.hidden)return;
   const values=[];
+  if(result.scfIntegrals){const fit=result.scfIntegrals;values.push(['SCF integrals',fit.densityFitted?'Density fitted (DF-JK)':'Exact four-center']);if(fit.densityFitted)values.push(['SCF fitting basis',fit.auxiliaryBasis],['SCF auxiliary functions / rank',`${fit.auxiliaryFunctions} / ${fit.metricRank}`]);}
   if(u)values.push(['Alpha / beta electrons',`${u.nalpha} / ${u.nbeta}`],['Multiplicity',u.multiplicity],['⟨S²⟩ / target',`${u.spinSquare.toFixed(6)} / ${u.targetSpinSquare.toFixed(6)}`],['Spin contamination',u.spinContamination.toFixed(6)]);
   if(m?.status==='complete'){
     values.push([`${m.reference} reference`,`${m.referenceEnergy.toFixed(10)} Eₕ`],['MP2 correlation',`${m.correlationEnergy.toFixed(10)} Eₕ`],['Opposite spin',`${m.oppositeSpinEnergy.toFixed(10)} Eₕ`],['Same spin',`${m.sameSpinEnergy.toFixed(10)} Eₕ`]);
@@ -244,8 +251,9 @@ function renderMethodDetails(result) {
   }else if(m)values.push(['MP2',m.reason??'Reference did not converge.']);
   for(const [label,value] of values){const item=document.createElement('div');item.textContent=label;const strong=document.createElement('strong');strong.textContent=mathText(value);item.append(strong);box.append(item);}
   const notes=[];
+  if(result.scfIntegrals)notes.push(result.scfIntegrals.densityFitted?'SCF uses DF-JK with def2-universal-JKFIT. Exact ERIs are evaluated on demand.':'SCF uses exact four-center integrals.');
   if(u)notes.push(`Guess: ${u.mixedGuessApplied?'opposite alpha/beta HOMO-LUMO mixing':'core Hamiltonian'}. UHF is not generally an eigenstate of total spin; convergence does not guarantee the lowest or stable SCF solution.`);
-  if(m)notes.push(`All-electron ${m.densityFitted?'density-fitted':'conventional'} MP2. Orbitals, densities, Fock matrices and SCF history belong to the ${m.reference} reference. MP2 can be unreliable near bond dissociation or small orbital gaps.${m.densityFitted?' Only correlation uses density fitting; SCF retains exact four-center integrals.':''}`);
+  if(m)notes.push(`All-electron ${m.densityFitted?'density-fitted':'conventional'} MP2. Orbitals, densities, Fock matrices and SCF history belong to the ${m.reference} reference. MP2 can be unreliable near bond dissociation or small orbital gaps.`);
   $('method-note').textContent=notes.join(' ');
 }
 function showResult(result,{pointIndex=null,skipRemember=false}={}) {
@@ -272,7 +280,7 @@ function showResult(result,{pointIndex=null,skipRemember=false}={}) {
   }
   history=r?.history??[];startHistory();history.forEach(appendIteration);drawSCF();renderOrbitals(r);renderMatrix();
   $('ao-order').textContent=result.aoLabels.map((label,i)=>`${i+1}: ${label}`).join('\n');$('eri-selectors').replaceChildren();
-  if(result.eri) for(const name of ['i','j','k','l']) {
+  for(const name of ['i','j','k','l']) {
     const label=document.createElement('label');label.textContent=name;const input=document.createElement('input');
     Object.assign(input,{type:'number',min:'1',max:String(n),step:'1',value:'1',required:true});input.setAttribute('aria-label',`ERI index ${name}`);
     input.addEventListener('input',renderERI);label.append(input);$('eri-selectors').append(label);
@@ -329,7 +337,7 @@ function selectPoint(index,{restoreSettings=true}={}) {
   $('geometry').value=toXYZ(point.molecule,'angstrom',`Scan point ${index+1}`);$('unit').value='angstrom';if(!preserveDraft)$('basis').value=scan.spec.basis;
   $('preset').value='custom';
   if(restoreSettings&&!busy&&!preserveDraft) {
-    $('method').value=scan.options.method??'rhf';$('multiplicity').value=scan.options.multiplicity??1;$('guess').value=scan.options.guess??'core';
+    $('scf-integrals').value=scan.options.scfIntegrals??'exact';$('method').value=scan.options.method??'rhf';$('multiplicity').value=scan.options.multiplicity??1;$('guess').value=scan.options.guess??'core';
     $('charge').value=scan.options.charge;$('maxiter').value=scan.options.maxIterations;$('diis').checked=scan.options.diis;
     methodExplicit=true;
   }
@@ -369,6 +377,13 @@ function renderScan() {
   if(scan?.summary&&scan.listId==null)scan.listId=rememberCompletedJob(current,{kind:'scan'});
 }
 worker.onmessage=({data})=>{
+  if(data.type==='eri-value') {
+    if(typeof eriPending==='undefined'||!eriPending||data.query!==eriPending.query||current!==eriPending.result)return;
+    if(data.protocol!==WORKER_PROTOCOL||data.buildId!==BUILD_ID){$('eri-value').textContent='Engine version mismatch. Reload the page.';return;}
+    const text=eriPending.indices.map(i=>i+1);
+    $('eri-value').textContent=data.error??mathText(`(${text[0]} ${text[1]}|${text[2]} ${text[3]}) = ${data.value.toFixed(14)} Eₕ · exact, on demand`);eriPending=null;return;
+  }
+
   if(data.type==='ready') {
     if(data.protocol!==WORKER_PROTOCOL||data.buildId!==BUILD_ID) {
       ready=false;current=null;worker.terminate();setBusy(false);$('energy-value').textContent=mathText('...');badge('ENGINE VERSION ERROR','error');
@@ -415,7 +430,7 @@ worker.onmessage=({data})=>{
     if(follow)selectPoint(scan.points.length-1,{restoreSettings:false});else renderScan();return;
   }
   if(data.type==='scan-complete') {
-    scan.cancelled=data.summary.cancelled;scan.summary=data.summary;activeRequest=null;setBusy(false);renderScan();persistSettings();
+    scan.cancelled=data.summary.cancelled;scan.summary=data.summary;activeRequest=null;setBusy(false);renderScan();renderERI();persistSettings();
     $('progress-text').textContent=`${scan.cancelled?'Stopped':'Complete'} · ${scan.points.length} / ${scan.spec.count} points`;
     if(!scan.points.length){badge('CANCELLED','warning');$('status').textContent='Scan cancelled before a point completed.';}
     return;

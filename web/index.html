@@ -86,10 +86,10 @@
       <details id="solver-popover" class="popover advanced-settings">
         <summary aria-label="Solver settings"><svg class="icon" aria-hidden="true"><use href="#i-sliders"/></svg><span class="solver-word">Solver</span></summary>
         <div class="popover-panel"><h2><span class="method-chip">RHF</span> solver</h2>
-          <div data-solver-group="scf"><label for="maxiter">Maximum SCF cycles</label><input id="maxiter" type="number" min="1" max="500" step="1" value="100" required><label class="check-label"><input id="diis" type="checkbox" checked> DIIS acceleration</label><p class="small-muted">ΔE &lt; 10⁻¹⁰ Eₕ<br>Density &amp; residual &lt; 10⁻⁸</p></div>
+          <div data-solver-group="scf"><label for="scf-integrals">SCF integrals</label><select id="scf-integrals"><option value="df" selected>Density fitted (DF-JK)</option><option value="exact">Exact four-center</option></select><p class="small-muted">SCF fitting basis: def2-universal-JKFIT. Independent of the MP2 correlation basis.</p><label for="maxiter">Maximum SCF cycles</label><input id="maxiter" type="number" min="1" max="500" step="1" value="100" required><label class="check-label"><input id="diis" type="checkbox" checked> DIIS acceleration</label><p class="small-muted">ΔE &lt; 10⁻¹⁰ Eₕ<br>Density &amp; residual &lt; 10⁻⁸</p></div>
           <div data-solver-group="uhf" hidden><label for="guess">Initial guess</label><select id="guess"><option value="mix">Orbital mixing</option><option value="core">Core Hamiltonian</option></select></div>
           <p data-solver-group="mp2" class="small-muted" hidden>All-electron MP2 correlation on the selected RHF or UHF reference.</p>
-          <p data-solver-group="df" class="small-muted" hidden>Correlation auxiliary basis: <strong>cc-pVDZ-RI</strong>. Density fitting applies to MP2; the SCF reference uses exact four-center integrals.</p>
+          <p data-solver-group="df" class="small-muted" hidden>Correlation auxiliary basis: <strong>cc-pVDZ-RI</strong>. Used for MP2 correlation, independently of the SCF integrals setting.</p>
           <p id="integrals-solver-note" class="small-muted" hidden>No iterative solver is used for molecular integrals.</p>
         </div>
       </details>

@@ -56,7 +56,7 @@ try:
         assert control(page, '#scan-moving').input_value()=='1, 2'
         print('WebGL rendering, PNG, rotation, atom picking and connected fragment selection PASS',flush=True)
         # The larger basis must be applied to the worker, not just the displayed label.
-        control(page, '#mode').select_option('rhf');page.locator('#basis').select_option('cc-pvdz');page.locator('#calculate').click();status('CONVERGED')
+        control(page, '#mode').select_option('rhf');control(page, '#scf-integrals').select_option('exact');page.locator('#basis').select_option('cc-pvdz');page.locator('#calculate').click();status('CONVERGED')
         data=json.loads(download('#download','water.json').read_text())
         expected=next(c for c in reference if c['name']=='water' and c['basis']=='cc-pvdz')
         assert data['nao']==24 and abs(data['rhf']['energy']-expected['energy'])<1e-9

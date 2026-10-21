@@ -2,6 +2,7 @@
 #ifndef BROWSER_QCHEM_UHF_H
 #define BROWSER_QCHEM_UHF_H
 #include "integrals.h"
+#include "df_integrals.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -11,6 +12,9 @@ typedef struct QCUHF QCUHF;
  * Status: 0 iterating, 1 converged, 2 iteration limit, -1 error. */
 QCUHF *qc_uhf_create(const QCResult *,int nalpha,int nbeta,int maxiter,int diis,
                      int guess,double etol,double dtol,double rtol);
+/* DF factors are copied at construction; the QCDF may then be freed. */
+QCUHF *qc_uhf_create_df(const QCResult *,const QCDF *,int na,int nb,int maxiter,int diis,int guess,double etol,double dtol,double rtol);
+int qc_uhf_df_rank(const QCUHF *);
 const char *qc_uhf_error(void);
 int qc_uhf_step(QCUHF *);
 int qc_uhf_nao(const QCUHF *);

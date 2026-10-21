@@ -18,7 +18,8 @@ try:
     browser=p.chromium.launch(**launch);page=browser.new_page(viewport={'width':1512,'height':982},reduced_motion='reduce');errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
     page.goto(f'http://127.0.0.1:{server.server_port}')
     def status(prefix):page.wait_for_function('(p)=>document.querySelector("#status").textContent.startsWith(p)',arg=prefix,polling=50)
-    def run():page.keyboard.press('Control+Enter')
+    def run():
+        control(page, '#scf-integrals').select_option('exact');page.keyboard.press('Control+Enter')
     def geometry(text):
         page.locator('#coordinates-editor').evaluate('(e)=>e.open=true');control(page, '#geometry').fill(text)
     def export():

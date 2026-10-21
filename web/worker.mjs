@@ -2,7 +2,7 @@
 import {METHOD_SPECS} from './methods.mjs';
 import createQChem from './qc_core.mjs';
 import { parseGeometry } from './molecule.mjs';
-import { computeIntegrals } from './engine.mjs';
+import { computeIntegrals,computeERI } from './engine.mjs';
 import { computeElectronic } from './electronic.mjs';
 import { runScan } from './scan.mjs';
 import {BUILD_ID,WORKER_PROTOCOL} from './build-info.mjs';
@@ -15,6 +15,16 @@ try {
   }});
   self.onmessage=async ({data})=>{
     if (data.type==='cancel') { if (active&&active.id===data.id) active.cancelled=true; return; }
+    if(data.type==='eri-query') {
+      const reply={type:'eri-value',query:data.query,protocol:WORKER_PROTOCOL,buildId:BUILD_ID};
+      try {
+        if(data.protocol!==WORKER_PROTOCOL||data.buildId!==BUILD_ID)throw new Error('Page and engine versions differ.');
+        if(active)throw new Error('Wait for the calculation to finish before inspecting ERIs.');
+        const molecule=parseGeometry(data.geometry,data.unit,data.basis);
+        self.postMessage({...reply,value:computeERI(engine,molecule,data.indices)});
+      }catch(error){self.postMessage({...reply,error:error.message});}
+      return;
+    }
     if (active) { self.postMessage({type:'error',id:data.id,protocol:WORKER_PROTOCOL,buildId:BUILD_ID,message:'A calculation is already running.'}); return; }
     const job={id:data.id??0,cancelled:false}; active=job;
     const send=(type,payload={},transfer=[])=>self.postMessage({type,id:job.id,protocol:WORKER_PROTOCOL,buildId:BUILD_ID,...payload},transfer);

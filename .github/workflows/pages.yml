@@ -32,6 +32,7 @@ jobs:
           node tests/check_state.mjs
           node tests/check_methods.mjs
           node tests/check_df_mp2.mjs
+          node tests/check_df_scf.mjs
           node tests/check_workspace.mjs
           node tests/check_coordinates.mjs
 

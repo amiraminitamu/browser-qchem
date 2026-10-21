@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 #include "df_mp2.h"
+#include "df_factors.h"
 #include <Eigen/Dense>
 #include <algorithm>
 #include <array>
@@ -27,18 +28,8 @@ static std::unique_ptr<QCDFMP2> create(const QCDF *df,int n,bool restricted,doub
   r->eps[0]=Eigen::Map<const Vector>(ea,n);r->eps[1]=Eigen::Map<const Vector>(eb,n);
   r->gap=std::numeric_limits<double>::infinity();
   for(int s=0;s<2;++s)if(r->o[s]&&r->v[s])r->gap=std::min(r->gap,r->eps[s][r->o[s]]-r->eps[s][r->o[s]-1]);
-  const int m=qc_df_naux(df);const Eigen::Map<const Matrix> metric(qc_df_data(df,0),m,m);
-  Eigen::SelfAdjointEigenSolver<Matrix> eig((.5*(metric+metric.transpose())).eval());
-  if(eig.info()!=Eigen::Success||!eig.eigenvalues().allFinite())throw std::runtime_error("DF Coulomb metric diagonalization failed.");
-  r->metric_min=eig.eigenvalues()[0];
-  if(r->metric_min < -std::max(1e-8,1e-10*eig.eigenvalues()[m-1]))throw std::runtime_error("DF Coulomb metric is not positive semidefinite.");
-  r->rank=(eig.eigenvalues().array()>metric_cutoff).count();
-  if(!r->rank)throw std::runtime_error("All auxiliary metric directions were removed.");
-  Matrix whitening=eig.eigenvectors().rightCols(r->rank);
-  for(int p=0;p<r->rank;++p)whitening.col(p)/=std::sqrt(eig.eigenvalues()[m-r->rank+p]);
-  const Eigen::Map<const Matrix> three(qc_df_data(df,1),n*n,m);
-  const Matrix b=three*whitening; // (mu nu|P) J^{-1/2}; storage O(N^2 M).
-  if(!b.allFinite())throw std::runtime_error("DF whitening produced nonfinite factors.");
+  const DFFactors factors(df,n);r->rank=factors.rank;r->metric_min=factors.minimum;
+  const Matrix &b=factors.b;
   for(int s=0;s<(restricted?1:2);++s){
     const Eigen::Map<const Matrix> c(s?cb:ca,n,n);
     for(int i=0;i<r->o[s];++i){
