@@ -10,7 +10,7 @@ lib.num_threads(1)
 try: lib.current_memory()
 except FileNotFoundError: lib.current_memory=lambda:(0,0)
 ROOT=Path(__file__).resolve().parents[1]
-p=argparse.ArgumentParser();p.add_argument('library');p.add_argument('--write-fixtures',action='store_true');args=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('library');p.add_argument('--write-fixtures',action='store_true');p.add_argument('--large',action='store_true');args=p.parse_args()
 qc=configure(load_library(args.library));ip=ct.POINTER(ct.c_int);dp=ct.POINTER(ct.c_double);handle=ct.c_void_p
 qc.qc_compute_mode.argtypes=[ct.c_int,*qc.qc_compute.argtypes];qc.qc_compute_mode.restype=handle
 qc.qc_eri.argtypes=[handle,*([ct.c_int]*4)];qc.qc_eri.restype=ct.c_double
@@ -43,6 +43,10 @@ def fitting(mol,basis):
  aux=df.addons.make_auxmol(mol,basis);values,keep=inputs(mol);sh,ex,co=packed(aux)
  h=qc.qc_df_compute(*values,len(sh)//3,sh.ctypes.data_as(ip),len(ex),ex.ctypes.data_as(dp),co.ctypes.data_as(dp));assert h,qc.qc_df_error();return h,aux
 examples=json.loads((ROOT/'tests/fixtures/df-mp2.json').read_text())['cases'];fixtures=[]
+if args.large:
+ water='\n'.join(f'{s} {x+shift} {y} {z}' for shift in [0,4,8] for s,x,y,z in [('O',0,0,0),('H',0,-.757,.587),('H',0,.757,.587)])
+ hydrogen='\n'.join(f'H 0 0 {i*.85}' for i in range(10))
+ examples=[{'name':name,'geometry':geometry,'unit':'angstrom','basis':'cc-pvdz','options':{'method':method,'charge':0,'multiplicity':1,'guess':'core'}} for name,geometry,method in [('water_trimer',water,'df-rmp2'),('water_trimer',water,'df-ump2'),('hydrogen_chain',hydrogen,'df-rmp2')]]
 for c in examples:
  mol=gto.M(atom=c['geometry'],unit=c['unit'],basis=c['basis'],charge=c['options']['charge'],spin=c['options']['multiplicity']-1,verbose=0)
  values,keep=inputs(mol);ints=qc.qc_compute_mode(0,*values);assert ints,qc.qc_error();assert not qc.qc_data(ints,3)
@@ -81,7 +85,7 @@ for c in examples:
   assert abs(qc.qc_dfmp2_scalar(post,1)-calc.e_corr)<2e-8
   qc.qc_dfmp2_free(post);post=None
   conv=None
-  if not u:
+  if not u and (not args.large or n<=50):
    # Conventional MP2 on DF-SCF must use exact correlation ERIs without a dense AO tensor.
    conventional=mp.mp2.MP2(mf.undo_df())
    if n>mol.nelectron//2:conventional.kernel(with_t2=False)
@@ -99,5 +103,26 @@ for c in examples:
   if ri:qc.qc_df_free(ri)
   if ref:getattr(qc,f'qc_{prefix}_free')(ref)
   qc.qc_free(ints)
-if args.write_fixtures:(ROOT/'tests/fixtures/df-scf.json').write_text(json.dumps({'reference':'PySCF 2.14.0, def2-universal-JKFIT SCF + independent cc-pVDZ-RI MP2 or exact MP2','cases':fixtures},indent=2)+'\n')
+if args.write_fixtures:(ROOT/('tests/fixtures/resource-large.json' if args.large else 'tests/fixtures/df-scf.json')).write_text(json.dumps({'reference':'PySCF 2.14.0, def2-universal-JKFIT SCF + independent cc-pVDZ-RI MP2 or exact MP2','cases':fixtures},indent=2)+'\n')
 print(len(fixtures),'DF-JK SCF and DF-MP2 comparisons, direct conventional MP2 and on-demand ERI PASS')
+if args.large:
+ # Native guards remain effective even when the JavaScript preflight is bypassed.
+ oversized=gto.M(atom=';'.join(f'H 0 0 {i*.85}' for i in range(20)),basis='cc-pvdz',verbose=0)
+ values,keep=inputs(oversized);assert not qc.qc_compute_mode(1,*values);assert b'ERI allocation' in qc.qc_error()
+ largefit=gto.M(atom=';'.join(f'Ne 0 0 {i*4}' for i in range(16)),basis='cc-pvdz',verbose=0)
+ try:
+  unexpected,_=fitting(largefit,'def2-universal-jkfit');qc.qc_df_free(unexpected);raise RuntimeError('Expected fitting allocation guard')
+ except AssertionError as error:assert b'workspace' in error.args[0]
+ print('Native exact-tensor and fitting-workspace guards reject allocations before evaluation PASS')
+if args.large:
+ neon=gto.M(atom='Ne 0 0 0; Ne 0 0 4; Ne 0 0 8',basis='cc-pvdz',verbose=0)
+ expected=scf.RHF(neon);expected.conv_tol=1e-12;expected.kernel();assert expected.converged
+ values,keep=inputs(neon);ints=qc.qc_compute_mode(1,*values);assert ints,qc.qc_error()
+ ref=qc.qc_rhf_create(ints,neon.nelectron,500,1,1e-10,1e-8,1e-8);assert ref,qc.qc_rhf_error()
+ status=0
+ while status==0:status=qc.qc_rhf_step(ref)
+ assert status==1 and abs(qc.qc_rhf_scalar(ref,0)-expected.e_tot)<2e-9
+ qc.qc_rhf_free(ref);qc.qc_free(ints)
+ if args.write_fixtures:
+  path=ROOT/'tests/fixtures/resource-large.json';content=json.loads(path.read_text());content['exactCase']={'geometry':'Ne 0 0 0\nNe 0 0 4\nNe 0 0 8','basis':'cc-pvdz','unit':'angstrom','energy':float(expected.e_tot)};path.write_text(json.dumps(content,indent=2)+'\n')
+ print('42 AO exact SCF energy agrees with independent PySCF PASS')

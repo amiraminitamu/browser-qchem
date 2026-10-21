@@ -14,7 +14,6 @@ export function validateRHFOptions(molecule,options={}) {
   if (!Number.isInteger(maxIterations) || maxIterations < 1 || maxIterations > 500) throw new Error('Maximum iterations must be an integer from 1 to 500.');
   const electrons = molecule.atoms.reduce((sum,atom) => sum+atom.charge,0)-charge;
   if (!Number.isSafeInteger(electrons) || electrons < 2 || electrons % 2) throw new Error('RHF requires a positive even electron count (closed-shell singlet). Check the charge.');
-  if (electrons > 80) throw new Error('Electron count exceeds the capacity of the 40 AO prototype.');
   if (electrons > 2*basisSummary(molecule).nao) throw new Error('The electron count does not fit this basis. Check the charge.');
   return {charge,maxIterations,electrons};
 }

@@ -1855,3 +1855,14 @@ dialog .primary {
   .developer-credit {flex-wrap:wrap;align-content:center;min-height:44px;padding:4px 8px;}
   .developer-credit .credit-university {flex-basis:100%;margin-left:0;padding-left:0;border-left:0;text-align:center;}
 }
+
+/* The cost estimate belongs to the stage heading, with a compact technical readout. */
+.resource-estimate {pointer-events:auto;position:relative;margin-top:8px;max-width:min(360px,calc(100vw - 60px));font-size:11.5px;color:var(--muted);z-index:18}
+.resource-estimate>summary {cursor:pointer;padding:4px 0;font-variant-numeric:tabular-nums;list-style-position:inside}
+.resource-estimate[data-level=heavy]>summary,.resource-estimate[data-level=moderate]>summary {color:#8b571b}
+.resource-estimate[data-level=blocked]>summary {color:#a4352b}
+.resource-panel {position:absolute;top:100%;left:0;width:min(340px,calc(100vw - 60px));padding:14px;background:#fffefa;border:1px solid #d5d0c5;border-radius:6px;color:#414751}
+.resource-panel h2 {font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin:0 0 12px}
+.resource-panel dl {display:grid;grid-template-columns:1fr auto;gap:7px;margin:0}
+.resource-panel dt {font-size:12px}.resource-panel dd {margin:0;font:12px var(--mono);font-variant-numeric:tabular-nums}
+.resource-panel p {font-size:12px;line-height:1.5;margin:12px 0 0;max-width:100%}

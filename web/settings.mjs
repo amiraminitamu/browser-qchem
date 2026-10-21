@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
+import {deviceBudget} from './resources.mjs';
 import {METHOD_SPECS,isUnrestricted,isMP2} from './methods.mjs';
 export const SETTINGS_KEY='browser-qchem.settings.v2';
 export const SETTINGS_FIELDS=['preset','geometry','unit','basis','scf-integrals','method','mode','charge','multiplicity','guess','maxiter','diis','scan-coordinate','scan-a','scan-b','scan-c','scan-d','scan-moving','scan-start','scan-end','scan-count','scan-unit'];
@@ -24,7 +25,7 @@ export function captureRequest(form,{id,protocol,buildId}) {
   const f=readSettings(form),method=f.method,mode=f.mode;
   if(!Object.hasOwn(METHOD_SPECS,method))throw new Error('Choose a supported electronic method.');
   if(!['rhf','scan','integrals'].includes(mode)) throw new Error('Choose a valid calculation type.');
-  const options=Object.freeze({method,scfIntegrals:f['scf-integrals'],...(METHOD_SPECS[method].densityFitted?{auxiliaryBasis:'cc-pvdz-ri'}:{}),charge:Number(f.charge),multiplicity:Number(f.multiplicity),guess:f.guess,maxIterations:Number(f.maxiter),diis:f.diis});
+  const options=Object.freeze({method,resourceBudgetBytes:deviceBudget(),scfIntegrals:f['scf-integrals'],...(METHOD_SPECS[method].densityFitted?{auxiliaryBasis:'cc-pvdz-ri'}:{}),charge:Number(f.charge),multiplicity:Number(f.multiplicity),guess:f.guess,maxIterations:Number(f.maxiter),diis:f.diis});
   const moving=Object.freeze(f['scan-moving'].trim()?f['scan-moving'].trim().split(/[,\s]+/).map(v=>/^\d+$/.test(v)?Number(v)-1:NaN):[]);
   const scan=mode==='scan'?Object.freeze({coordinate:f['scan-coordinate'],atoms:Object.freeze(['a','b','c','d'].slice(0,({bond:2,angle:3,dihedral:4})[f['scan-coordinate']]??2).map(key=>f['scan-'+key]===''?NaN:Number(f['scan-'+key])-1)),a:Number(f['scan-a'])-1,b:Number(f['scan-b'])-1,moving,start:Number(f['scan-start']),end:Number(f['scan-end']),count:Number(f['scan-count']),unit:f['scan-unit']}):undefined;
   return Object.freeze({id,protocol,buildId,geometry:f.geometry,unit:f.unit,basis:f.basis,mode,options,scan});

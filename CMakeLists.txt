@@ -40,6 +40,8 @@ if(EMSCRIPTEN)
     "-sEXPORTED_FUNCTIONS=['_h2_overlap','_qc_compute','_qc_compute_mode','_qc_eri','_qc_error','_qc_nao','_qc_enuc','_qc_data','_qc_free','_qc_rhf_create','_qc_rhf_create_df','_qc_rhf_df_rank','_qc_rhf_error','_qc_rhf_step','_qc_rhf_status','_qc_rhf_iteration','_qc_rhf_scalar','_qc_rhf_data','_qc_rhf_free','_qc_uhf_create','_qc_uhf_create_df','_qc_uhf_df_rank','_qc_uhf_error','_qc_uhf_step','_qc_uhf_status','_qc_uhf_iteration','_qc_uhf_scalar','_qc_uhf_data','_qc_uhf_free','_qc_mp2_create','_qc_mp2_error','_qc_mp2_step','_qc_mp2_status','_qc_mp2_iteration','_qc_mp2_nocc','_qc_mp2_nvirt','_qc_mp2_scalar','_qc_mp2_free','_qc_df_compute','_qc_df_error','_qc_df_nao','_qc_df_naux','_qc_df_data','_qc_df_free','_qc_dfmp2_rhf_create','_qc_dfmp2_uhf_create','_qc_dfmp2_error','_qc_dfmp2_step','_qc_dfmp2_status','_qc_dfmp2_iteration','_qc_dfmp2_steps','_qc_dfmp2_nocc','_qc_dfmp2_nvirt','_qc_dfmp2_rank','_qc_dfmp2_scalar','_qc_dfmp2_free','_malloc','_free']"
     "-sEXPORTED_RUNTIME_METHODS=['HEAP32','HEAPF64','UTF8ToString']"
     "-sALLOW_MEMORY_GROWTH=1"
+    "-sMAXIMUM_MEMORY=536870912"
+    "-sABORTING_MALLOC=0"
     "-sSTACK_SIZE=1048576" -fexceptions)
   target_compile_options(qc_core PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-fexceptions>)
   file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/dist")

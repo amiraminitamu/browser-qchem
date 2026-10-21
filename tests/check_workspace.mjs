@@ -41,8 +41,8 @@ const ring=parseGeometry('C 0 0 0\nC 1.4 0 0\nC .7 1.212 0');
 assert.throws(()=>connectedFragment(ring,0,1),/ring/);
 for(const bad of [{a:0,b:0},{moving:[0,1]},{moving:[2]},{count:102},{start:0},{start:1,end:1},{unit:'nm'}])
   assert.throws(()=>scanSpec(fragment,{a:0,b:1,start:1,end:2,count:3,...bad}));
-const tooBig=parseGeometry('Ne 0 0 0\nNe 0 0 3\nNe 0 0 6','angstrom','cc-pvdz');
-assert.equal(basisSummary(tooBig).fits,false);assert.throws(()=>packBasis(tooBig),/40 AOs/);
+const tooBig=parseGeometry(Array.from({length:32},(_,i)=>`Ne 0 0 ${i*3}`).join('\n'),'angstrom','cc-pvdz');
+assert.equal(basisSummary(tooBig).fits,false);assert.throws(()=>packBasis(tooBig),/256 AOs/);
 assert.throws(()=>parseGeometry('H 0 0 0','angstrom','fake'),/basis/);
 const h2=parseGeometry('H 0 0 0\nH 0 0 .74');
 const config={a:0,b:1,start:.5,end:1.5,count:5};

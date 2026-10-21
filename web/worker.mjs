@@ -42,7 +42,7 @@ try {
           progress=>send('post-scf',progress));
         send('scan-complete',{spec:scan.spec,summary:{cancelled:scan.cancelled,requested:scan.requested,completed:scan.completed,elapsedMs:performance.now()-start}});
       } else {
-        const result=data.mode==='integrals'?computeIntegrals(engine,molecule)
+        const result=data.mode==='integrals'?computeIntegrals(engine,molecule,options)
           :await computeElectronic(engine,molecule,options,entry=>send('iteration',{entry}),progress=>send('post-scf',{progress}));
         result.elapsedMs=performance.now()-start;
         if (job.cancelled) send('cancelled');

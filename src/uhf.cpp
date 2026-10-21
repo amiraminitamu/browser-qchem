@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 #include "uhf.h"
 #include "df_factors.h"
+#include "limits.h"
 #include <Eigen/Dense>
 #include <algorithm>
 #include <array>
@@ -84,7 +85,7 @@ extern "C" QCUHF *qc_uhf_create_df(const QCResult *integrals,const QCDF *df,int 
     last_error.clear();
     try{
         const int n=qc_nao(integrals);
-        if(n<1||n>40||na<nb||nb<0||na<1||na>n||nb>n)throw std::runtime_error("UHF spin populations must fit the basis, with Nalpha >= Nbeta >= 0 and at least one electron.");
+        if(n<1||n>QC_MAX_AO||na<nb||nb<0||na<1||na>n||nb>n)throw std::runtime_error("UHF spin populations must fit the basis, with Nalpha >= Nbeta >= 0 and at least one electron.");
         if(maxiter<1||maxiter>500||guess<0||guess>1||!std::isfinite(etol)||!std::isfinite(dtol)||!std::isfinite(rtol)||etol<=0||dtol<=0||rtol<=0)
             throw std::runtime_error("Invalid UHF guess, iteration limit or convergence threshold.");
         auto r=std::make_unique<QCUHF>();r->n=n;r->occ[0]=na;r->occ[1]=nb;r->maxiter=maxiter;r->diis=diis!=0;

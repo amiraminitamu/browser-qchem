@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
+import {assertResources} from './resources.mjs';
 import { ANGSTROM_PER_BOHR, toXYZ, basisSummary } from './molecule.mjs';
 import {COORDINATES,coordinateValue,displaceCoordinate} from './coordinates.mjs';
 import {computeElectronic,validateElectronicOptions,scfResult,totalEnergy} from './electronic.mjs';
@@ -47,13 +48,14 @@ export function scanSpec(molecule,config) {
   if(!moving.length||!moving.every(i=>Number.isInteger(i)&&i>=0&&i<n)||!moving.includes(terminal)||fixed.some(i=>moving.includes(i)))throw new Error('Moving atoms must include the last selected atom and exclude fixed coordinate atoms.');
   coordinateValue(molecule,coordinate,atoms,unit);
   if(coordinate==='bond'&&distance(molecule,a,b)<1e-8)throw new Error('The selected atoms coincide.');
-  if(!basisSummary(molecule).fits)throw new Error('This scan exceeds the 40 AO limit.');
+  if(!basisSummary(molecule).fits)throw new Error('This scan exceeds the 256 AO structural bound.');
   return {a,b,atoms,coordinate,start,end,count,unit,moving:moving.sort((i,j)=>i-j),basis:molecule.basis,kind:`unrelaxed ${coordinate} scan`};
 }
 export function scanGeometry(molecule,spec,value) {return displaceCoordinate(molecule,spec,value);}
 export async function runScan(engine,molecule,config,options={},onPoint=()=>{},onIteration=()=>{},onProgress=()=>{}) {
   const settings=validateElectronicOptions(molecule,options);
-  const spec={...scanSpec(molecule,config),method:settings.method,scfIntegrals:settings.scfIntegrals,jkfitBasis:settings.scfIntegrals==='df'?'def2-universal-JKFIT':null,charge:settings.charge,electrons:settings.electrons,multiplicity:settings.multiplicity??1,guess:settings.guess??'core',...(settings.auxiliaryBasis?{auxiliaryBasis:settings.auxiliaryBasis}:{})}, points=[];
+  const resources=assertResources(molecule,{...options,mode:'scan',scanCount:Number(config.count)});
+  const spec={...scanSpec(molecule,config),resources,method:settings.method,scfIntegrals:settings.scfIntegrals,jkfitBasis:settings.scfIntegrals==='df'?'def2-universal-JKFIT':null,charge:settings.charge,electrons:settings.electrons,multiplicity:settings.multiplicity??1,guess:settings.guess??'core',...(settings.auxiliaryBasis?{auxiliaryBasis:settings.auxiliaryBasis}:{})}, points=[];
   for (let index=0;index<spec.count;index++) {
     if (options.isCancelled?.()) break;
     const coordinate=spec.start+(spec.end-spec.start)*index/(spec.count-1);
