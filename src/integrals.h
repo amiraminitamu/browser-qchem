@@ -16,6 +16,10 @@ typedef struct QCResult QCResult;
 QCResult *qc_compute(int natm, const int *charges, const double *xyz,
                      int nshell, const int *shells, int nprim,
                      const double *exponents, const double *coefficients);
+/* dense=0 computes only S/T/V; preserves the libcint context for on-demand ERIs. */
+QCResult *qc_compute_mode(int dense,int natm,const int *charges,const double *xyz,int nshell,const int *shells,int nprim,const double *exponents,const double *coefficients);
+double qc_eri(const QCResult *,int i,int j,int k,int l);
+int qc_eri_transform(const QCResult *,const double *coefficient_column,double *out);
 const char *qc_error(void);
 int qc_nao(const QCResult *result);
 double qc_enuc(const QCResult *result);

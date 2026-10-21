@@ -5,6 +5,7 @@ import {computeElectronic} from '../web/electronic.mjs';
 import {serializable,prepareIntegrals} from '../web/engine.mjs';
 import {validateUHFOptions} from '../web/uhf.mjs';
 const input=JSON.parse(fs.readFileSync(0,'utf8')),engine=await createQChem();
+input.options={scfIntegrals:'exact',...input.options};
 const molecule=parseGeometry(input.geometry,input.unit,input.basis);
 if(process.argv.includes('--initial-uhf')) {
   const s=validateUHFOptions(molecule,input.options),{handle,result}=prepareIntegrals(engine,molecule);

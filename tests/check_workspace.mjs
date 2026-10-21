@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import createQChem from '../build/wasm/dist/qc_core.mjs';
 import {parseGeometry,packBasis,basisSummary,toXYZ,ANGSTROM_PER_BOHR} from '../web/molecule.mjs';
-import {computeRHF} from '../web/rhf.mjs';
-import {scanSpec,scanGeometry,runScan,distance,connectedFragment,scanCSV,scanXYZ} from '../web/scan.mjs';
+import {computeRHF as originalComputeRHF} from '../web/rhf.mjs';
+import {scanSpec,scanGeometry,runScan as originalRunScan,distance,connectedFragment,scanCSV,scanXYZ} from '../web/scan.mjs';
 const engine=await createQChem();
 const reference=JSON.parse(fs.readFileSync(new URL('./fixtures/workspace.json',import.meta.url)));
 const near=(actual,expected,tol=1e-9)=>assert.ok(Math.abs(actual-expected)<tol,`${actual} != ${expected}`);
@@ -62,3 +62,7 @@ assert.ok(failed.points[2].result);assert.equal(failed.points[2].status,'converg
 await assert.rejects(()=>runScan(engine,h2,config,{charge:1}),/even electron/);
 const recovered=await computeRHF(engine,h2);assert.ok(recovered.rhf.converged);
 console.log('Rigid fragments, reverse ranges, bohr units, rings, AO limits, cancellation, failed points, recovery PASS');
+
+function computeRHF(e,m,o={},...rest){return originalComputeRHF(e,m,{...o,scfIntegrals:'exact'},...rest);}
+
+function runScan(e,m,c,o={},...rest){return originalRunScan(e,m,c,{...o,scfIntegrals:'exact'},...rest);}

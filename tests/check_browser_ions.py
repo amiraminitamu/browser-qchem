@@ -23,6 +23,7 @@ try:
         return Path(d.value.path()).read_text()
     def reference(name,basis,method='uhf'):return next(c for c in fixture['cases'] if c['name']==name and c['basis']==basis and c['options']['method']==method)
     status('CONVERGED')
+    control(page, '#scf-integrals').select_option('exact')
     for preset,name,charge,mult,ne in [('h2plus','H2+',1,2,1),('heh','HeH',0,2,3),('hehplus','HeH+',1,1,2)]:
         control(page, '#preset').select_option(preset)
         assert control(page, '#charge').input_value()==str(charge)

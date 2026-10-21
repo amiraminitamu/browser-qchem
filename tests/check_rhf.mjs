@@ -7,7 +7,7 @@ const engine=await createQChem();
 const reference=JSON.parse(fs.readFileSync(new URL('./fixtures/water-rhf-sto3g.json',import.meta.url),'utf8'));
 const water=parseGeometry(WATER_XYZ);
 let progress=0;
-const result=await computeRHF(engine,water,{},() => progress++);
+const result=await computeRHF(engine,water,{scfIntegrals:'exact'},() => progress++);
 const r=result.rhf;
 assert.ok(r.converged); assert.equal(r.iterations,progress); assert.equal(r.electrons,10);
 assert.ok(Math.abs(r.energy-reference.energy)<1e-9);

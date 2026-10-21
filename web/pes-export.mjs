@@ -18,6 +18,7 @@ export function pesFigureModel(scan,{unit='kcal',relative=true}={}) {
     metadata:[
       ['Molecule',`${scan.moleculeName??'Custom molecule'}${scan.formula?' · '+scan.formula:''} · ${source.atoms.length} atoms`],
       ['Calculation',`${(spec.method??'rhf').toUpperCase()} / ${basisLabel(spec.basis)}${spec.auxiliaryBasis?' · auxiliary '+spec.auxiliaryBasis:''} · charge ${spec.charge??0} · multiplicity ${spec.multiplicity??1}`],
+      ['SCF integrals',spec.scfIntegrals==='df'?`Density fitted (DF-JK) / ${spec.jkfitBasis??'def2-universal-JKFIT'}`:'Exact four-center'],
       ['Coordinate',`${coordinate} · moving atoms ${(spec.moving??[]).map(i=>i+1).join(', ')}`],
       ['Sampled minimum',`${meta.symbol} = ${minimum.coordinate.toFixed(6)} ${symbol}; E = ${minimum.energy.toFixed(12)} Eₕ; trajectory point ${minimum.index+1}${!converged.length?' (unconverged)':''}`],
       ['Scan range',`${spec.start} → ${spec.end} ${symbol} · ${scan.points.length}/${spec.count} points · unrelaxed${scan.cancelled?' · stopped':''}`],

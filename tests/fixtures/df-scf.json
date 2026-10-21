@@ -1,0 +1,1265 @@
+{
+  "reference": "PySCF 2.14.0, def2-universal-JKFIT SCF + independent cc-pVDZ-RI MP2 or exact MP2",
+  "cases": [
+    {
+      "name": "water",
+      "geometry": "O .14 -.23 .31\n H .79 .02 .91\n H -.51 .61 .44",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -74.95206158420633,
+      "naux": 84,
+      "energy": -74.99214496272928,
+      "correlationEnergy": -0.040083378522948826,
+      "oppositeSpinEnergy": -0.03757794282614413,
+      "sameSpinEnergy": -0.0025054356968046976,
+      "conventionalCorrelationEnergy": -0.04008948677600683,
+      "jkfitFunctions": 113,
+      "jkfitRank": 113,
+      "spinSquare": 0,
+      "eriIndices": [
+        0,
+        6,
+        1,
+        6
+      ],
+      "exactERI": 0.0137403013637972
+    },
+    {
+      "name": "water",
+      "geometry": "O .14 -.23 .31\n H .79 .02 .91\n H -.51 .61 .44",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -74.95206158420633,
+      "naux": 84,
+      "energy": -74.99214496272927,
+      "correlationEnergy": -0.04008337852294319,
+      "oppositeSpinEnergy": -0.03757794282613911,
+      "sameSpinEnergy": -0.00250543569680408,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 113,
+      "jkfitRank": 113,
+      "spinSquare": 1.7763568394002505e-15,
+      "eriIndices": [
+        0,
+        6,
+        1,
+        6
+      ],
+      "exactERI": 0.0137403013637972
+    },
+    {
+      "name": "hydrogen",
+      "geometry": "H 0 0 0\n H 0 0 .74",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -1.1167833179013509,
+      "naux": 28,
+      "energy": -1.1299214332327936,
+      "correlationEnergy": -0.013138115331442648,
+      "oppositeSpinEnergy": -0.013138115331442648,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": -0.013139853664684505,
+      "jkfitFunctions": 36,
+      "jkfitRank": 36,
+      "spinSquare": 0,
+      "eriIndices": [
+        0,
+        1,
+        1,
+        1
+      ],
+      "exactERI": 0.44459112373312804
+    },
+    {
+      "name": "hydrogen",
+      "geometry": "H 0 0 0\n H 0 0 .74",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -1.1167833179013507,
+      "naux": 28,
+      "energy": -1.1299214332327934,
+      "correlationEnergy": -0.013138115331442653,
+      "oppositeSpinEnergy": -0.013138115331442653,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 36,
+      "jkfitRank": 36,
+      "spinSquare": 0.0,
+      "eriIndices": [
+        0,
+        1,
+        1,
+        1
+      ],
+      "exactERI": 0.44459112373312804
+    },
+    {
+      "name": "stretched_hydrogen",
+      "geometry": "H 0 0 0\n H 0 0 3",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -0.6561980311435809,
+      "naux": 28,
+      "energy": -0.8815397300043584,
+      "correlationEnergy": -0.22534169886077746,
+      "oppositeSpinEnergy": -0.22534169886077746,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": -0.22537803589359692,
+      "jkfitFunctions": 36,
+      "jkfitRank": 36,
+      "spinSquare": 0,
+      "eriIndices": [
+        0,
+        1,
+        1,
+        1
+      ],
+      "exactERI": 0.006543937968906878
+    },
+    {
+      "name": "stretched_hydrogen",
+      "geometry": "H 0 0 0\n H 0 0 3",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "mix",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -0.9332853799078753,
+      "naux": 28,
+      "energy": -0.9332854647010932,
+      "correlationEnergy": -8.479321788924051e-08,
+      "oppositeSpinEnergy": -8.479321788924051e-08,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 36,
+      "jkfitRank": 36,
+      "spinSquare": 0.9985892205592006,
+      "eriIndices": [
+        0,
+        1,
+        1,
+        1
+      ],
+      "exactERI": 0.006543937968906878
+    },
+    {
+      "name": "hehplus",
+      "geometry": "He 0 0 0\n H 0 0 .8",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 1,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -2.8462714973913448,
+      "naux": 23,
+      "energy": -2.853404579230247,
+      "correlationEnergy": -0.0071330818389025745,
+      "oppositeSpinEnergy": -0.0071330818389025745,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": -0.007150010927539879,
+      "jkfitFunctions": 41,
+      "jkfitRank": 41,
+      "spinSquare": 0,
+      "eriIndices": [
+        0,
+        1,
+        1,
+        1
+      ],
+      "exactERI": 0.3515944563424473
+    },
+    {
+      "name": "hehplus",
+      "geometry": "He 0 0 0\n H 0 0 .8",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 1,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -2.8462714973913448,
+      "naux": 23,
+      "energy": -2.853404579230247,
+      "correlationEnergy": -0.007133081838902574,
+      "oppositeSpinEnergy": -0.007133081838902574,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 41,
+      "jkfitRank": 41,
+      "spinSquare": 2.220446049250313e-16,
+      "eriIndices": [
+        0,
+        1,
+        1,
+        1
+      ],
+      "exactERI": 0.3515944563424473
+    },
+    {
+      "name": "methyl",
+      "geometry": "C 0 0 0\n H 1.07 0 0\n H -.535 .92665 0\n H -.535 -.92665 0",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -39.07667192588198,
+      "naux": 98,
+      "energy": -39.11439492266635,
+      "correlationEnergy": -0.037722996784367975,
+      "oppositeSpinEnergy": -0.03618448294225102,
+      "sameSpinEnergy": -0.0015385138421169578,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 129,
+      "jkfitRank": 129,
+      "spinSquare": 0.764608354577395,
+      "eriIndices": [
+        0,
+        7,
+        1,
+        7
+      ],
+      "exactERI": 0.022858216396929705
+    },
+    {
+      "name": "oxygen",
+      "geometry": "O 0 0 0\n O 0 0 1.21",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 3,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -147.3803416166645,
+      "naux": 112,
+      "energy": -147.42219911494837,
+      "correlationEnergy": -0.0418574982838553,
+      "oppositeSpinEnergy": -0.0309527134916747,
+      "sameSpinEnergy": -0.0109047847921806,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 154,
+      "jkfitRank": 154,
+      "spinSquare": 2.012795758883793,
+      "eriIndices": [
+        0,
+        9,
+        1,
+        9
+      ],
+      "exactERI": 0.011474000162621682
+    },
+    {
+      "name": "helium",
+      "geometry": "He 0 0 0",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -2.80791335449294,
+      "naux": 9,
+      "energy": -2.80791335449294,
+      "correlationEnergy": 0.0,
+      "oppositeSpinEnergy": 0.0,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": 0.0,
+      "jkfitFunctions": 23,
+      "jkfitRank": 23,
+      "spinSquare": 0,
+      "eriIndices": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "exactERI": 1.0557129427350722
+    },
+    {
+      "name": "helium",
+      "geometry": "He 0 0 0",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -2.80791335449294,
+      "naux": 9,
+      "energy": -2.80791335449294,
+      "correlationEnergy": 0.0,
+      "oppositeSpinEnergy": 0.0,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 23,
+      "jkfitRank": 23,
+      "spinSquare": -4.440892098500626e-16,
+      "eriIndices": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "exactERI": 1.0557129427350722
+    },
+    {
+      "name": "h2plus",
+      "geometry": "H 0 0 0\n H 0 0 1.06",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 1,
+        "multiplicity": 2,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -0.5826965597947078,
+      "naux": 28,
+      "energy": -0.5826965597947078,
+      "correlationEnergy": 0.0,
+      "oppositeSpinEnergy": 0.0,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 36,
+      "jkfitRank": 36,
+      "spinSquare": 0.75,
+      "eriIndices": [
+        0,
+        1,
+        1,
+        1
+      ],
+      "exactERI": 0.28246498218397736
+    },
+    {
+      "name": "hydrogen_atom",
+      "geometry": "H 0 0 0",
+      "unit": "angstrom",
+      "basis": "sto-3g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -0.46658184955727533,
+      "naux": 14,
+      "energy": -0.46658184955727533,
+      "correlationEnergy": 0.0,
+      "oppositeSpinEnergy": 0.0,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 18,
+      "jkfitRank": 18,
+      "spinSquare": 0.75,
+      "eriIndices": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "exactERI": 0.7746059439198978
+    },
+    {
+      "name": "water",
+      "geometry": "O .14 -.23 .31\n H .79 .02 .91\n H -.51 .61 .44",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -75.96877523492678,
+      "naux": 84,
+      "energy": -76.10136633377813,
+      "correlationEnergy": -0.13259109885134743,
+      "oppositeSpinEnergy": -0.10175985435394516,
+      "sameSpinEnergy": -0.030831244497402266,
+      "conventionalCorrelationEnergy": -0.13260461134454377,
+      "jkfitFunctions": 113,
+      "jkfitRank": 113,
+      "spinSquare": 0,
+      "eriIndices": [
+        0,
+        12,
+        1,
+        12
+      ],
+      "exactERI": 0.021806503327614364
+    },
+    {
+      "name": "water",
+      "geometry": "O .14 -.23 .31\n H .79 .02 .91\n H -.51 .61 .44",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -75.96877523492678,
+      "naux": 84,
+      "energy": -76.10136633378588,
+      "correlationEnergy": -0.1325910988590912,
+      "oppositeSpinEnergy": -0.1017598543593103,
+      "sameSpinEnergy": -0.03083124449978089,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 113,
+      "jkfitRank": 113,
+      "spinSquare": 2.6645352591003757e-15,
+      "eriIndices": [
+        0,
+        12,
+        1,
+        12
+      ],
+      "exactERI": 0.021806503327614364
+    },
+    {
+      "name": "hydrogen",
+      "geometry": "H 0 0 0\n H 0 0 .74",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -1.1267697478577035,
+      "naux": 28,
+      "energy": -1.1441332504357622,
+      "correlationEnergy": -0.017363502578058722,
+      "oppositeSpinEnergy": -0.017363502578058722,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": -0.017380632727573026,
+      "jkfitFunctions": 36,
+      "jkfitRank": 36,
+      "spinSquare": 0,
+      "eriIndices": [
+        0,
+        3,
+        1,
+        3
+      ],
+      "exactERI": 0.23467025959762433
+    },
+    {
+      "name": "hydrogen",
+      "geometry": "H 0 0 0\n H 0 0 .74",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -1.1267697478577032,
+      "naux": 28,
+      "energy": -1.1441332504357045,
+      "correlationEnergy": -0.017363502578001233,
+      "oppositeSpinEnergy": -0.017363502578001233,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 36,
+      "jkfitRank": 36,
+      "spinSquare": -8.881784197001252e-16,
+      "eriIndices": [
+        0,
+        3,
+        1,
+        3
+      ],
+      "exactERI": 0.23467025959762433
+    },
+    {
+      "name": "stretched_hydrogen",
+      "geometry": "H 0 0 0\n H 0 0 3",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -0.8157130492118517,
+      "naux": 28,
+      "energy": -0.9200306145693542,
+      "correlationEnergy": -0.10431756535750253,
+      "oppositeSpinEnergy": -0.10431756535750253,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": -0.1043729369584181,
+      "jkfitFunctions": 36,
+      "jkfitRank": 36,
+      "spinSquare": 0,
+      "eriIndices": [
+        0,
+        3,
+        1,
+        3
+      ],
+      "exactERI": 0.00032343271298956617
+    },
+    {
+      "name": "stretched_hydrogen",
+      "geometry": "H 0 0 0\n H 0 0 3",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "mix",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -0.9967284799307798,
+      "naux": 28,
+      "energy": -0.9967402072097795,
+      "correlationEnergy": -1.17272789996595e-05,
+      "oppositeSpinEnergy": -1.17272789996595e-05,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 36,
+      "jkfitRank": 36,
+      "spinSquare": 0.9953919523412328,
+      "eriIndices": [
+        0,
+        3,
+        1,
+        3
+      ],
+      "exactERI": 0.00032343271298956617
+    },
+    {
+      "name": "hehplus",
+      "geometry": "He 0 0 0\n H 0 0 .8",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 1,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -2.9093566460880735,
+      "naux": 23,
+      "energy": -2.9261890890743514,
+      "correlationEnergy": -0.016832442986277667,
+      "oppositeSpinEnergy": -0.016832442986277667,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": -0.016850658540349846,
+      "jkfitFunctions": 41,
+      "jkfitRank": 41,
+      "spinSquare": 0,
+      "eriIndices": [
+        0,
+        3,
+        1,
+        3
+      ],
+      "exactERI": 0.1584765019024904
+    },
+    {
+      "name": "hehplus",
+      "geometry": "He 0 0 0\n H 0 0 .8",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 1,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -2.9093566460880753,
+      "naux": 23,
+      "energy": -2.926189089074353,
+      "correlationEnergy": -0.0168324429862777,
+      "oppositeSpinEnergy": -0.0168324429862777,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 41,
+      "jkfitRank": 41,
+      "spinSquare": -8.881784197001252e-16,
+      "eriIndices": [
+        0,
+        3,
+        1,
+        3
+      ],
+      "exactERI": 0.1584765019024904
+    },
+    {
+      "name": "methyl",
+      "geometry": "C 0 0 0\n H 1.07 0 0\n H -.535 .92665 0\n H -.535 -.92665 0",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -39.546660715660636,
+      "naux": 98,
+      "energy": -39.62289371860789,
+      "correlationEnergy": -0.07623300294725616,
+      "oppositeSpinEnergy": -0.0632827698916237,
+      "sameSpinEnergy": -0.012950233055632462,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 129,
+      "jkfitRank": 129,
+      "spinSquare": 0.7614161733667508,
+      "eriIndices": [
+        0,
+        14,
+        1,
+        14
+      ],
+      "exactERI": 0.03663480551546659
+    },
+    {
+      "name": "oxygen",
+      "geometry": "O 0 0 0\n O 0 0 1.21",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 3,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -149.54537918534226,
+      "naux": 112,
+      "energy": -149.78566542512613,
+      "correlationEnergy": -0.24028623978388197,
+      "oppositeSpinEnergy": -0.16087775022935533,
+      "sameSpinEnergy": -0.07940848955452665,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 154,
+      "jkfitRank": 154,
+      "spinSquare": 2.0335540491198616,
+      "eriIndices": [
+        0,
+        17,
+        1,
+        17
+      ],
+      "exactERI": 0.051521478112321537
+    },
+    {
+      "name": "helium",
+      "geometry": "He 0 0 0",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -2.8551883005701644,
+      "naux": 9,
+      "energy": -2.8663788271965998,
+      "correlationEnergy": -0.011190526626435424,
+      "oppositeSpinEnergy": -0.011190526626435424,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": -0.011193531823387826,
+      "jkfitFunctions": 23,
+      "jkfitRank": 23,
+      "spinSquare": 0,
+      "eriIndices": [
+        0,
+        1,
+        1,
+        1
+      ],
+      "exactERI": 0.47618957361704806
+    },
+    {
+      "name": "helium",
+      "geometry": "He 0 0 0",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -2.855188300570164,
+      "naux": 9,
+      "energy": -2.8663788271965993,
+      "correlationEnergy": -0.011190526626435389,
+      "oppositeSpinEnergy": -0.011190526626435389,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 23,
+      "jkfitRank": 23,
+      "spinSquare": 1.5543122344752192e-15,
+      "eriIndices": [
+        0,
+        1,
+        1,
+        1
+      ],
+      "exactERI": 0.47618957361704806
+    },
+    {
+      "name": "h2plus",
+      "geometry": "H 0 0 0\n H 0 0 1.06",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 1,
+        "multiplicity": 2,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -0.58402745958406,
+      "naux": 28,
+      "energy": -0.58402745958406,
+      "correlationEnergy": 0.0,
+      "oppositeSpinEnergy": 0.0,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 36,
+      "jkfitRank": 36,
+      "spinSquare": 0.75,
+      "eriIndices": [
+        0,
+        3,
+        1,
+        3
+      ],
+      "exactERI": 0.1491726778144528
+    },
+    {
+      "name": "hydrogen_atom",
+      "geometry": "H 0 0 0",
+      "unit": "angstrom",
+      "basis": "6-31g",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -0.4982329107290701,
+      "naux": 14,
+      "energy": -0.4982329107290701,
+      "correlationEnergy": 0.0,
+      "oppositeSpinEnergy": 0.0,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 18,
+      "jkfitRank": 18,
+      "spinSquare": 0.75,
+      "eriIndices": [
+        0,
+        1,
+        1,
+        1
+      ],
+      "exactERI": 0.3613038495405744
+    },
+    {
+      "name": "water",
+      "geometry": "O .14 -.23 .31\n H .79 .02 .91\n H -.51 .61 .44",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -76.0124826351912,
+      "naux": 84,
+      "energy": -76.219689587393,
+      "correlationEnergy": -0.2072069522017967,
+      "oppositeSpinEnergy": -0.15509117716150694,
+      "sameSpinEnergy": -0.05211577504028976,
+      "conventionalCorrelationEnergy": -0.20721915983935674,
+      "jkfitFunctions": 113,
+      "jkfitRank": 113,
+      "spinSquare": 0,
+      "eriIndices": [
+        0,
+        23,
+        1,
+        23
+      ],
+      "exactERI": 0.0006034585558114551
+    },
+    {
+      "name": "water",
+      "geometry": "O .14 -.23 .31\n H .79 .02 .91\n H -.51 .61 .44",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -76.01248263519123,
+      "naux": 84,
+      "energy": -76.21968958738634,
+      "correlationEnergy": -0.2072069521951101,
+      "oppositeSpinEnergy": -0.1550911771572519,
+      "sameSpinEnergy": -0.052115775037858206,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 113,
+      "jkfitRank": 113,
+      "spinSquare": -2.6645352591003757e-14,
+      "eriIndices": [
+        0,
+        23,
+        1,
+        23
+      ],
+      "exactERI": 0.0006034585558114551
+    },
+    {
+      "name": "hydrogen",
+      "geometry": "H 0 0 0\n H 0 0 .74",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -1.1287208259088644,
+      "naux": 28,
+      "energy": -1.1550707522283739,
+      "correlationEnergy": -0.02634992631950952,
+      "oppositeSpinEnergy": -0.02634992631950952,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": -0.026361138777322875,
+      "jkfitFunctions": 36,
+      "jkfitRank": 36,
+      "spinSquare": 0,
+      "eriIndices": [
+        0,
+        9,
+        1,
+        9
+      ],
+      "exactERI": 0.1343266084618783
+    },
+    {
+      "name": "hydrogen",
+      "geometry": "H 0 0 0\n H 0 0 .74",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -1.1287208259088644,
+      "naux": 28,
+      "energy": -1.1550707522277774,
+      "correlationEnergy": -0.026349926318913072,
+      "oppositeSpinEnergy": -0.026349926318913072,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 36,
+      "jkfitRank": 36,
+      "spinSquare": -4.440892098500626e-16,
+      "eriIndices": [
+        0,
+        9,
+        1,
+        9
+      ],
+      "exactERI": 0.1343266084618783
+    },
+    {
+      "name": "stretched_hydrogen",
+      "geometry": "H 0 0 0\n H 0 0 3",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -0.8264835260105217,
+      "naux": 28,
+      "energy": -0.9256026178137403,
+      "correlationEnergy": -0.09911909180321868,
+      "oppositeSpinEnergy": -0.09911909180321868,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": -0.09921136842849151,
+      "jkfitFunctions": 36,
+      "jkfitRank": 36,
+      "spinSquare": 0,
+      "eriIndices": [
+        0,
+        9,
+        1,
+        9
+      ],
+      "exactERI": 8.254194676682416e-06
+    },
+    {
+      "name": "stretched_hydrogen",
+      "geometry": "H 0 0 0\n H 0 0 3",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "mix",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -0.9987417329064319,
+      "naux": 28,
+      "energy": -0.9987828336985782,
+      "correlationEnergy": -4.110079214636052e-05,
+      "oppositeSpinEnergy": -4.110079214636052e-05,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 36,
+      "jkfitRank": 36,
+      "spinSquare": 0.9948948619166902,
+      "eriIndices": [
+        0,
+        9,
+        1,
+        9
+      ],
+      "exactERI": 8.254194676682416e-06
+    },
+    {
+      "name": "hehplus",
+      "geometry": "He 0 0 0\n H 0 0 .8",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 1,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -2.9235667069094493,
+      "naux": 23,
+      "energy": -2.9528978860376793,
+      "correlationEnergy": -0.029331179128229995,
+      "oppositeSpinEnergy": -0.029331179128229995,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": -0.02941118500116224,
+      "jkfitFunctions": 41,
+      "jkfitRank": 41,
+      "spinSquare": 0,
+      "eriIndices": [
+        0,
+        9,
+        1,
+        9
+      ],
+      "exactERI": 0.22852457968503076
+    },
+    {
+      "name": "hehplus",
+      "geometry": "He 0 0 0\n H 0 0 .8",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-ump2",
+        "charge": 1,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -2.9235667069094475,
+      "naux": 23,
+      "energy": -2.9528978860376776,
+      "correlationEnergy": -0.02933117912822998,
+      "oppositeSpinEnergy": -0.02933117912822998,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 41,
+      "jkfitRank": 41,
+      "spinSquare": -2.6645352591003757e-15,
+      "eriIndices": [
+        0,
+        9,
+        1,
+        9
+      ],
+      "exactERI": 0.22852457968503076
+    },
+    {
+      "name": "methyl",
+      "geometry": "C 0 0 0\n H 1.07 0 0\n H -.535 .92665 0\n H -.535 -.92665 0",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -39.563546572790116,
+      "naux": 98,
+      "energy": -39.69230169705958,
+      "correlationEnergy": -0.12875512426946079,
+      "oppositeSpinEnergy": -0.10350744118484548,
+      "sameSpinEnergy": -0.025247683084615294,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 129,
+      "jkfitRank": 129,
+      "spinSquare": 0.7608123334629893,
+      "eriIndices": [
+        0,
+        28,
+        1,
+        28
+      ],
+      "exactERI": 0.0007802221300362187
+    },
+    {
+      "name": "oxygen",
+      "geometry": "O 0 0 0\n O 0 0 1.21",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 3,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -149.62716253687717,
+      "naux": 112,
+      "energy": -149.97652049746767,
+      "correlationEnergy": -0.34935796059049673,
+      "oppositeSpinEnergy": -0.24198630676847535,
+      "sameSpinEnergy": -0.10737165382202137,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 154,
+      "jkfitRank": 154,
+      "spinSquare": 2.0331826977466214,
+      "eriIndices": [
+        0,
+        27,
+        1,
+        27
+      ],
+      "exactERI": 4.725200309431555e-06
+    },
+    {
+      "name": "helium",
+      "geometry": "He 0 0 0",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-rmp2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -2.8551883987271296,
+      "naux": 9,
+      "energy": -2.8810074261932144,
+      "correlationEnergy": -0.025819027466084887,
+      "oppositeSpinEnergy": -0.025819027466084887,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": -0.025822871700796914,
+      "jkfitFunctions": 23,
+      "jkfitRank": 23,
+      "spinSquare": 0,
+      "eriIndices": [
+        0,
+        4,
+        1,
+        4
+      ],
+      "exactERI": 0.1425235475592445
+    },
+    {
+      "name": "helium",
+      "geometry": "He 0 0 0",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 1,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -2.855188398727129,
+      "naux": 9,
+      "energy": -2.881007426193214,
+      "correlationEnergy": -0.025819027466084884,
+      "oppositeSpinEnergy": -0.025819027466084884,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 23,
+      "jkfitRank": 23,
+      "spinSquare": 6.661338147750939e-16,
+      "eriIndices": [
+        0,
+        4,
+        1,
+        4
+      ],
+      "exactERI": 0.1425235475592445
+    },
+    {
+      "name": "h2plus",
+      "geometry": "H 0 0 0\n H 0 0 1.06",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-ump2",
+        "charge": 1,
+        "multiplicity": 2,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -0.6002572844066536,
+      "naux": 28,
+      "energy": -0.6002572844066536,
+      "correlationEnergy": 0.0,
+      "oppositeSpinEnergy": 0.0,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 36,
+      "jkfitRank": 36,
+      "spinSquare": 0.75,
+      "eriIndices": [
+        0,
+        9,
+        1,
+        9
+      ],
+      "exactERI": 0.08850038519918478
+    },
+    {
+      "name": "hydrogen_atom",
+      "geometry": "H 0 0 0",
+      "unit": "angstrom",
+      "basis": "cc-pvdz",
+      "options": {
+        "method": "df-ump2",
+        "charge": 0,
+        "multiplicity": 2,
+        "guess": "core",
+        "scfIntegrals": "df"
+      },
+      "referenceEnergy": -0.49927840341958307,
+      "naux": 14,
+      "energy": -0.49927840341958307,
+      "correlationEnergy": 0.0,
+      "oppositeSpinEnergy": 0.0,
+      "sameSpinEnergy": 0.0,
+      "conventionalCorrelationEnergy": null,
+      "jkfitFunctions": 18,
+      "jkfitRank": 18,
+      "spinSquare": 0.75,
+      "eriIndices": [
+        0,
+        4,
+        1,
+        4
+      ],
+      "exactERI": 0.10135394449518877
+    }
+  ]
+}

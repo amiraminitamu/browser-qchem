@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import fs from 'node:fs';
 import {METHOD_SPECS,isUnrestricted,isMP2} from '../web/methods.mjs';
+import {scfBackend} from '../web/scf-integrals.mjs';
 import {mathText} from '../web/format.mjs';
 import {TASKS} from '../web/workbench.mjs';
 
@@ -11,7 +12,7 @@ function functionBlock(source,start,end) {const a=source.indexOf(start),b=source
 
 export function runStateTests(appSource,settingsSource) {
   const settings=exported(settingsSource,['readSettings','restoreSettings','saveSettings','presetMethod','captureRequest','assertResultMatches','SETTINGS_FIELDS']);
-  const defaults={preset:'water',geometry:'O 0 0 0\nH 0 0 1\nH 0 1 0',unit:'angstrom',basis:'sto-3g',method:'rhf',mode:'rhf',charge:'0',multiplicity:'1',guess:'mix',maxiter:'100',diis:true,'scan-coordinate':'bond','scan-c':'','scan-d':'','scan-a':'1','scan-b':'2','scan-moving':'2','scan-start':'.7','scan-end':'1.4','scan-count':'3','scan-unit':'angstrom'};
+  const defaults={preset:'water',geometry:'O 0 0 0\nH 0 0 1\nH 0 1 0',unit:'angstrom',basis:'sto-3g','scf-integrals':'df',method:'rhf',mode:'rhf',charge:'0',multiplicity:'1',guess:'mix',maxiter:'100',diis:true,'scan-coordinate':'bond','scan-c':'','scan-d':'','scan-a':'1','scan-b':'2','scan-moving':'2','scan-start':'.7','scan-end':'1.4','scan-count':'3','scan-unit':'angstrom'};
   function controller(saved) {
     const nodes=new Map(),queue=new Map(),memory=new Map(saved??[]);let clock=0;
     function node(id) {
@@ -118,7 +119,7 @@ export function runStateTests(appSource,settingsSource) {
   fallback.node('water').emit('click');equal(fallback.node('method').value,'rhf','Reset explicitly resets all defaults');
   reports.push('Initial ion defaults and explicit full Reset remain deterministic');
   const rq=settings.captureRequest(menu.form,{id:99,protocol:2,buildId:'test-build'});
-  let mismatch=false;try{settings.assertResultMatches(rq,{method:'RHF',molecule:{basis:rq.basis},rhf:{charge:0}});}catch{mismatch=true;}
+  let mismatch=false;try{settings.assertResultMatches(rq,{method:'RHF',scfIntegrals:{type:'df'},molecule:{basis:rq.basis},rhf:{charge:0}});}catch{mismatch=true;}
   check(mismatch,'Wrong-method result must be rejected');
   menu.node('method').value='rhf';equal(rq.options.method,'uhf','DOM changes cannot mutate a captured job');
   reports.push('Wrong-method result rejected; captured settings independent of form');
@@ -132,13 +133,25 @@ export function runStateTests(appSource,settingsSource) {
     check(rejected,'A conventional result cannot masquerade as DF-MP2');
   }
   reports.push('DF method and auxiliary basis persist; conventional results cannot masquerade as density fitted');
+  const backend=controller();equal(backend.node('scf-integrals').value,'df','New setup defaults to DF');
+  backend.node('scf-integrals').value='exact';backend.node('scf-integrals').emit('change');backend.api.run();
+  const snapshot=backend.sent.at(-1);equal(snapshot.options.scfIntegrals,'exact','SCF backend captured independently');
+  equal(controller(backend.memory).node('scf-integrals').value,'exact','Explicit exact backend persists');
+  backend.node('scf-integrals').value='df';equal(snapshot.options.scfIntegrals,'exact','Captured backend is immutable');
+  let wrongBackend=false;
+  try{settings.assertResultMatches(snapshot,{method:'RHF',molecule:{basis:snapshot.basis},rhf:{charge:0},scfIntegrals:{type:'df'}});}catch{wrongBackend=true;}
+  check(wrongBackend,'Mismatched SCF backend must be rejected');
+  const legacyFields={...defaults};delete legacyFields['scf-integrals'];
+  const legacy=controller([['browser-qchem.settings.v2',JSON.stringify({schema:2,fields:legacyFields,methodExplicit:true})]]);
+  equal(legacy.node('scf-integrals').value,'df','Legacy settings adopt DF default');equal(legacy.node('geometry').value,defaults.geometry,'Legacy geometry survives migration');
+  reports.push('DF default and legacy migration; exact persistence; immutable backend; mismatched result rejection');
   return reports;
 }
 
 export async function runWorkerTests(workerSource,electronicSource) {
   const sent=[],calls=[];
-  const electronic=Function('METHOD_SPECS','isUnrestricted','isMP2','computeRHF','computeUHF','validateRHFOptions','validateUHFOptions',
-    electronicSource.replace(/^import .*;$/gm,'').replace(/^export /gm,'')+'\nreturn {computeElectronic};')(METHOD_SPECS,isUnrestricted,isMP2,
+  const electronic=Function('scfBackend','METHOD_SPECS','isUnrestricted','isMP2','computeRHF','computeUHF','validateRHFOptions','validateUHFOptions',
+    electronicSource.replace(/^import .*;$/gm,'').replace(/^export /gm,'')+'\nreturn {computeElectronic};')(scfBackend,METHOD_SPECS,isUnrestricted,isMP2,
       async(_e,_m,o)=>{calls.push(o.dfmp2?'DF-RMP2':o.mp2?'MP2':'RHF');return {rhf:{charge:o.charge},...(o.mp2||o.dfmp2?{mp2:{status:'complete',energy:-1.1}}:{})};},
       async(_e,_m,o)=>{calls.push(o.dfmp2?'DF-UMP2':'UHF');return {uhf:{charge:o.charge,multiplicity:o.multiplicity},...(o.dfmp2?{mp2:{status:'complete',energy:-1.1}}:{})};},
       (_m,o)=>{if(o.charge===1)throw new Error('RHF requires a positive even electron count.');return {charge:o.charge};},

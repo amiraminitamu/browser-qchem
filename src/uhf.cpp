@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 #include "uhf.h"
+#include "df_factors.h"
 #include <Eigen/Dense>
 #include <algorithm>
 #include <array>
@@ -17,6 +18,7 @@ struct QCUHF {
     int n,occ[2],maxiter,iteration=0,status=0;
     bool diis,mixed=false;
     double energy,enuc,de=0,drms=0,residual=0,overlap_min,etol,dtol,rtol;
+    std::unique_ptr<DFFactors> df;
     const double *eri;
     Matrix s,h,x;
     Pair d,f,c;
@@ -25,6 +27,7 @@ struct QCUHF {
 };
 static Pair fock(const QCUHF &r,const Pair &d) {
     Pair f={r.h,r.h};const size_t n=r.n;
+    if(r.df){const Matrix j=r.df->coulomb((d[0]+d[1]).eval());for(int s=0;s<2;++s)f[s]+=j-r.df->exchange(r.c[s].leftCols(r.occ[s]));return f;}
     for(size_t i=0;i<n;++i)for(size_t j=0;j<n;++j){
         double coulomb=0,exchange[2]={0,0};
         for(size_t k=0;k<n;++k)for(size_t l=0;l<n;++l){
@@ -77,7 +80,7 @@ static Pair extrapolate(QCUHF &r){
     return f;
 }
 extern "C" const char *qc_uhf_error(void){return last_error.c_str();}
-extern "C" QCUHF *qc_uhf_create(const QCResult *integrals,int na,int nb,int maxiter,int diis,int guess,double etol,double dtol,double rtol){
+extern "C" QCUHF *qc_uhf_create_df(const QCResult *integrals,const QCDF *df,int na,int nb,int maxiter,int diis,int guess,double etol,double dtol,double rtol){
     last_error.clear();
     try{
         const int n=qc_nao(integrals);
@@ -86,6 +89,7 @@ extern "C" QCUHF *qc_uhf_create(const QCResult *integrals,int na,int nb,int maxi
             throw std::runtime_error("Invalid UHF guess, iteration limit or convergence threshold.");
         auto r=std::make_unique<QCUHF>();r->n=n;r->occ[0]=na;r->occ[1]=nb;r->maxiter=maxiter;r->diis=diis!=0;
         r->etol=etol;r->dtol=dtol;r->rtol=rtol;r->enuc=qc_enuc(integrals);r->eri=qc_data(integrals,3);
+        if(df)r->df=std::make_unique<DFFactors>(df,n);else if(!r->eri)throw std::runtime_error("Exact SCF requires four-center integrals.");
         r->s=Eigen::Map<const Matrix>(qc_data(integrals,0),n,n);
         r->h=Eigen::Map<const Matrix>(qc_data(integrals,1),n,n)+Eigen::Map<const Matrix>(qc_data(integrals,2),n,n);
         Eigen::SelfAdjointEigenSolver<Matrix> eig(r->s);
@@ -140,3 +144,7 @@ extern "C" const double *qc_uhf_data(const QCUHF *r,int kind){
     switch(kind){case 0:return r->d[0].data();case 1:return r->d[1].data();case 2:return r->f[0].data();case 3:return r->f[1].data();case 4:return r->c[0].data();case 5:return r->c[1].data();case 6:return r->eps[0].data();case 7:return r->eps[1].data();case 8:return r->occupations[0].data();case 9:return r->occupations[1].data();default:return nullptr;}
 }
 extern "C" void qc_uhf_free(QCUHF *r){delete r;}
+
+extern "C" QCUHF *qc_uhf_create(const QCResult *i,int na,int nb,int mi,int di,int g,double e,double d,double r){return qc_uhf_create_df(i,nullptr,na,nb,mi,di,g,e,d,r);}
+
+extern "C" int qc_uhf_df_rank(const QCUHF *r){return r&&r->df?r->df->rank:0;}

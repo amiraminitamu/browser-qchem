@@ -10,6 +10,7 @@
 struct QCMP2 {
     int n,o,v,iteration=0,status=0;
     const double *eri,*c,*eps;
+    const QCResult *integrals;
     double reference,os=0,ss=0,min_denominator=std::numeric_limits<double>::infinity(),gap;
 };
 static std::string last_error;
@@ -22,7 +23,7 @@ extern "C" QCMP2 *qc_mp2_create(const QCRHF *reference) {
         m->n=qc_nao(integrals); m->o=0;
         const double *occupation=qc_rhf_data(reference,4);
         for (int i=0;i<m->n;++i) if (occupation[i]>1) ++m->o;
-        m->v=m->n-m->o; m->eri=qc_data(integrals,3);
+        m->integrals=integrals; m->v=m->n-m->o; m->eri=qc_data(integrals,3);
         m->c=qc_rhf_data(reference,2); m->eps=qc_rhf_data(reference,3);
         m->reference=qc_rhf_scalar(reference,0);
         m->gap=m->v ? m->eps[m->o]-m->eps[m->o-1] : std::numeric_limits<double>::quiet_NaN();
@@ -40,9 +41,14 @@ extern "C" int qc_mp2_step(QCMP2 *m) {
         // (i nu|lambda sigma) -> (i a|lambda sigma) -> (i a|j sigma) -> (i a|j b).
         // Keep i fixed, so the largest extra array is only n^3.
         std::vector<double> x(n*n*n,0),y(v*n*n,0),z(v*o*n,0),g(v*o*v,0);
+        if(m->eri) {
         for(int mu=0;mu<n;++mu) for(int nu=0;nu<n;++nu)
             for(int la=0;la<n;++la) for(int si=0;si<n;++si)
                 x[(nu*n+la)*n+si]+=c[mu*n+i]*m->eri[((mu*n+nu)*n+la)*n+si];
+        } else {
+            std::vector<double> column(n);for(int mu=0;mu<n;++mu)column[mu]=c[mu*n+i];
+            if(!qc_eri_transform(m->integrals,column.data(),x.data()))throw std::runtime_error("Direct MP2 integral transformation failed.");
+        }
         for(int a=0;a<v;++a) for(int nu=0;nu<n;++nu)
             for(int la=0;la<n;++la) for(int si=0;si<n;++si)
                 y[(a*n+la)*n+si]+=c[nu*n+o+a]*x[(nu*n+la)*n+si];

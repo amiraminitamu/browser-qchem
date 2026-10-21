@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import {computeDFMP2} from './df-mp2.mjs';
 import { computeMP2 } from './mp2.mjs';
-import { prepareIntegrals } from './engine.mjs';
+import {prepareSCF} from './scf-integrals.mjs';
 import { basisSummary } from './molecule.mjs';
 export const RHF_THRESHOLDS = { energy:1e-10, density:1e-8, residual:1e-8 };
 export class CalculationCancelled extends Error {
@@ -22,13 +22,15 @@ export async function computeRHF(engine, molecule, options = {}, onIteration = (
   const checkCancelled = () => { if (options.isCancelled?.()) throw new CalculationCancelled(); };
   checkCancelled();
   const {charge,maxIterations,electrons}=validateRHFOptions(molecule,options);
-  const { handle, result } = prepareIntegrals(engine,molecule);
+  const prepared=prepareSCF(engine,molecule,options),{handle,result}=prepared;
+  let df=prepared.df;
   let rhf = 0;
   try {
     if (!result.checks.passed) throw new Error('Integral normalization or symmetry checks failed. RHF was not started.');
     const t = RHF_THRESHOLDS;
-    rhf = engine._qc_rhf_create(handle,electrons,maxIterations,options.diis === false ? 0 : 1,t.energy,t.density,t.residual);
+    rhf = engine._qc_rhf_create_df(handle,df,electrons,maxIterations,options.diis === false ? 0 : 1,t.energy,t.density,t.residual);
     if (!rhf) throw new Error(engine.UTF8ToString(engine._qc_rhf_error()));
+    if(df){result.scfIntegrals.metricRank=engine._qc_rhf_df_rank(rhf);engine._qc_df_free(df);df=0;}
     const history = [];
     let status = 0;
     while (status === 0) {
@@ -57,7 +59,7 @@ export async function computeRHF(engine, molecule, options = {}, onIteration = (
     return result;
   } finally {
     if (rhf) engine._qc_rhf_free(rhf);
-    engine._qc_free(handle);
+    if(df)engine._qc_df_free(df);engine._qc_free(handle);
   }
 }
 

@@ -39,6 +39,7 @@ try:
             file=Path(temp)/'rhf.json'; event.value.save_as(file)
             return json.loads(file.read_text())
         wait_status('CONVERGED')
+        control(page, '#scf-integrals').select_option('exact');page.keyboard.press('Control+Enter');wait_status('CONVERGED')
         assert '-74.963063129729' in summary_text()
         data=download(); actual=data['rhf']
         assert actual['converged']

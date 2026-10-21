@@ -10,7 +10,7 @@ const engine=await createQChem(),water=parseGeometry(WATER_XYZ),h2=parseGeometry
 const near=(a,b,tol=2e-8)=>assert.ok(Math.abs(a-b)<tol,`${a} != ${b}`);
 const fixture=JSON.parse(fs.readFileSync(new URL('./fixtures/methods.json',import.meta.url)));
 for(const c of fixture.cases) {
-  const result=await computeElectronic(engine,parseGeometry(c.geometry,c.unit,c.basis),c.options),r=result.uhf??result.rhf;
+  const result=await computeElectronic(engine,parseGeometry(c.geometry,c.unit,c.basis),{...c.options,scfIntegrals:'exact'}),r=result.uhf??result.rhf;
   assert.ok(r.converged);near(r.energy,c.referenceEnergy);
   if(result.uhf)near(r.spinSquare,c.spinSquare,2e-6);
   else for(const key of ['energy','correlationEnergy','oppositeSpinEnergy','sameSpinEnergy'])near(result.mp2[key],c[key]);
@@ -43,7 +43,7 @@ assert.ok((await computeElectronic(engine,water,{method:'mp2'})).mp2.energy<-74.
 console.log('Broken symmetry, spin validation, no virtuals, failed references, cancellation, UHF/MP2 scans and recovery PASS');
 
 for(const c of fixture.ionScans??[]) {
- const scan=await runScan(engine,parseGeometry(c.geometry,c.unit,c.basis),c.scan,c.options);
+ const scan=await runScan(engine,parseGeometry(c.geometry,c.unit,c.basis),c.scan,{...c.options,scfIntegrals:'exact'});
  assert.equal(scan.spec.charge,c.options.charge);
  for(const [i,p] of scan.points.entries()) {assert.ok(p.converged);near(p.energy,c.energies[i]);assert.equal(p.result.uhf.charge,c.options.charge);assert.equal(p.result.uhf.multiplicity,c.options.multiplicity);}
  assert.match(scanCSV(scan),/reference_energy_hartree,charge,electrons/);
@@ -55,5 +55,5 @@ const failedIon=await runScan(engine,parseGeometry('H 0 0 0\nH 0 0 1'),{a:0,b:1,
 assert.equal(failedIon.points[0].status,'error');assert.ok(failedIon.points[1].converged);
 const failedFields=scanCSV(failedIon).trim().split('\n')[1].split(',').map(s=>JSON.parse(s));
 assert.equal(failedFields[9],'UHF');assert.equal(failedFields[10],'2');assert.equal(failedFields[14],'1');assert.equal(failedFields[15],'1');
-assert.match(scanXYZ(failedIon),/method=UHF multiplicity=2 charge=1 electrons=1 status=error/);
+assert.match(scanXYZ(failedIon),/method=UHF multiplicity=2 charge=1 electrons=1 .*status=error/);
 console.log('Failed ion scan points retain method, multiplicity, charge and electron count PASS');
