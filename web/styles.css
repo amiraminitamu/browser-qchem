@@ -108,7 +108,7 @@ h3,.eyebrow,.export-panel h3 {
   height:100dvh;
   width:100vw;
   display:grid;
-  grid-template-rows:48px minmax(0,1fr) 26px
+  grid-template-rows:48px minmax(0,1fr) 52px
 }
 .app-header {
   position:relative;
@@ -1019,7 +1019,7 @@ tr.clickable:focus-visible {
   white-space:nowrap;
   min-width:0
 }
-.workspace-footer>a {
+.footer-status>a {
   display:flex;
   align-items:center;
   gap:5px;
@@ -1446,7 +1446,7 @@ dialog .primary {
 }
 @media(max-width:850px) {
   .app-frame {
-    grid-template-rows:88px minmax(0,1fr) 26px
+    grid-template-rows:88px minmax(0,1fr) 52px
   }
   .app-header {
     display:grid;
@@ -1806,4 +1806,52 @@ dialog .primary {
     scroll-behavior:auto!important;
     transition:none!important
   }
+}
+
+/* Developer credit stays visible below the live telemetry at every viewport size. */
+.workspace-footer {
+  flex-direction:column;
+  align-items:stretch;
+  gap:0;
+  padding:0;
+}
+.footer-status {
+  display:flex;
+  align-items:center;
+  gap:14px;
+  min-height:25px;
+  padding:0 12px;
+  min-width:0;
+}
+.developer-credit {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex:1;
+  gap:0;
+  min-height:26px;
+  padding:3px 12px;
+  border-top:1px solid var(--border-subtle);
+  background:#ece8df;
+  color:var(--muted);
+  font-size:11px;
+  line-height:16px;
+}
+.developer-credit strong {
+  font-weight:600;
+  color:var(--ink);
+}
+.developer-credit>span+span {
+  margin-left:10px;
+  padding-left:10px;
+  border-left:1px solid var(--border-subtle);
+}
+@media(max-width:850px) {
+  .footer-status {gap:10px;}
+}
+@media(max-width:600px) {
+  .app-frame {grid-template-rows:88px minmax(0,1fr) 70px;}
+  .footer-status {gap:8px;padding:0 8px;}
+  .developer-credit {flex-wrap:wrap;align-content:center;min-height:44px;padding:4px 8px;}
+  .developer-credit .credit-university {flex-basis:100%;margin-left:0;padding-left:0;border-left:0;text-align:center;}
 }
